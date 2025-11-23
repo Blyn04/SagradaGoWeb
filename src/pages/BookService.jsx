@@ -1,6 +1,7 @@
 import { useContext } from "react";
 import { NavbarContext } from "../context/AllContext";
 import SignInPage from "./SignInPage";
+import Wedding from "./Bookings/Wedding";
 
 
 export default function BookService() {
@@ -10,9 +11,7 @@ export default function BookService() {
       <div className="w-svw">
         {
           bookingSelected === "wedding" && 
-          <div>
-            <h1 className="text-black">wedding</h1>
-          </div>
+          <Wedding />
         }
 
 
