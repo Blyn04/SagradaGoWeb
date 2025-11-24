@@ -10,6 +10,7 @@ import BookService from "./pages/BookService";
 import Events from "./pages/Events";
 import BeVolunteer from "./pages/BeVolunteer";
 import Donate from "./pages/Donate";
+import Profile from "./pages/ProfilePage";
 
 import AdminLogin from "./pages/admin/AdminLogin";
 import AddAdmin from "./pages/admin/AddAdmin";
@@ -77,6 +78,7 @@ function App() {
                   <Route path="/events" element={<Events />} />
                   <Route path="/be-volunteer" element={<BeVolunteer />} />
                   <Route path="/donate" element={<Donate />} />
+                  <Route path="/profile" element={<Profile isAdmin={false} />} />
                 </Routes>
                 </div>
               </div>

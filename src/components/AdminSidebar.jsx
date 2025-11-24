@@ -16,6 +16,11 @@ export default function AdminSidebar() {
 
   const menuItems = [
     {
+      key: "/profile",
+      icon: <UserOutlined />,
+      label: "Profile",
+    },
+    {
       key: "/admin/dashboard",
       icon: <DashboardOutlined />,
       label: "Dashboard",
