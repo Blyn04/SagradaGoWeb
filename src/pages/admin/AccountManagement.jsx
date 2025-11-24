@@ -379,9 +379,110 @@ export default function AccountManagement() {
           )}
         </div>
 
-        {showAddModal && (
+       {showAddModal && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+              <h2 className="text-xl font-semibold mb-4">Add User/Priest</h2>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input
+                  type="text"
+                  placeholder="First Name"
+                  value={formData.first_name}
+                  onChange={(e) =>
+                    setFormData({ ...formData, first_name: e.target.value })
+                  }
+                  className="border rounded px-2 py-1 w-full"
+                />
+                <input
+                  type="text"
+                  placeholder="Middle Name"
+                  value={formData.middle_name}
+                  onChange={(e) =>
+                    setFormData({ ...formData, middle_name: e.target.value })
+                  }
+                  className="border rounded px-2 py-1 w-full"
+                />
+                <input
+                  type="text"
+                  placeholder="Last Name"
+                  value={formData.last_name}
+                  onChange={(e) =>
+                    setFormData({ ...formData, last_name: e.target.value })
+                  }
+                  className="border rounded px-2 py-1 w-full"
+                />
+                <input
+                  type="email"
+                  placeholder="Email"
+                  value={formData.email}
+                  onChange={(e) =>
+                    setFormData({ ...formData, email: e.target.value })
+                  }
+                  className="border rounded px-2 py-1 w-full"
+                />
+                <input
+                  type="text"
+                  placeholder="Contact Number"
+                  value={formData.contact_number}
+                  onChange={(e) =>
+                    setFormData({ ...formData, contact_number: e.target.value })
+                  }
+                  className="border rounded px-2 py-1 w-full"
+                />
+                <input
+                  type="date"
+                  placeholder="Birthday"
+                  value={formData.birthday}
+                  onChange={(e) =>
+                    setFormData({ ...formData, birthday: e.target.value })
+                  }
+                  className="border rounded px-2 py-1 w-full"
+                />
+                <input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Password"
+                  value={formData.password}
+                  onChange={(e) =>
+                    setFormData({ ...formData, password: e.target.value })
+                  }
+                  className="border rounded px-2 py-1 w-full"
+                />
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  placeholder="Confirm Password"
+                  value={formData.confirmPassword}
+                  onChange={(e) =>
+                    setFormData({ ...formData, confirmPassword: e.target.value })
+                  }
+                  className="border rounded px-2 py-1 w-full"
+                />
+                <label className="flex items-center gap-2 mt-2 md:col-span-2">
+                  <input
+                    type="checkbox"
+                    checked={formData.is_priest}
+                    onChange={(e) =>
+                      setFormData({ ...formData, is_priest: e.target.checked })
+                    }
+                  />
+                  Is Priest?
+                </label>
+              </div>
+
+              <div className="flex justify-end gap-2 mt-4">
+                <Button
+                  text="Cancel"
+                  color="#ccc"
+                  textColor="#000"
+                  onClick={() => setShowAddModal(false)}
+                />
+                <Button
+                  text="Save"
+                  color="#b87d3e"
+                  textColor="#fff"
+                  onClick={handleAddUser}
+                />
+              </div>
             </div>
           </div>
         )}
