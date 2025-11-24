@@ -9,6 +9,8 @@ import {
 } from "firebase/auth";
 import Button from "../../components/Button";
 
+import { Table, Tag, Button as AntButton } from "antd";
+
 export default function AccountManagement() {
   const navigate = useNavigate();
   const [users, setUsers] = useState([]);
@@ -184,7 +186,7 @@ export default function AccountManagement() {
       setLoading(true);
       await axios.put(`${API_URL}/updateUserStatus`, {
         uid,
-        is_active: !currentStatus, // true = active, false = disabled
+        is_active: !currentStatus,
       });
 
       alert(`User account has been ${!currentStatus ? "enabled" : "disabled"} successfully!`);
@@ -193,6 +195,7 @@ export default function AccountManagement() {
     } catch (error) {
       console.error("Error updating user status:", error);
       alert(error.response?.data?.message || `Failed to ${action} user account.`);
+
     } finally {
       setLoading(false);
     }
@@ -220,10 +223,77 @@ export default function AccountManagement() {
     return date.toLocaleDateString();
   };
 
+  const columns = [
+    {
+      title: "Name",
+      dataIndex: "first_name",
+      key: "name",
+      render: (_, user) => (
+        <span className="font-medium text-gray-900">
+          {user.first_name} {user.middle_name} {user.last_name}
+        </span>
+      ),
+    },
+    {
+      title: "Email",
+      dataIndex: "email",
+      key: "email",
+    },
+    {
+      title: "Contact",
+      dataIndex: "contact_number",
+      key: "contact",
+    },
+    {
+      title: "Birthday",
+      dataIndex: "birthday",
+      key: "birthday",
+      render: (date) => <span>{formatDate(date)}</span>,
+    },
+    {
+      title: "Role",
+      dataIndex: "is_priest",
+      key: "role",
+      render: (is_priest) => (
+        <Tag color={is_priest ? "purple" : "blue"}>
+          {is_priest ? "Priest" : "User"}
+        </Tag>
+      ),
+    },
+    {
+      title: "Actions",
+      key: "actions",
+      render: (_, user) => (
+        <div className="flex gap-2">
+          <AntButton
+            size="small"
+            type={user.is_priest ? "default" : "primary"}
+            ghost={!user.is_priest}
+            onClick={() => handleUpdateRole(user.uid, !user.is_priest)}
+            loading={loading}
+          >
+            {user.is_priest ? "Remove Priest" : "Make Priest"}
+          </AntButton>
+
+          <AntButton
+            size="small"
+            danger={user.is_active ?? true}
+            type={(user.is_active ?? true) ? "primary" : "default"}
+            onClick={() =>
+              handleDisableUser(user.uid, user.is_active ?? true)
+            }
+            loading={loading}
+          >
+            {user.is_active ?? true ? "Disable" : "Enable"}
+          </AntButton>
+        </div>
+      ),
+    },
+  ];
+
   return (
     <div className="w-full min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <div>
             <h1 className="text-3xl font-bold text-gray-800">Account Management</h1>
@@ -299,304 +369,19 @@ export default function AccountManagement() {
               <p className="text-gray-500">No users found.</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-100">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
-                      Name
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
-                      Email
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
-                      Contact
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
-                      Birthday
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
-                      Role
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredUsers.map((user) => (
-                    <tr key={user.uid} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">
-                          {user.first_name} {user.middle_name} {user.last_name}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{user.email}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
-                          {user.contact_number}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
-                          {formatDate(user.birthday)}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span
-                          className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            user.is_priest
-                              ? "bg-purple-100 text-purple-800"
-                              : "bg-blue-100 text-blue-800"
-                          }`}
-                        >
-                          {user.is_priest ? "Priest" : "User"}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium flex gap-2">
-                        <button
-                          onClick={() => handleUpdateRole(user.uid, !user.is_priest)}
-                          className={`px-3 py-1 rounded ${
-                            user.is_priest
-                              ? "bg-blue-100 text-blue-700 hover:bg-blue-200"
-                              : "bg-purple-100 text-purple-700 hover:bg-purple-200"
-                          } transition`}
-                          disabled={loading}
-                        >
-                          {user.is_priest ? "Remove Priest" : "Make Priest"}
-                        </button>
-
-                        <button
-                          onClick={() => handleDisableUser(user.uid, user.is_active ?? true)}
-                          className={`px-3 py-1 rounded ${
-                            user.is_active ?? true
-                              ? "bg-red-100 text-red-700 hover:bg-red-200"
-                              : "bg-green-100 text-green-700 hover:bg-green-200"
-                          } transition`}
-                          disabled={loading}
-                        >
-                          {user.is_active ?? true ? "Disable" : "Enable"}
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <Table
+              dataSource={filteredUsers}
+              rowKey="uid"
+              pagination={{ pageSize: 10 }}
+              className="antd-table-custom"
+              columns={columns}
+            />
           )}
         </div>
 
         {showAddModal && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-gray-800">
-                  Add New User/Priest
-                </h2>
-                <button
-                  onClick={() => {
-                    setShowAddModal(false);
-                    resetForm();
-                  }}
-                  className="text-gray-500 hover:text-gray-700 text-2xl"
-                >
-                  ✕
-                </button>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                {/* First Name */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    First Name <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.first_name}
-                    onChange={(e) =>
-                      setFormData({ ...formData, first_name: e.target.value })
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#b87d3e]"
-                  />
-                  {errors.first_name && (
-                    <p className="text-red-500 text-xs mt-1">{errors.first_name}</p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Middle Name
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.middle_name}
-                    onChange={(e) =>
-                      setFormData({ ...formData, middle_name: e.target.value })
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#b87d3e]"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Last Name <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.last_name}
-                    onChange={(e) =>
-                      setFormData({ ...formData, last_name: e.target.value })
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#b87d3e]"
-                  />
-                  {errors.last_name && (
-                    <p className="text-red-500 text-xs mt-1">{errors.last_name}</p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Contact Number <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.contact_number}
-                    onChange={(e) =>
-                      setFormData({ ...formData, contact_number: e.target.value })
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#b87d3e]"
-                  />
-                  {errors.contact_number && (
-                    <p className="text-red-500 text-xs mt-1">{errors.contact_number}</p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Birthday <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="date"
-                    value={formData.birthday}
-                    onChange={(e) =>
-                      setFormData({ ...formData, birthday: e.target.value })
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#b87d3e]"
-                  />
-                  {errors.birthday && (
-                    <p className="text-red-500 text-xs mt-1">{errors.birthday}</p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Email <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) =>
-                      setFormData({ ...formData, email: e.target.value })
-                    }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#b87d3e]"
-                  />
-                  {errors.email && (
-                    <p className="text-red-500 text-xs mt-1">{errors.email}</p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Password <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      value={formData.password}
-                      onChange={(e) =>
-                        setFormData({ ...formData, password: e.target.value })
-                      }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#b87d3e]"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500"
-                    >
-                      {showPassword ? "👁️" : "🚫"}
-                    </button>
-                  </div>
-                  {errors.password && (
-                    <p className="text-red-500 text-xs mt-1">{errors.password}</p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Confirm Password <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <input
-                      type={showConfirmPassword ? "text" : "password"}
-                      value={formData.confirmPassword}
-                      onChange={(e) =>
-                        setFormData({ ...formData, confirmPassword: e.target.value })
-                      }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#b87d3e]"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500"
-                    >
-                      {showConfirmPassword ? "👁️" : "🚫"}
-                    </button>
-                  </div>
-                  {errors.confirmPassword && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {errors.confirmPassword}
-                    </p>
-                  )}
-                </div>
-
-                <div className="col-span-2">
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={formData.is_priest}
-                      onChange={(e) =>
-                        setFormData({ ...formData, is_priest: e.target.checked })
-                      }
-                      className="mr-2 w-4 h-4 text-[#b87d3e] focus:ring-[#b87d3e] border-gray-300 rounded"
-                    />
-                    <span className="text-sm font-medium text-gray-700">
-                      This user is a priest
-                    </span>
-                  </label>
-                </div>
-              </div>
-
-              <div className="mt-6 flex justify-end gap-3">
-                <button
-                  onClick={() => {
-                    setShowAddModal(false);
-                    resetForm();
-                  }}
-                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
-                >
-                  Cancel
-                </button>
-                <Button
-                  color="#b87d3e"
-                  textColor="#ffffff"
-                  text={loading ? "Creating..." : "Create User"}
-                  onClick={handleAddUser}
-                  disabled={loading}
-                />
-              </div>
             </div>
           </div>
         )}
@@ -604,4 +389,3 @@ export default function AccountManagement() {
     </div>
   );
 }
-
