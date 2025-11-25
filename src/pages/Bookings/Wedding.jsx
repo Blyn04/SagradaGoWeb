@@ -1,27 +1,33 @@
 import { useContext, useState } from "react";
 import { NavbarContext } from "../../context/AllContext";
-import "../../styles/booking/wedding.css";
+import "../../styles/booking/wedding.css"
 import default_profile from "../../assets/no-image.jpg";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import dayjs from "dayjs";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { MobileTimePicker } from "@mui/x-date-pickers/MobileTimePicker";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 
 export default function Wedding() {
   const { currentUser } = useContext(NavbarContext);
 
-  console.log(currentUser);
-
   const [form, setForm] = useState({
-    uid: currentUser.uid,
+    uid: currentUser?.uid || "",
     date: "",
     time: "",
     attendees: "",
     contact_number: "",
-    groom_fullname: "",
-    bride_fullname: "",
-    marriage_license: null,
-    marriage_contract: null,
+    groom_first: "",
+    groom_middle: "",
+    groom_last: "",
+    bride_first: "",
+    bride_middle: "",
+    bride_last: "",
     groom_1x1: null,
     bride_1x1: null,
+    marriage_license: null,
+    marriage_contract: null,
     groom_baptismal_cert: null,
     bride_baptismal_cert: null,
     groom_confirmation_cert: null,
@@ -34,254 +40,128 @@ export default function Wedding() {
     bride_permission: null,
   });
 
-  const [errors, setErrors] = useState({});
-  const [submitting, setSubmitting] = useState(false);
-  const [successMsg, setSuccessMsg] = useState("");
-  const [serverError, setServerError] = useState("");
 
-  function handleChange(e) {
-    const { name, value } = e.target;
-    setForm((s) => ({ ...s, [name]: value }));
-    setErrors((prev) => ({ ...prev, [name]: undefined }));
-  }
-
-  function handleFileChange(e) {
-    const { name, files } = e.target;
-    setForm((s) => ({ ...s, [name]: files?.[0] ?? null }));
-    setErrors((prev) => ({ ...prev, [name]: undefined }));
-  }
-
-  function validate() {
-    const err = {};
-    if (!form.uid) err.uid = "User ID is required";
-    if (!form.date) err.date = "Wedding date is required";
-    if (!form.time) err.time = "Wedding time is required";
-    if (!form.attendees || Number(form.attendees) <= 0)
-      err.attendees = "Valid number of attendees is required";
-    if (!form.contact_number) err.contact_number = "Contact number is required";
-    if (!form.groom_fullname)
-      err.groom_fullname = "Groom full name is required";
-    if (!form.bride_fullname)
-      err.bride_fullname = "Bride full name is required";
-    if (!form.groom_1x1) err.groom_1x1 = "Groom 1x1 photo is required";
-    if (!form.bride_1x1) err.bride_1x1 = "Bride 1x1 photo is required";
-    if (!form.marriage_license && !form.marriage_contract)
-      err.marriage = "Marriage license or contract is required";
-    if (!form.groom_baptismal_cert)
-      err.groom_baptismal_cert = "Groom baptismal certificate is required";
-    if (!form.bride_baptismal_cert)
-      err.bride_baptismal_cert = "Bride baptismal certificate is required";
-    if (!form.groom_confirmation_cert)
-      err.groom_confirmation_cert =
-        "Groom confirmation certificate is required";
-    if (!form.bride_confirmation_cert)
-      err.bride_confirmation_cert =
-        "Bride confirmation certificate is required";
-
-    return err;
-  }
-
-  async function handleSubmit(e) {
-    e.preventDefault();
-    setSuccessMsg("");
-    setServerError("");
-
-    const err = validate();
-    if (Object.keys(err).length) {
-      setErrors(err);
-      window.scrollTo({ top: 0, behavior: "smooth" });
-      return;
-    }
-
-    setSubmitting(true);
-
-    try {
-      const fd = new FormData();
-      [
-        "uid",
-        "date",
-        "time",
-        "attendees",
-        "contact_number",
-        "groom_fullname",
-        "bride_fullname",
-      ].forEach((k) => fd.append(k, form[k] ?? ""));
-
-      // append files (only if present)
-      const filesToAppend = [
-        "marriage_license",
-        "marriage_contract",
-        "groom_1x1",
-        "bride_1x1",
-        "groom_baptismal_cert",
-        "bride_baptismal_cert",
-        "groom_confirmation_cert",
-        "bride_confirmation_cert",
-        "groom_cenomar",
-        "bride_cenomar",
-        "groom_banns",
-        "bride_banns",
-        "groom_permission",
-        "bride_permission",
-      ];
-
-      filesToAppend.forEach((k) => {
-        if (form[k]) fd.append(k, form[k]);
-      });
-
-      const res = await fetch(apiEndpoint, {
-        method: "POST",
-        body: fd,
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        setServerError(data.message || "Server returned an error");
-      } else {
-        setSuccessMsg(data.message || "Wedding booking created");
-        // reset form (optional)
-        setForm({
-          uid: "",
-          date: "",
-          time: "",
-          attendees: "",
-          contact_number: "",
-          groom_fullname: "",
-          bride_fullname: "",
-          marriage_license: null,
-          marriage_contract: null,
-          groom_1x1: null,
-          bride_1x1: null,
-          groom_baptismal_cert: null,
-          bride_baptismal_cert: null,
-          groom_confirmation_cert: null,
-          bride_confirmation_cert: null,
-          groom_cenomar: null,
-          bride_cenomar: null,
-          groom_banns: null,
-          bride_banns: null,
-          groom_permission: null,
-          bride_permission: null,
-        });
-      }
-    } catch (err) {
-      console.error(err);
-      setServerError("Network or server error");
-    } finally {
-      setSubmitting(false);
-    }
-  }
-
-  // small helper to render a file name or placeholder
-  function fileLabel(file) {
-    return file ? file.name : "No file chosen";
-  }
 
   const inputText = [
-    {
-      title: "Groom First Name",
-      type: "text",
-    },
-    {
-      title: "Groom Middle Name",
-      type: "text",
-    },
-    {
-      title: "Groom Last Name",
-      type: "text",
-    },
-    {
-      title: "Date",
-      type: "date",
-    },
-    {
-      title: "Bride First Name",
-      type: "text",
-    },
-    {
-      title: "Bride Middle Name",
-      type: "text",
-    },
-    {
-      title: "Bride Last Name",
-      type: "text",
-    },
-    {
-      title: "Time",
-      type: "time",
-    },
-    {
-      title: "Contact Number",
-      type: "text",
-    },
-    {
-      title: "Attendees",
-      type: "number",
-    },
+    { key: "groom_first", title: "Groom First Name", type: "text" },
+    { key: "groom_middle", title: "Groom Middle Name", type: "text" },
+    { key: "groom_last", title: "Groom Last Name", type: "text" },
+    { key: "date", title: "Date", type: "date" },
+
+    { key: "bride_first", title: "Bride First Name", type: "text" },
+    { key: "bride_middle", title: "Bride Middle Name", type: "text" },
+    { key: "bride_last", title: "Bride Last Name", type: "text" },
+    { key: "time", title: "Time", type: "time" },
+
+    { key: "contact_number", title: "Contact Number", type: "text" },
+    { key: "attendees", title: "Attendees", type: "number" },
   ];
 
   const uploadProfileImage = [
-    {
-      title: "Groom Photo",
-    },
-    {
-      title: "Bride Photo",
-    },
+    { key: "groom_1x1", title: "Groom Photo" },
+    { key: "bride_1x1", title: "Bride Photo" },
   ];
 
+  const occupiedDates = [
+    new Date("2025-11-27"),
+    new Date("2025-11-28"),
+    new Date("2025-11-29"),
+    new Date("2025-11-30"),
+    new Date("2025-12-01"),
+  ];
+
+
   return (
+
     <form className="w-full bg-green-400 grid grid-cols-4 p-10! gap-4">
+      {inputText.map((elem) => (
+        <div className="flex flex-col" key={elem.key}>
+          <h1>{elem.title}</h1>
 
-      {
-  inputText.map((elem) => (
-    <div className="flex flex-col" key={elem.title}>
-      <h1>{elem.title}</h1>
-
-      {elem.type === "date" ? (
-        <DatePicker
-          selected={form.date}
-          onChange={(v) => setForm({ ...form, date: v })}
-          className="input-text"
-          dateFormat="yyyy-MM-dd"
-        />
-      ) : elem.type === "time" ? (
-        <DatePicker
-          selected={form.time}
-          onChange={(v) => setForm({ ...form, time: v })}
-          className="input-text"
-          showTimeSelect
-          showTimeSelectOnly
-          timeIntervals={15}
-          timeCaption="Time"
-          dateFormat="h:mm aa"
-        />
-      ) : (
-        <input type={elem.type} className="input-text" />
-      )}
-    </div>
-  ))
-}
-
-
+          {elem.type === "date" ? (
+            <DatePicker
+              selected={form.date ? new Date(form.date) : null}
+              onChange={(v) =>
+                setForm((prev) => ({ ...prev, date: v ? v.toISOString() : "" }))
+              }
+              className="input-text"
+              dateFormat="yyyy-MM-dd"
+              excludeDates={occupiedDates}  
+            />
+          ) : elem.type === "time" ? (
+            <div className="w-10/12 h-8 bg-white border border-black px-5! flex items-center">
+              <LocalizationProvider dateAdapter={AdapterDayjs}>
+                <MobileTimePicker
+                  value={form.time ? dayjs(form.time) : null}
+                  // onChange={(v) =>
+                  //   setForm((prev) => ({
+                  //     ...prev,
+                  //     time: v ? v.toISOString() : "",
+                  //   }))
+                  // }
+                  slotProps={{
+                    textField: {
+                      className: "w-full h-full bg-white p-0 m-0",
+                      InputProps: {
+                        sx: {
+                          padding: 0,
+                          height: "100%",
+                          "& fieldset": { border: "none" },
+                        },
+                      },
+                      sx: {
+                        padding: 0,
+                        margin: 0,
+                        height: "100%",
+                        "& .MuiInputBase-root": {
+                          height: "100%",
+                          padding: 0,
+                        },
+                        "& .MuiInputBase-input": {
+                          height: "100%",
+                          padding: 0,
+                        },
+                        "&:hover fieldset": {
+                          border: "none !important",
+                        },
+                        "&.Mui-focused fieldset": {
+                          border: "none !important", 
+                        },
+                      },
+                    },
+                  }}
+                />
+              </LocalizationProvider>
+            </div>
+          ) : (
+            <input
+              name={elem.key}
+              type={elem.type}
+              className="input-text"
+              value={form[elem.key] || ""}
+              // onChange={handleChange}
+            />
+          )}
+        </div>
+      ))}
 
       {uploadProfileImage.map((elem) => (
-        <div className="grid grid-cols-[3fr_1fr] w-full">
+        <div className="grid grid-cols-[3fr_1fr]" key={elem.key}>
           <div>
             <label className="block text-sm font-medium mb-1">
               {elem.title}
             </label>
+
             <input
               type="file"
               accept="image/*"
-              name="groom_1x1"
-              onChange={handleFileChange}
+              name={elem.key}
+              // onChange={handleFileChange}
             />
-            <p className="text-xs mt-1">{fileLabel(form.groom_1x1)}</p>
-            {errors.groom_1x1 && (
-              <p className="text-xs text-red-500 mt-1">{errors.groom_1x1}</p>
-            )}
+
+            {/* <p className="text-xs mt-1">{fileLabel(form[elem.key])}</p> */}
           </div>
+
           <img src={default_profile} alt="no-profile" className="w-15" />
         </div>
       ))}

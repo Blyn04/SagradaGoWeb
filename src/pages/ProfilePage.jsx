@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from "react";
-import { NavbarContext } from "../context/AllContext"; // use your existing context
-import styles from "../styles/profile.css"; 
+import { NavbarContext } from "../context/AllContext"; 
+import "../styles/profile.css"; 
 import { Modal, Button } from "antd";
 
 export default function ProfilePage({ user, onLogout, updateUser }) {
@@ -153,11 +153,11 @@ export default function ProfilePage({ user, onLogout, updateUser }) {
   const fullName = `${currentUser?.first_name || ""} ${currentUser?.middle_name || ""} ${currentUser?.last_name || ""}`;
 
   return (
-    <div className={styles.profileContainer}>
+    <div className="profileContainer">
       <h2>{fullName}</h2>
       <p>{currentUser?.email}</p>
 
-      <div className={styles.formGroup}>
+      <div className="formGroup">
         <label>First Name</label>
         <input
           type="text"
@@ -166,10 +166,10 @@ export default function ProfilePage({ user, onLogout, updateUser }) {
           onBlur={() => handleBlur("first_name")}
           disabled={!isEditing}
         />
-        {errors.first_name && <span className={styles.error}>{errors.first_name}</span>}
+        {errors.first_name && <span className="error">{errors.first_name}</span>}
       </div>
 
-      <div className={styles.formGroup}>
+      <div className="formGroup">
         <label>Middle Name</label>
         <input
           type="text"
@@ -178,10 +178,10 @@ export default function ProfilePage({ user, onLogout, updateUser }) {
           onBlur={() => handleBlur("middle_name")}
           disabled={!isEditing}
         />
-        {errors.middle_name && <span className={styles.error}>{errors.middle_name}</span>}
+        {errors.middle_name && <span className="error">{errors.middle_name}</span>}
       </div>
 
-      <div className={styles.formGroup}>
+      <div className="formGroup">
         <label>Last Name</label>
         <input
           type="text"
@@ -190,10 +190,10 @@ export default function ProfilePage({ user, onLogout, updateUser }) {
           onBlur={() => handleBlur("last_name")}
           disabled={!isEditing}
         />
-        {errors.last_name && <span className={styles.error}>{errors.last_name}</span>}
+        {errors.last_name && <span className="error">{errors.last_name}</span>}
       </div>
 
-      <div className={styles.formGroup}>
+      <div className="formGroup">
         <label>Contact Number</label>
         <input
           type="text"
@@ -202,10 +202,10 @@ export default function ProfilePage({ user, onLogout, updateUser }) {
           onBlur={() => handleBlur("contact_number")}
           disabled={!isEditing}
         />
-        {errors.contact_number && <span className={styles.error}>{errors.contact_number}</span>}
+        {errors.contact_number && <span className="error">{errors.contact_number}</span>}
       </div>
 
-      <div className={styles.formGroup}>
+      <div className="formGroup">
         <label>Email</label>
         <input
           type="email"
@@ -214,7 +214,7 @@ export default function ProfilePage({ user, onLogout, updateUser }) {
           onBlur={() => handleBlur("email")}
           disabled={!isEditing}
         />
-        {errors.email && <span className={styles.error}>{errors.email}</span>}
+        {errors.email && <span className="error">{errors.email}</span>}
       </div>
 
       {!isEditing ? (
