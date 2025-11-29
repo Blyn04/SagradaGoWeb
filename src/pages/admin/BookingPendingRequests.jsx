@@ -322,9 +322,8 @@ export default function BookingPendingRequests() {
 
     const details = [];
     Object.keys(selectedBooking).forEach((key) => {
-      if (key === "_id" || key === "__v" || key === "bookingType" || key === "typeLabel") return;
+      if (["_id", "__v", "bookingType", "typeLabel"].includes(key)) return;
       const value = selectedBooking[key];
-
       if (value !== null && value !== undefined && value !== "") {
         details.push({ key, value });
       }
@@ -333,18 +332,48 @@ export default function BookingPendingRequests() {
     return (
       <div>
         <Row gutter={[16, 16]}>
+          {/* Booking Type */}
           <Col span={24}>
             <Text strong>Booking Type:</Text>
             <div>{getTypeTag(selectedBooking.bookingType)}</div>
           </Col>
+
+          {/* Status */}
           <Col span={24}>
             <Text strong>Status:</Text>
             <div>{getStatusTag(selectedBooking.status)}</div>
           </Col>
+
+          {/* Dynamic details */}
           {details.map(({ key, value }) => (
             <Col span={12} key={key}>
-              <Text strong>{key.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}:</Text>
-              <div>{typeof value === "object" ? JSON.stringify(value) : String(value)}</div>
+              <Text strong>
+                {key.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}:
+              </Text>
+              <div style={{ marginTop: 4 }}>
+                {typeof value === "string" && value.toLowerCase().endsWith(".pdf") ? (
+                  // PDF Viewer with correct Supabase path
+                  <iframe
+                    src={`https://qpwoatrmswpkgyxmzkjv.supabase.co/storage/v1/object/public/bookings/${value}`}
+                    width="100%"
+                    height="400px"
+                    title={key}
+                    style={{ border: "1px solid #ddd", borderRadius: 4 }}
+                  />
+                ) : typeof value === "boolean" ? (
+                  value ? "Yes" : "No"
+                ) : Array.isArray(value) ? (
+                  <ul style={{ paddingLeft: 20 }}>
+                    {value.map((v, i) => (
+                      <li key={i}>{v}</li>
+                    ))}
+                  </ul>
+                ) : typeof value === "object" ? (
+                  <pre style={{ whiteSpace: "pre-wrap" }}>{JSON.stringify(value, null, 2)}</pre>
+                ) : (
+                  String(value)
+                )}
+              </div>
             </Col>
           ))}
         </Row>
