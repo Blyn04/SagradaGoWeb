@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Card, Row, Col, Statistic, Button, Space, Table, Tag, Typography, Spin, Empty } from "antd";
+import { Card, Row, Col, Statistic, Button, Space, Table, Tag, Typography, Spin, Empty, Calendar } from "antd";
 import {
   UserOutlined,
   TeamOutlined,
@@ -12,6 +12,8 @@ import {
   ReloadOutlined,
 } from "@ant-design/icons";
 import axios from "axios";
+import { Badge } from "antd";
+import dayjs from "dayjs";
 import { API_URL } from "../../Constants";
 import "../../styles/dashboard.css";
 
@@ -20,6 +22,7 @@ const { Title, Text } = Typography;
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const [calendarEvents, setCalendarEvents] = useState([]);
   const [stats, setStats] = useState({
     totalUsers: 0,
     totalPriests: 0,
@@ -65,6 +68,15 @@ export default function AdminDashboard() {
         ...(anointings.data.anointings || []),
       ];
 
+ 
+      const eventsForCalendar = allBookings.map((b) => ({
+        date: b.date,
+        type: b.serviceType || b.service || b.type || "Other",
+        name: b.title || b.full_name || b.name || b.serviceType || "Event",
+      }));
+
+      setCalendarEvents(eventsForCalendar); 
+
       const pendingBookingsCount = allBookings.filter((b) => b.status === "pending").length;
 
       const recentUsers = users.slice().reverse().slice(0, 5);
@@ -75,16 +87,39 @@ export default function AdminDashboard() {
         pendingBookings: pendingBookingsCount,
         totalDonations: allDonationsRes.data.stats.amounts.total || 0,
         monthlyDonations: monthlyDonationRes.data.totalAmount || 0,
-        totalVolunteers: 0, // Update if you have volunteers endpoint
+        totalVolunteers: 0, 
         recentUsers: recentUsers,
       });
 
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
-      
+
     } finally {
       setLoading(false);
     }
+  };
+
+  const dateCellRender = (value) => {
+    const dateStr = value.format("YYYY-MM-DD");
+    const dayEvents = calendarEvents.filter((event) => event.date === dateStr);
+
+    return (
+        <ul style={{ padding: 0, margin: 0, listStyle: "none" }}>
+          {dayEvents.map((item, index) => (
+            <li key={index}>
+              <Badge
+                status={
+                  item.type === "Wedding" ? "success" :
+                  item.type === "Baptism" ? "processing" :
+                  item.type === "Burial" ? "error" :
+                  "default"
+                }
+                text={item.name}
+              />
+          </li>
+        ))}
+      </ul>
+    );
   };
 
   const quickActions = [
@@ -368,6 +403,14 @@ export default function AdminDashboard() {
                 </div>
               </Space>
             </Card>
+
+            <Card
+              title={<Title level={4}>Calendar</Title>}
+              className="dashboard-calendar-card"
+            >
+              <Calendar fullscreen={false} dateCellRender={dateCellRender} />
+            </Card>
+
           </Col>
         </Row>
       </div>
