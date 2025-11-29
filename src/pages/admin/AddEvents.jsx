@@ -47,12 +47,9 @@ export default function AddEvents() {
   const fetchEvents = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${API_URL}/admin/getAllEvents`).catch(() => ({
-        data: { events: [] },
-      }));
-
+      const response = await axios.get(`${API_URL}/getAllEvents`);
       setEvents(response.data.events || []);
-
+      
     } catch (error) {
       console.error("Error fetching events:", error);
       message.error("Failed to fetch events. Please try again.");
