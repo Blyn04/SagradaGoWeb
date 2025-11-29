@@ -81,6 +81,7 @@ export default function BookingPendingRequests() {
       ];
 
       let filtered = allBookings;
+      
       if (statusFilter !== "all") {
         filtered = allBookings.filter((b) => b.status === statusFilter);
       }
@@ -125,6 +126,8 @@ export default function BookingPendingRequests() {
           b.first_name,
           b.last_name,
           b.deceased_name,
+          b.user?.name,
+          b.user?.email,
         ].filter(Boolean);
         return searchableFields.some((field) => field?.toLowerCase().includes(term));
       });
@@ -217,9 +220,11 @@ export default function BookingPendingRequests() {
       return booking.deceased_name || "N/A";
 
     } else {
-      return `${booking.first_name || ""} ${booking.last_name || ""}`.trim() || "N/A";
+      return booking.user?.name || `${booking.first_name || ""} ${booking.last_name || ""}`.trim() || "N/A";
     }
   };
+
+  const getEmail = (booking) => booking.user?.email || "N/A";
 
   const columns = [
     {
@@ -324,6 +329,7 @@ export default function BookingPendingRequests() {
     Object.keys(selectedBooking).forEach((key) => {
       if (["_id", "__v", "bookingType", "typeLabel"].includes(key)) return;
       const value = selectedBooking[key];
+
       if (value !== null && value !== undefined && value !== "") {
         details.push({ key, value });
       }
@@ -344,6 +350,18 @@ export default function BookingPendingRequests() {
             <div>{getStatusTag(selectedBooking.status)}</div>
           </Col>
 
+          {/* Name */}
+          <Col span={12}>
+            <Text strong>Name:</Text>
+            <div>{getName(selectedBooking)}</div>
+          </Col>
+
+          {/* Email */}
+          <Col span={12}>
+            <Text strong>Email:</Text>
+            <div>{getEmail(selectedBooking)}</div>
+          </Col>
+
           {/* Dynamic details */}
           {details.map(({ key, value }) => (
             <Col span={12} key={key}>
@@ -352,7 +370,6 @@ export default function BookingPendingRequests() {
               </Text>
               <div style={{ marginTop: 4 }}>
                 {typeof value === "string" && value.toLowerCase().endsWith(".pdf") ? (
-                  // PDF Viewer with correct Supabase path
                   <iframe
                     src={`https://qpwoatrmswpkgyxmzkjv.supabase.co/storage/v1/object/public/bookings/${value}`}
                     width="100%"
@@ -550,5 +567,3 @@ export default function BookingPendingRequests() {
     </div>
   );
 }
-
-
