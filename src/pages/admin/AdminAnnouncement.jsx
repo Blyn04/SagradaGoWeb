@@ -9,6 +9,8 @@ import {
   Space,
   Popconfirm,
   message,
+  Typography,
+  Select,
 } from "antd";
 import {
   PlusOutlined,
@@ -17,10 +19,15 @@ import {
   ReloadOutlined,
 } from "@ant-design/icons";
 import axios from "axios";
+import { API_URL } from "../../Constants";
+
+const { Text } = Typography;
+const { Option } = Select;
 
 export default function AdminAnnouncements() {
   const [announcements, setAnnouncements] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingData, setEditingData] = useState(null);
 
@@ -29,11 +36,11 @@ export default function AdminAnnouncements() {
   const fetchAnnouncements = async () => {
     try {
       setLoading(true);
-      const res = await axios.get("/api/getAnnouncements");
-      setAnnouncements(res.data.announcements || []);
+      const res = await axios.get(`${API_URL}/getAnnouncements`);
+      setAnnouncements(res.data || []);
 
     } catch (error) {
-      console.log(error);
+      console.error(error);
       message.error("Failed to load announcements");
 
     } finally {
@@ -56,6 +63,9 @@ export default function AdminAnnouncements() {
     form.setFieldsValue({
       title: record.title,
       content: record.content,
+      priority: record.priority || "normal",
+      author: record.author || "Parish Office",
+      image: record.image || "",
     });
 
     setIsModalOpen(true);
@@ -64,34 +74,46 @@ export default function AdminAnnouncements() {
   const handleSubmit = async () => {
     try {
       const values = await form.validateFields();
+      setSaving(true);
+
+      const payload = {
+        ...values,
+        date: new Date().toISOString(), 
+      };
 
       if (editingData) {
-        await axios.put(`/api/admin/updateAnnouncement/${editingData._id}`, values);
-        message.success("Announcement updated");
+        await axios.put(
+          `${API_URL}/admin/updateAnnouncement/${editingData._id}`,
+          payload
+        );
+        message.success("Announcement updated successfully");
 
       } else {
-        await axios.post("/api/admin/createAnnouncement", values);
-        message.success("Announcement created");
+        await axios.post(`${API_URL}/admin/createAnnouncement`, payload);
+        message.success("Announcement created successfully");
       }
 
       fetchAnnouncements();
       setIsModalOpen(false);
 
     } catch (error) {
-      console.log(error);
+      console.error("Announcement save error:", error.response || error);
       message.error("Error saving announcement");
+
+    } finally {
+      setSaving(false);
     }
   };
 
   const deleteAnnouncement = async (id) => {
     try {
-      await axios.delete(`/api/admin/deleteAnnouncement/${id}`);
-      message.success("Deleted successfully");
+      await axios.delete(`${API_URL}/admin/deleteAnnouncement/${id}`);
+      message.success("Announcement deleted");
       fetchAnnouncements();
-
+      
     } catch (error) {
-      console.log(error);
-      message.error("Failed to delete");
+      console.error(error);
+      message.error("Failed to delete announcement");
     }
   };
 
@@ -99,17 +121,35 @@ export default function AdminAnnouncements() {
     {
       title: "Title",
       dataIndex: "title",
-      width: "25%",
+      width: "20%",
+      render: (t) => <b>{t}</b>,
     },
     {
       title: "Content",
       dataIndex: "content",
-      render: (text) => <div style={{ whiteSpace: "pre-wrap" }}>{text}</div>,
-      width: "55%",
+      width: "45%",
+      render: (text) => (
+        <div style={{ whiteSpace: "pre-wrap" }}>
+          <Text>{text}</Text>
+        </div>
+      ),
+    },
+    {
+      title: "Priority",
+      dataIndex: "priority",
+      width: "10%",
+      render: (p) => p || "normal",
+    },
+    {
+      title: "Created",
+      dataIndex: "createdAt",
+      width: "15%",
+      render: (date) =>
+        date ? new Date(date).toLocaleString() : <i>Unknown</i>,
     },
     {
       title: "Actions",
-      width: "20%",
+      width: "10%",
       render: (_, record) => (
         <Space>
           <Button
@@ -126,9 +166,7 @@ export default function AdminAnnouncements() {
             cancelText="No"
             onConfirm={() => deleteAnnouncement(record._id)}
           >
-            <Button danger icon={<DeleteOutlined />}>
-              Delete
-            </Button>
+            <Button danger icon={<DeleteOutlined />} />
           </Popconfirm>
         </Space>
       ),
@@ -163,7 +201,8 @@ export default function AdminAnnouncements() {
         open={isModalOpen}
         onCancel={() => setIsModalOpen(false)}
         onOk={handleSubmit}
-        okText="Save"
+        okText={editingData ? "Update" : "Create"}
+        confirmLoading={saving}
       >
         <Form layout="vertical" form={form}>
           <Form.Item
@@ -179,7 +218,26 @@ export default function AdminAnnouncements() {
             name="content"
             rules={[{ required: true, message: "Content is required" }]}
           >
-            <Input.TextArea rows={6} placeholder="Enter announcement details" />
+            <Input.TextArea
+              rows={6}
+              placeholder="Enter announcement details"
+            />
+          </Form.Item>
+
+          <Form.Item label="Priority" name="priority">
+            <Select>
+              <Option value="normal">Normal</Option>
+              <Option value="important">Important</Option>
+              <Option value="urgent">Urgent</Option>
+            </Select>
+          </Form.Item>
+
+          <Form.Item label="Author" name="author">
+            <Input placeholder="Author name" />
+          </Form.Item>
+
+          <Form.Item label="Image URL" name="image">
+            <Input placeholder="Optional image URL" />
           </Form.Item>
         </Form>
       </Modal>
