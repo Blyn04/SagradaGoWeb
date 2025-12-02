@@ -4,3 +4,16 @@
 .input-text{
     @apply w-10/12 h-8 bg-white border border-black px-1;
 }
+
+.form-container{
+    @apply w-full bg-green-400 grid grid-cols-4 p-10! gap-4;
+}
+
+.time-container{
+    @apply w-10/12 h-8 bg-white border border-black px-5! flex items-center;
+}
+
+.time-slot-props{
+    @apply w-full h-full bg-white p-0 m-0;
+}
+
