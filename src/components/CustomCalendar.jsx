@@ -1,71 +1,64 @@
-import React from 'react';
-import { Badge, Calendar } from 'antd';
-const getListData = value => {
-  let listData = []; // Specify the type of listData
-  switch (value.date()) {
-    case 8:
-      listData = [
-        { type: 'warning', content: 'This is warning event.' },
-        { type: 'success', content: 'This is usual event.' },
-      ];
-      break;
-    case 10:
-      listData = [
-        { type: 'warning', content: 'This is warning event.' },
-        { type: 'success', content: 'This is usual event.' },
-        { type: 'error', content: 'This is error event.' },
-      ];
-      break;
-    case 15:
-      listData = [
-        { type: 'warning', content: 'This is warning event' },
-        { type: 'success', content: 'This is very long usual event......' },
-        { type: 'error', content: 'This is error event 1.' },
-        { type: 'error', content: 'This is error event 2.' },
-        { type: 'error', content: 'This is error event 3.' },
-        { type: 'error', content: 'This is error event 4.' },
-      ];
-      break;
-    default:
-  }
-  return listData || [];
-};
-const getMonthData = value => {
-  if (value.month() === 8) {
-    return 1394;
-  }
-};
-const App = () => {
-  const monthCellRender = value => {
-    const num = getMonthData(value);
-    return num ? (
-      <div className="notes-month">
-        <section>{num}</section>
-        <span>Backlog number</span>
-      </div>
-    ) : null;
-  };
-  const dateCellRender = value => {
-    const listData = getListData(value);
+import React from "react";
+import { Badge, Calendar } from "antd";
+import dayjs from "dayjs";
+import "../styles/custom-calendar.css";
+
+const CustomCalendar = ({ events }) => {
+  const dateCellRender = (value) => {
+    const dateStr = dayjs(value).format("YYYY-MM-DD");
+    const dayEvents = events.filter((event) => event.date === dateStr);
+
+    if (dayEvents.length === 0) return null;
+
     return (
-      <ul className="events">
-        {listData.map(item => (
-          <li key={item.content}>
-            <Badge status={item.type} text={item.content} />
+      <ul className="events" style={{ padding: 0, margin: 0, listStyle: "none" }}>
+        {dayEvents.map((item, index) => (
+          <li key={index} style={{ marginBottom: 4 }}>
+            <Badge
+              status={
+                item.type === "Wedding"
+                  ? "success"
+                  : item.type === "Baptism"
+                  ? "processing"
+                  : item.type === "Burial"
+                  ? "error"
+                  : "default"
+              }
+              text={item.name}
+            />
           </li>
         ))}
       </ul>
     );
   };
+
+  // Optionally, you can show month data if needed
+  const monthCellRender = (value) => {
+    // Example: return number of events in the month
+    const monthStr = dayjs(value).format("YYYY-MM");
+    const monthEventsCount = events.filter((event) =>
+      event.date.startsWith(monthStr)
+    ).length;
+
+    return monthEventsCount ? (
+      <div className="notes-month">
+        <section>{monthEventsCount}</section>
+        <span>Events</span>
+      </div>
+    ) : null;
+  };
+
   const cellRender = (current, info) => {
-    if (info.type === 'date') {
+    if (info.type === "date") {
       return dateCellRender(current);
     }
-    if (info.type === 'month') {
+    if (info.type === "month") {
       return monthCellRender(current);
     }
     return info.originNode;
   };
+
   return <Calendar cellRender={cellRender} />;
 };
-export default App;
+
+export default CustomCalendar;

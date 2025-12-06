@@ -69,14 +69,15 @@ export default function AdminDashboard() {
         ...(anointings.data.anointings || []),
       ];
 
- 
-      const eventsForCalendar = allBookings.map((b) => ({
+      const approvedBookings = allBookings.filter((b) => b.status === "approved");
+
+      const eventsForCalendar = approvedBookings.map((b) => ({
         date: b.date,
         type: b.serviceType || b.service || b.type || "Other",
         name: b.title || b.full_name || b.name || b.serviceType || "Event",
       }));
 
-      setCalendarEvents(eventsForCalendar); 
+      setCalendarEvents(eventsForCalendar);
 
       const pendingBookingsCount = allBookings.filter((b) => b.status === "pending").length;
 
@@ -88,7 +89,7 @@ export default function AdminDashboard() {
         pendingBookings: pendingBookingsCount,
         totalDonations: allDonationsRes.data.stats.amounts.total || 0,
         monthlyDonations: monthlyDonationRes.data.totalAmount || 0,
-        totalVolunteers: 0, 
+        totalVolunteers: 0,
         recentUsers: recentUsers,
       });
 
