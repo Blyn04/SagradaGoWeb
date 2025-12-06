@@ -170,7 +170,6 @@ export default function BookingPendingRequests() {
 
   const handleStatusUpdate = async (bookingId, bookingType, newStatus) => {
     try {
-      // If confirming, require priest selection
       if (newStatus === "confirmed" && !selectedPriestId) {
         message.warning("Please select a priest before confirming the booking.");
         return;
@@ -205,7 +204,7 @@ export default function BookingPendingRequests() {
       message.success(`Booking ${newStatus === "confirmed" ? "confirmed" : newStatus === "cancelled" ? "cancelled" : "updated"} successfully.`);
       fetchAllBookings();
       setDetailModalVisible(false);
-      setSelectedPriestId(null); // Reset selection
+      setSelectedPriestId(null); 
 
     } catch (error) {
       console.error("Error updating booking status:", error);
