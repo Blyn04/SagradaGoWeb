@@ -16,6 +16,7 @@ import { Badge } from "antd";
 import dayjs from "dayjs";
 import { API_URL } from "../../Constants";
 import "../../styles/dashboard.css";
+import CustomCalendar from "../../components/CustomCalendar";
 
 const { Title, Text } = Typography;
 
@@ -403,16 +404,14 @@ export default function AdminDashboard() {
                 </div>
               </Space>
             </Card>
-
-            <Card
-              title={<Title level={4}>Calendar</Title>}
-              className="dashboard-calendar-card"
-            >
-              <Calendar fullscreen={false} dateCellRender={dateCellRender} />
-            </Card>
-
           </Col>
         </Row>
+
+        <Card
+          title={<Title level={4}>Calendar</Title>}
+        >
+          <CustomCalendar events={calendarEvents} />
+        </Card>
       </div>
     </div>
   );
