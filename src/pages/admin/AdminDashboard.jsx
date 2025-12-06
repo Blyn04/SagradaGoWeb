@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Card, Row, Col, Statistic, Button, Space, Table, Tag, Typography, Spin, Empty, Calendar } from "antd";
+import { Card, Row, Col, Statistic, Button, Space, Table, Tag, Typography, Spin, Empty, Calendar, Modal } from "antd";
 import {
   UserOutlined,
   TeamOutlined,
@@ -23,6 +23,8 @@ export default function AdminDashboard() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [calendarEvents, setCalendarEvents] = useState([]);
+  const [selectedBooking, setSelectedBooking] = useState(null);
+  const [isModalVisible, setIsModalVisible] = useState(false);
   const [stats, setStats] = useState({
     totalUsers: 0,
     totalPriests: 0,
@@ -61,7 +63,6 @@ export default function AdminDashboard() {
 
       const [weddings, baptisms, burials, communions, confirmations, anointings, confessions] = bookingsRes;
       
-      // Normalize confessions data
       const normalizedConfessions = (confessions.data.bookings || []).map((b) => ({
         ...b,
         bookingType: "Confession",
@@ -80,7 +81,6 @@ export default function AdminDashboard() {
         ...normalizedConfessions,
       ];
 
-      // Filter confirmed bookings
       const confirmedBookings = allBookings.filter((b) => {
         const status = (b.status || "").toLowerCase();
         return status === "confirmed";
@@ -90,32 +90,33 @@ export default function AdminDashboard() {
         console.log(`Found ${confirmedBookings.length} confirmed booking(s) for calendar`);
       }
 
-      // Helper function to get booking name
       const getBookingName = (booking) => {
         if (booking.bookingType === "Wedding") {
           const groom = `${booking.groom_first_name || ''} ${booking.groom_last_name || ''}`.trim();
           const bride = `${booking.bride_first_name || ''} ${booking.bride_last_name || ''}`.trim();
           return groom && bride ? `${groom} & ${bride}` : (groom || bride || booking.full_name || "Wedding");
+
         } else if (booking.bookingType === "Burial") {
           return booking.deceased_name || booking.full_name || "Burial Service";
+
         } else {
           return booking.full_name || booking.user?.name || booking.name || booking.bookingType || "Event";
         }
       };
 
-      // Normalize date to local timezone for calendar
       const eventsForCalendar = confirmedBookings.map((b) => {
         if (!b.date) {
           console.warn("Booking missing date:", b);
           return null;
         }
 
-        // Handle both string and Date objects
         let bookingDate;
         if (typeof b.date === 'string') {
           bookingDate = dayjs(b.date);
+
         } else if (b.date instanceof Date) {
           bookingDate = dayjs(b.date);
+          
         } else {
           bookingDate = dayjs(b.date);
         }
@@ -130,8 +131,14 @@ export default function AdminDashboard() {
           date: dateStr,
           type: b.bookingType || "Other",
           name: getBookingName(b),
+          status: b.status || "pending",  
+          groom_first_name: b.groom_first_name,
+          groom_last_name: b.groom_last_name,
+          bride_first_name: b.bride_first_name,
+          bride_last_name: b.bride_last_name,
+          deceased_name: b.deceased_name,
         };
-      }).filter(Boolean); // Remove null entries
+      }).filter(Boolean);
 
       setCalendarEvents(eventsForCalendar);
 
@@ -157,6 +164,15 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleBookingClick = (booking) => {
+    setSelectedBooking(booking);
+    setIsModalVisible(true);
+  };
+
+  const handleModalClose = () => {
+    setIsModalVisible(false);
+    setSelectedBooking(null);
+  };
 
   const quickActions = [
     {
@@ -445,9 +461,37 @@ export default function AdminDashboard() {
         <Card
           title={<Title level={4}>Calendar</Title>}
         >
-          <CustomCalendar events={calendarEvents} />
+          <CustomCalendar events={calendarEvents} onEventClick={handleBookingClick} />
         </Card>
       </div>
+
+      <Modal
+        title={selectedBooking ? selectedBooking.name : "Booking Details"}
+        open={isModalVisible}
+        onCancel={handleModalClose}
+        footer={null}
+      >
+        {selectedBooking ? (
+          <div>
+            <p><strong>Type:</strong> {selectedBooking.type}</p>
+            <p><strong>Date:</strong> {selectedBooking.date}</p>
+
+            {selectedBooking.bookingType === "Wedding" && (
+              <>
+                <p><strong>Groom:</strong> {selectedBooking.groom_first_name} {selectedBooking.groom_last_name}</p>
+                <p><strong>Bride:</strong> {selectedBooking.bride_first_name} {selectedBooking.bride_last_name}</p>
+              </>
+            )}
+
+            {selectedBooking.bookingType === "Burial" && (
+              <p><strong>Deceased:</strong> {selectedBooking.deceased_name}</p>
+            )}
+
+            <p><strong>Status:</strong> {selectedBooking.status}</p>
+          </div>
+        ) : null}
+      </Modal>
+
     </div>
   );
 }
