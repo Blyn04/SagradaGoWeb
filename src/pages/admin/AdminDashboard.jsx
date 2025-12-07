@@ -141,7 +141,7 @@ export default function AdminDashboard() {
       const recentUsers = users.slice().reverse().slice(0, 5);
 
       setStats({
-        totalUsers: users.length,
+        totalUsers: users.filter((u) => !u.is_priest).length,
         totalPriests: priests.length,
         pendingBookings: pendingBookingsCount,
         totalDonations: allDonationsRes.data.stats.amounts.total || 0,
@@ -157,6 +157,9 @@ export default function AdminDashboard() {
       setLoading(false);
     }
   };
+
+  const user = JSON.parse(localStorage.getItem("currentUser")) || null;
+  const isPriest = user?.is_priest || false;
 
   const handleBookingClick = (booking) => {
     setSelectedBooking(booking);
@@ -302,21 +305,24 @@ export default function AdminDashboard() {
 
         {/* Statistics Cards */}
         <Row gutter={[16, 16]} className="dashboard-stats-grid">
-          <Col xs={24} sm={12} lg={6}>
-            <Card className="dashboard-stat-card">
-              <Statistic
-                title="Total Users"
-                value={stats.totalUsers}
-                prefix={<UserOutlined />}
-                valueStyle={{ color: "#1890ff" }}
-              />
-              <div className="dashboard-stat-title">
-                <Text type="secondary" className="dashboard-stat-text">
-                  Regular users
-                </Text>
-              </div>
-            </Card>
-          </Col>
+          {!isPriest && (
+            <Col xs={24} sm={12} lg={6}>
+              <Card className="dashboard-stat-card">
+                <Statistic
+                  title="Total Users"
+                  value={stats.totalUsers}
+                  prefix={<UserOutlined />}
+                  valueStyle={{ color: "#1890ff" }}
+                />
+                <div className="dashboard-stat-title">
+                  <Text type="secondary" className="dashboard-stat-text">
+                    Regular users
+                  </Text>
+                </div>
+              </Card>
+            </Col>
+          )}
+
           <Col xs={24} sm={12} lg={6}>
             <Card className="dashboard-stat-card">
               <Statistic
@@ -332,6 +338,7 @@ export default function AdminDashboard() {
               </div>
             </Card>
           </Col>
+
           <Col xs={24} sm={12} lg={6}>
             <Card
               className="dashboard-stat-card"
@@ -352,38 +359,44 @@ export default function AdminDashboard() {
               </div>
             </Card>
           </Col>
-          <Col xs={24} sm={12} lg={6}>
-            <Card className="dashboard-stat-card">
-              <Statistic
-                title="Total Donations"
-                value={stats.totalDonations}
-                prefix={<DollarOutlined />}
-                precision={2}
-                valueStyle={{ color: "#52c41a" }}
-              />
-              <div className="dashboard-stat-title">
-                <Text type="secondary" className="dashboard-stat-text">
-                  All-time donations
-                </Text>
-              </div>
-            </Card>
-          </Col>
-          <Col xs={24} sm={12} lg={6}>
-            <Card className="dashboard-stat-card">
-              <Statistic
-                title="Donations This Month"
-                value={stats.monthlyDonations}
-                prefix={<DollarOutlined />}
-                precision={2}
-                valueStyle={{ color: "#13c2c2" }}
-              />
-              <div className="dashboard-stat-title">
-                <Text type="secondary" className="dashboard-stat-text">
-                  Current month
-                </Text>
-              </div>
-            </Card>
-          </Col>
+
+          {!isPriest && (
+            <>
+              <Col xs={24} sm={12} lg={6}>
+                <Card className="dashboard-stat-card">
+                  <Statistic
+                    title="Total Donations"
+                    value={stats.totalDonations}
+                    prefix={<DollarOutlined />}
+                    precision={2}
+                    valueStyle={{ color: "#52c41a" }}
+                  />
+                  <div className="dashboard-stat-title">
+                    <Text type="secondary" className="dashboard-stat-text">
+                      All-time donations
+                    </Text>
+                  </div>
+                </Card>
+              </Col>
+
+              {/* <Col xs={24} sm={12} lg={6}>
+                <Card className="dashboard-stat-card">
+                  <Statistic
+                    title="Donations This Month"
+                    value={stats.monthlyDonations}
+                    prefix={<DollarOutlined />}
+                    precision={2}
+                    valueStyle={{ color: "#13c2c2" }}
+                  />
+                  <div className="dashboard-stat-title">
+                    <Text type="secondary" className="dashboard-stat-text">
+                      Current month
+                    </Text>
+                  </div>
+                </Card>
+              </Col> */}
+            </>
+          )}
         </Row>
 
         {/* Quick Actions */}
