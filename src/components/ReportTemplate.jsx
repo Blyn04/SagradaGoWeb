@@ -6,6 +6,22 @@ import dayjs from "dayjs";
 const { Title } = Typography;
 
 export default function ReportTemplate({ title, columns, data, exportHandler }) {
+  const formattedData = data.map((row, index) => {
+    const newRow = { ...row };
+    Object.keys(newRow).forEach(key => {
+      const value = newRow[key];
+
+      if (value instanceof Date || dayjs(value, { strict: true }).isValid()) {
+        newRow[key] = dayjs(value).format("YYYY-MM-DD HH:mm");
+      }
+
+      else if (typeof value === "number") {
+        newRow[key] = value.toLocaleString();
+      }
+    });
+    return { ...newRow, id: row.id || index };
+  });
+
   return (
     <Card style={{ margin: "24px" }}>
       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 16 }}>
@@ -18,8 +34,8 @@ export default function ReportTemplate({ title, columns, data, exportHandler }) 
       </div>
       <Table
         columns={columns}
-        dataSource={data}
-        rowKey={(record, index) => record.id || index}
+        dataSource={formattedData}
+        rowKey={(record) => record.id}
         pagination={{ pageSize: 20 }}
         scroll={{ x: 1200 }}
       />
