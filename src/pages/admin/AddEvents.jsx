@@ -177,6 +177,21 @@ export default function AddEvents() {
     return dayjs(dateString).format("MMMM DD, YYYY");
   };
 
+  const isEventPast = (dateString) => {
+    if (!dateString) return false;
+    const eventDate = dayjs(dateString).startOf("day");
+    const today = dayjs().startOf("day");
+    return eventDate.isBefore(today);
+  };
+
+  const getEventStatus = (dateString) => {
+    if (!dateString) return { status: "unknown", color: "default", text: "Unknown" };
+    const isPast = isEventPast(dateString);
+    return isPast
+      ? { status: "past", color: "default", text: "Past" }
+      : { status: "upcoming", color: "green", text: "Upcoming" };
+  };
+
   const columns = [
     {
       title: "Image",
@@ -205,6 +220,31 @@ export default function AddEvents() {
       dataIndex: "date",
       key: "date",
       render: (date) => formatDate(date),
+      sorter: (a, b) => {
+        if (!a.date) return 1;
+        if (!b.date) return -1;
+        return dayjs(a.date).unix() - dayjs(b.date).unix();
+      },
+    },
+    {
+      title: "Status",
+      key: "status",
+      render: (_, record) => {
+        const statusInfo = getEventStatus(record.date);
+        return (
+          <Tag color={statusInfo.color} icon={statusInfo.status === "upcoming" ? <CalendarOutlined /> : null}>
+            {statusInfo.text}
+          </Tag>
+        );
+      },
+      filters: [
+        { text: "Upcoming", value: "upcoming" },
+        { text: "Past", value: "past" },
+      ],
+      onFilter: (value, record) => {
+        const statusInfo = getEventStatus(record.date);
+        return statusInfo.status === value;
+      },
     },
     {
       title: "Location",
