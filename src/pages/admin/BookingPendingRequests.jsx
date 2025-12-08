@@ -51,6 +51,7 @@ export default function BookingPendingRequests() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("pending");
   const [typeFilter, setTypeFilter] = useState("all");
+  const [monthFilter, setMonthFilter] = useState("all");
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [detailModalVisible, setDetailModalVisible] = useState(false);
   const [updateLoading, setUpdateLoading] = useState(false);
@@ -80,7 +81,7 @@ export default function BookingPendingRequests() {
 
   useEffect(() => {
     filterBookings();
-  }, [searchTerm, bookings, typeFilter]);
+  }, [searchTerm, bookings, typeFilter, monthFilter]);
 
   const fetchAllBookings = async () => {
     try {
@@ -149,6 +150,17 @@ export default function BookingPendingRequests() {
       filtered = filtered.filter((b) => b.bookingType === typeFilter);
     }
 
+    if (monthFilter !== "all") {
+      filtered = filtered.filter((b) => {
+        if (!b.date) return false;
+        const bookingDate = new Date(b.date);
+
+        if (isNaN(bookingDate.getTime())) return false;
+
+        return bookingDate.getMonth() + 1 === parseInt(monthFilter);
+      });
+    }
+
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       filtered = filtered.filter((b) => {
@@ -170,6 +182,21 @@ export default function BookingPendingRequests() {
     }
 
     setFilteredBookings(filtered);
+  };
+
+  const getMonthOptions = () => {
+    const months = [
+      "January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December"
+    ];
+
+    return [
+      { value: "all", label: "All Months" },
+      ...months.map((month, index) => ({
+        value: String(index + 1),
+        label: month,
+      })),
+    ];
   };
 
   const handleStatusUpdate = async (bookingId, bookingType, newStatus) => {
@@ -669,7 +696,7 @@ export default function BookingPendingRequests() {
         {/* Filters */}
         <Card style={{ marginBottom: 24 }}>
           <Row gutter={[16, 16]}>
-            <Col xs={24} sm={12} md={8}>
+            <Col xs={24} sm={12} md={6}>
               <Input
                 placeholder="Search by name, transaction ID, or contact..."
                 prefix={<SearchOutlined />}
@@ -678,7 +705,7 @@ export default function BookingPendingRequests() {
                 allowClear
               />
             </Col>
-            <Col xs={24} sm={12} md={8}>
+            <Col xs={24} sm={12} md={6}>
               <Select
                 style={{ width: "100%" }}
                 value={statusFilter}
@@ -691,7 +718,7 @@ export default function BookingPendingRequests() {
                 <Option value="cancelled">Cancelled</Option>
               </Select>
             </Col>
-            <Col xs={24} sm={12} md={8}>
+            <Col xs={24} sm={12} md={6}>
               <Select
                 style={{ width: "100%" }}
                 value={typeFilter}
@@ -706,6 +733,24 @@ export default function BookingPendingRequests() {
                 <Option value="Confession">Confession</Option>
                 <Option value="Confirmation">Confirmation</Option>
                 <Option value="Wedding">Wedding</Option>
+              </Select>
+            </Col>
+            <Col xs={24} sm={12} md={6}>
+              <Select
+                style={{ width: "100%" }}
+                value={monthFilter}
+                onChange={setMonthFilter}
+                placeholder="Filter by month"
+                showSearch
+                filterOption={(input, option) =>
+                  (option?.label ?? "").toLowerCase().includes(input.toLowerCase())
+                }
+              >
+                {getMonthOptions().map((option) => (
+                  <Option key={option.value} value={option.value}>
+                    {option.label}
+                  </Option>
+                ))}
               </Select>
             </Col>
           </Row>
