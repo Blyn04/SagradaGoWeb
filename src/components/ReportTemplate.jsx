@@ -12,11 +12,18 @@ export default function ReportTemplate({ title, columns, data, exportType = "pdf
     Object.keys(newRow).forEach((key) => {
       const value = newRow[key];
 
-      if (value instanceof Date || dayjs(value, { strict: true }).isValid()) {
-        newRow[key] = dayjs(value).format("YYYY-MM-DD HH:mm");
+      if (typeof value === "number") {
+        return;
+      }
 
-      } else if (typeof value === "number") {
-        newRow[key] = value.toLocaleString();
+      if (value instanceof Date) {
+        newRow[key] = dayjs(value).format("YYYY-MM-DD HH:mm");
+      } else if (typeof value === "string" && value.length > 0 && (value.includes("-") || value.includes("/"))) {
+        const dateValue = dayjs(value);
+        
+        if (dateValue.isValid() && !isNaN(Date.parse(value))) {
+          newRow[key] = dateValue.format("YYYY-MM-DD HH:mm");
+        }
       }
     });
 

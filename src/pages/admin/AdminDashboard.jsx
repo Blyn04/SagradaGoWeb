@@ -47,10 +47,23 @@ export default function AdminDashboard() {
     try {
       setLoading(true);
 
-      const [usersResponse, allDonationsRes, monthlyDonationRes, bookingsRes] = await Promise.all([
+      const [usersResponse, allDonationsRes, monthlyDonationRes, donationsListRes, bookingsRes] = await Promise.all([
         axios.get(`${API_URL}/getAllUsers`),
-        axios.get(`${API_URL}/admin/getDonationStatistics`),
-        axios.get(`${API_URL}/admin/getMonthlyDonations`),
+        axios.get(`${API_URL}/admin/getDonationStatistics`).catch((error) => {
+          console.error("Error fetching donation statistics:", error);
+          return { data: { stats: { amounts: { total: 0, confirmed: 0, pending: 0 }, counts: { total: 0, pending: 0, confirmed: 0, cancelled: 0 } } } };
+        }),
+
+        axios.get(`${API_URL}/admin/getMonthlyDonations`).catch((error) => {
+          console.error("Error fetching monthly donations:", error);
+          return { data: { totalAmount: 0, count: 0, monthlyDonations: [] } };
+        }),
+
+        axios.get(`${API_URL}/admin/getAllDonations`, { params: { limit: 100 } }).catch((error) => {
+          console.error("Error fetching donations list:", error);
+          return { data: { donations: [] } };
+        }),
+        
         axios.all([
           axios.get(`${API_URL}/admin/getAllWeddings`).catch(() => ({ data: { weddings: [] } })),
           axios.get(`${API_URL}/admin/getAllBaptisms`).catch(() => ({ data: { baptisms: [] } })),
@@ -140,22 +153,23 @@ export default function AdminDashboard() {
         totalUsers: users.filter((u) => !u.is_priest).length,
         totalPriests: priests.length,
         pendingBookings: pendingBookingsCount,
-        totalDonations: allDonationsRes.data.stats.amounts.total || 0,
-        monthlyDonations: monthlyDonationRes.data.totalAmount || 0,
+        totalDonations: allDonationsRes?.data?.stats?.amounts?.total || 0,
+        monthlyDonations: monthlyDonationRes?.data?.totalAmount || 0,
         totalVolunteers: 0,
         recentUsers: recentUsers,
       });
 
-setDonationReportData(
-  (allDonationsRes.data.donations || []).map((d, i) => ({
-    id: d._id || i,
-    donor_name: d.user_name || "N/A",
-    email: d.user_email || "N/A",
-    amount: d.amount || 0,
-    date: d.createdAt || "",
-    transaction_id: d._id || "N/A",
-  }))
-);
+      setDonationReportData(
+        (donationsListRes?.data?.donations || []).map((d, i) => ({
+          id: d._id || i,
+          donor_name: d.user_name || "N/A",
+          email: d.user_email || "N/A",
+          amount: d.amount || 0,
+          paymentMethod: d.paymentMethod || "N/A",
+          date: d.createdAt || "",
+          transaction_id: d._id || "N/A",
+        }))
+      );
 
       setBookingReportData(allBookings.map((b) => ({
         bookingName: getBookingName(b),
@@ -304,7 +318,16 @@ setDonationReportData(
   const donationColumns = [
     { title: "Donor Name", dataIndex: "donor_name", key: "donor_name" },
     { title: "Email", dataIndex: "email", key: "email" },
-    { title: "Amount", dataIndex: "amount", key: "amount" },
+    { 
+      title: "Amount", 
+      dataIndex: "amount", 
+      key: "amount",
+      render: (value) => {
+        const amount = typeof value === 'number' ? value : parseFloat(value) || 0;
+        return `₱${amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      }
+    },
+    { title: "Payment Method", dataIndex: "paymentMethod", key: "paymentMethod" },
     { title: "Date", dataIndex: "date", key: "date" },
     { title: "Transaction ID", dataIndex: "transaction_id", key: "transaction_id" },
   ];
