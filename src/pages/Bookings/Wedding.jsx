@@ -168,38 +168,13 @@ export default function Wedding() {
     alert("Bride photo uploaded successfully");
   };
 
-  const groomUploadPhoto = async (e) => {
-    const file = e.target.files[0];
-    if (!file || !currentUser?.uid) return;
 
-    const fileExt = file.name.split(".").pop().toLowerCase();
-    const fileName = `groom_${currentUser.uid}_${Date.now()}.${fileExt}`;
-    const filePath = `wedding/${fileName}`;
-
-    const { error } = await supabase.storage
-      .from("profile")
-      .upload(filePath, file, {
-        cacheControl: "3600",
-        upsert: true,
-      });
-
-    if (error) {
-      console.error("Upload error:", error.message);
-      return;
-    }
-
-    const { data } = supabase.storage.from("profile").getPublicUrl(filePath);
-    const timestamp = Date.now();
-
-    setGroomPhoto(`${data.publicUrl}?t=${timestamp}`);
-    alert("Groom photo uploaded successfully!");
-  };
 
   const uploadProfileImage = [
     {
       key: "groom_1x1",
       title: "Groom Photo",
-      onChange: groomUploadPhoto,
+      // onChange: groomUploadPhoto,
       preview: groomPhoto, 
     },
     {
@@ -281,7 +256,10 @@ export default function Wedding() {
     console.log("bride photo", bridePhoto);
     console.log("groom photo", groomPhoto);
 
-    alert("gege");
+
+
+    
+
     setBookingSelected(bookingSelected);
 
     const dateOnly = date.split("T")[0];
@@ -310,28 +288,6 @@ export default function Wedding() {
       // bride_permission: bridePermission,
     });
     console.log("forms:", form);
-  }
-
-
-
-
-  async function getAllWeddingImages() {
-    const { data: files, error } = await supabase.storage
-      .from("wedding")
-      .list();
-
-    if (error) {
-      console.error(error);
-      return [];
-    }
-
-    return files.map((file) => {
-      const { data: urlData } = supabase.storage
-        .from("wedding")
-        .getPublicUrl(file.name);
-
-      return urlData.publicUrl;
-    });
   }
 
 
