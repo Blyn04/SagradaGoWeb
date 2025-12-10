@@ -24,7 +24,9 @@ import {
   Empty,
   Checkbox,
   Form,
+  DatePicker,
 } from "antd";
+import dayjs from "dayjs";
 import {
   UserOutlined,
   TeamOutlined,
@@ -60,6 +62,8 @@ export default function AccountManagement() {
     is_priest: false,
   });
 
+  const [birthdayDisplay, setBirthdayDisplay] = useState(""); 
+
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -71,6 +75,11 @@ export default function AccountManagement() {
   useEffect(() => {
     filterUsers();
   }, [users, searchTerm, filterType]);
+
+  useEffect(() => {
+    filterUsers();
+  }, [users, searchTerm, filterType]);
+
 
   const fetchUsers = async () => {
     try {
@@ -111,13 +120,73 @@ export default function AccountManagement() {
     setFilteredUsers(filtered);
   };
 
+  const formatDateInput = (value) => {
+    const numbers = value.replace(/\D/g, "");
+
+    if (numbers.length <= 2) {
+      return numbers;
+
+    } else if (numbers.length <= 4) {
+      return `${numbers.slice(0, 2)}/${numbers.slice(2)}`;
+
+    } else {
+      return `${numbers.slice(0, 2)}/${numbers.slice(2, 4)}/${numbers.slice(4, 8)}`;
+    }
+  };
+
+  const parseDateInput = (value) => {
+    if (!value) return "";
+    
+    if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      return value;
+    }
+  
+    const match = value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    if (match) {
+      const [, month, day, year] = match;
+      return `${year}-${month}-${day}`;
+    }
+    
+    return value;
+  };
+
+  const validateBirthday = (birthday) => {
+    if (!birthday) {
+      return "Birthday is required";
+    }
+
+    const dateString = parseDateInput(birthday);
+    const date = dayjs(dateString, "YYYY-MM-DD", true);
+    const today = dayjs();
+    const minDate = dayjs().subtract(120, "years");
+
+    if (!date.isValid()) {
+      return "Please enter a valid date (MM/DD/YYYY)";
+    }
+
+    if (date.isAfter(today)) {
+      return "Birthday cannot be in the future";
+    }
+
+    if (date.isBefore(minDate)) {
+      return "Please enter a valid birthday (not more than 120 years ago)";
+    }
+
+    return "";
+  };
+
   const handleAddUser = async () => {
     const newErrors = {};
     if (!formData.first_name) newErrors.first_name = "First name is required";
     if (!formData.last_name) newErrors.last_name = "Last name is required";
     if (!formData.email) newErrors.email = "Email is required";
     if (!formData.contact_number) newErrors.contact_number = "Contact number is required";
-    if (!formData.birthday) newErrors.birthday = "Birthday is required";
+    
+    const birthdayError = validateBirthday(formData.birthday);
+    if (birthdayError) {
+      newErrors.birthday = birthdayError;
+    }
+    
     if (!formData.password) newErrors.password = "Password is required";
     if (formData.password !== formData.confirmPassword) {
       newErrors.confirmPassword = "Passwords do not match";
@@ -145,12 +214,16 @@ export default function AccountManagement() {
 
       await sendEmailVerification(user);
 
+      const formattedBirthday = formData.birthday
+        ? dayjs(formData.birthday).format("YYYY-MM-DD")
+        : "";
+
       await axios.post(`${API_URL}/createUser`, {
         first_name: formData.first_name,
         middle_name: formData.middle_name,
         last_name: formData.last_name,
         contact_number: formData.contact_number,
-        birthday: formData.birthday,
+        birthday: formattedBirthday,
         email: formData.email,
         password: formData.password,
         uid: uid,
@@ -219,6 +292,7 @@ export default function AccountManagement() {
       is_priest: false,
     });
 
+    setBirthdayDisplay("");
     setErrors({});
   };
 
@@ -368,6 +442,7 @@ export default function AccountManagement() {
           }}
           footer={null}
           width={800}
+          maskClosable={true}
         >
           <Form layout="vertical">
             <Row gutter={16}>
@@ -447,14 +522,55 @@ export default function AccountManagement() {
                     </>
                   }
                   validateStatus={errors.birthday ? "error" : ""}
-                  help={errors.birthday}
+                  help={errors.birthday || "Format: MM/DD/YYYY"}
                 >
                   <Input
-                    type="date"
-                    value={formData.birthday}
-                    onChange={(e) =>
-                      setFormData({ ...formData, birthday: e.target.value })
-                    }
+                    value={birthdayDisplay}
+                    onChange={(e) => {
+                      const inputValue = e.target.value;
+                      if (inputValue.length < birthdayDisplay.length) {
+                        setBirthdayDisplay(inputValue);
+
+                        if (inputValue.length === 0) {
+                          setFormData({ ...formData, birthday: "" });
+                          setErrors((prev) => ({ ...prev, birthday: "" }));
+                        }
+                        return;
+                      }
+                      
+                      const formatted = formatDateInput(inputValue);
+                      setBirthdayDisplay(formatted);
+
+                      if (/^\d{2}\/\d{2}\/\d{4}$/.test(formatted)) {
+                        const parsed = parseDateInput(formatted);
+                        setFormData({ ...formData, birthday: parsed });
+                        
+                        const error = validateBirthday(parsed);
+                        setErrors((prev) => ({ ...prev, birthday: error }));
+
+                      } else if (formatted.length === 0) {
+                        setFormData({ ...formData, birthday: "" });
+                        setErrors((prev) => ({ ...prev, birthday: "" }));
+                      }
+                    }}
+                    onBlur={() => {
+                      if (birthdayDisplay) {
+                        if (/^\d{2}\/\d{2}\/\d{4}$/.test(birthdayDisplay)) {
+                          const parsed = parseDateInput(birthdayDisplay);
+                          const error = validateBirthday(parsed);
+                          setErrors((prev) => ({ ...prev, birthday: error }));
+
+                        } else {
+                          setErrors((prev) => ({ ...prev, birthday: "Please enter a complete date (MM/DD/YYYY)" }));
+                        }
+                        
+                      } else if (formData.birthday) {
+                        const error = validateBirthday(formData.birthday);
+                        setErrors((prev) => ({ ...prev, birthday: error }));
+                      }
+                    }}
+                    placeholder="MM/DD/YYYY"
+                    maxLength={10}
                   />
                 </Form.Item>
               </Col>
