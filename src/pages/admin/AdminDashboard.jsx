@@ -117,6 +117,10 @@ export default function AdminDashboard() {
         }
       };
 
+      const getBookingEmail = (booking) => {
+        return booking.user?.email || booking.email || "N/A";
+      };
+
       const eventsForCalendar = confirmedBookings.map((b) => {
         if (!b.date) return null;
         const bookingDate = dayjs(b.date);
@@ -131,7 +135,7 @@ export default function AdminDashboard() {
           status: b.status || "pending",
           bookingName: getBookingName(b),
           bookingType,
-          email: b.email,
+          email: getBookingEmail(b),
           transaction_id: b.transaction_id,
           time: b.time,
           attendees: b.attendees,
