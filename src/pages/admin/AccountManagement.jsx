@@ -36,6 +36,7 @@ import {
   EyeOutlined,
   EyeInvisibleOutlined,
   ArrowLeftOutlined,
+  EditOutlined,
 } from "@ant-design/icons";
 
 const { Title, Text } = Typography;
@@ -49,6 +50,8 @@ export default function AccountManagement() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("all"); 
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingUser, setEditingUser] = useState(null);
 
   const [formData, setFormData] = useState({
     first_name: "",
@@ -156,7 +159,11 @@ export default function AccountManagement() {
     }
 
     const dateString = parseDateInput(birthday);
-    const date = dayjs(dateString, "YYYY-MM-DD", true);
+    let date = dayjs(dateString, "YYYY-MM-DD", true);
+    if (!date.isValid()) {
+      date = dayjs(dateString);
+    }
+    
     const today = dayjs();
     const minDate = dayjs().subtract(120, "years");
 
@@ -279,6 +286,91 @@ export default function AccountManagement() {
     });
   };
 
+  const handleEditUser = (user) => {
+    setEditingUser(user);
+    const birthdayValue = user.birthday ? dayjs(user.birthday).format("MM/DD/YYYY") : "";
+    const birthdayFormatted = user.birthday ? dayjs(user.birthday).format("YYYY-MM-DD") : "";
+    setFormData({
+      first_name: user.first_name || "",
+      middle_name: user.middle_name || "",
+      last_name: user.last_name || "",
+      contact_number: user.contact_number || "",
+      birthday: birthdayFormatted,
+      email: user.email || "",
+      password: "",
+      confirmPassword: "",
+      is_priest: user.is_priest || false,
+    });
+    setBirthdayDisplay(birthdayValue);
+    setErrors({});
+    setShowEditModal(true);
+  };
+
+  const handleUpdateUser = async () => {
+    const newErrors = {};
+    if (!formData.first_name) newErrors.first_name = "First name is required";
+    if (!formData.last_name) newErrors.last_name = "Last name is required";
+    if (!formData.email) newErrors.email = "Email is required";
+    if (!formData.contact_number) newErrors.contact_number = "Contact number is required";
+    
+    let birthdayToValidate = formData.birthday;
+    if (birthdayDisplay && /^\d{2}\/\d{2}\/\d{4}$/.test(birthdayDisplay)) {
+      birthdayToValidate = parseDateInput(birthdayDisplay);
+
+    } else if (!birthdayToValidate && birthdayDisplay) {
+      birthdayToValidate = parseDateInput(birthdayDisplay);
+    }
+    
+    const birthdayError = validateBirthday(birthdayToValidate);
+    if (birthdayError) {
+      newErrors.birthday = birthdayError;
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setErrors({});
+
+      const formattedBirthday = birthdayToValidate
+        ? dayjs(birthdayToValidate).format("YYYY-MM-DD")
+        : "";
+
+      await axios.put(`${API_URL}/updateUser`, {
+        uid: editingUser.uid,
+        first_name: formData.first_name,
+        middle_name: formData.middle_name,
+        last_name: formData.last_name,
+        contact_number: formData.contact_number,
+        birthday: formattedBirthday,
+        email: formData.email,
+        is_priest: formData.is_priest,
+      });
+
+      message.success("User updated successfully!");
+      setShowEditModal(false);
+      setEditingUser(null);
+      resetForm();
+      fetchUsers();
+
+    } catch (error) {
+      console.error("Error updating user:", error);
+
+      if (error.response) {
+        message.error(error.response.data.message || "Failed to update user.");
+        
+      } else {
+        message.error("Failed to update user. Please try again.");
+      }
+
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const resetForm = () => {
     setFormData({
       first_name: "",
@@ -342,13 +434,21 @@ export default function AccountManagement() {
       title: "Actions",
       key: "actions",
       render: (_, record) => (
-        <Button
-          type={record.is_priest ? "default" : "primary"}
-          onClick={() => handleUpdateRole(record.uid, !record.is_priest)}
-          loading={loading}
-        >
-          {record.is_priest ? "Remove Priest" : "Make Priest"}
-        </Button>
+        <Space>
+          <Button
+            icon={<EditOutlined />}
+            onClick={() => handleEditUser(record)}
+          >
+            Edit
+          </Button>
+          <Button
+            type={record.is_priest ? "default" : "primary"}
+            onClick={() => handleUpdateRole(record.uid, !record.is_priest)}
+            loading={loading}
+          >
+            {record.is_priest ? "Remove Priest" : "Make Priest"}
+          </Button>
+        </Space>
       ),
     },
   ];
@@ -431,6 +531,204 @@ export default function AccountManagement() {
             }}
           />
         </Card>
+
+        {/* Edit User Modal */}
+        <Modal
+          title="Edit User/Priest"
+          open={showEditModal}
+          onCancel={() => {
+            setShowEditModal(false);
+            setEditingUser(null);
+            resetForm();
+          }}
+          footer={null}
+          width={800}
+          maskClosable={true}
+        >
+          <Form layout="vertical">
+            <Row gutter={16}>
+              <Col xs={24} sm={12}>
+                <Form.Item
+                  label={
+                    <>
+                      First Name <span style={{ color: "red" }}>*</span>
+                    </>
+                  }
+                  validateStatus={errors.first_name ? "error" : ""}
+                  help={errors.first_name}
+                >
+                  <Input
+                    value={formData.first_name}
+                    onChange={(e) =>
+                      setFormData({ ...formData, first_name: e.target.value })
+                    }
+                    placeholder="Enter first name"
+                  />
+                </Form.Item>
+              </Col>
+              <Col xs={24} sm={12}>
+                <Form.Item label="Middle Name">
+                  <Input
+                    value={formData.middle_name}
+                    onChange={(e) =>
+                      setFormData({ ...formData, middle_name: e.target.value })
+                    }
+                    placeholder="Enter middle name"
+                  />
+                </Form.Item>
+              </Col>
+              <Col xs={24} sm={12}>
+                <Form.Item
+                  label={
+                    <>
+                      Last Name <span style={{ color: "red" }}>*</span>
+                    </>
+                  }
+                  validateStatus={errors.last_name ? "error" : ""}
+                  help={errors.last_name}
+                >
+                  <Input
+                    value={formData.last_name}
+                    onChange={(e) =>
+                      setFormData({ ...formData, last_name: e.target.value })
+                    }
+                    placeholder="Enter last name"
+                  />
+                </Form.Item>
+              </Col>
+              <Col xs={24} sm={12}>
+                <Form.Item
+                  label={
+                    <>
+                      Contact Number <span style={{ color: "red" }}>*</span>
+                    </>
+                  }
+                  validateStatus={errors.contact_number ? "error" : ""}
+                  help={errors.contact_number}
+                >
+                  <Input
+                    value={formData.contact_number}
+                    onChange={(e) =>
+                      setFormData({ ...formData, contact_number: e.target.value })
+                    }
+                    placeholder="Enter contact number"
+                  />
+                </Form.Item>
+              </Col>
+              <Col xs={24} sm={12}>
+                <Form.Item
+                  label={
+                    <>
+                      Birthday <span style={{ color: "red" }}>*</span>
+                    </>
+                  }
+                  validateStatus={errors.birthday ? "error" : ""}
+                  help={errors.birthday || "Format: MM/DD/YYYY"}
+                >
+                  <Input
+                    value={birthdayDisplay}
+                    onChange={(e) => {
+                      const inputValue = e.target.value;
+                      if (inputValue.length < birthdayDisplay.length) {
+                        setBirthdayDisplay(inputValue);
+
+                        if (inputValue.length === 0) {
+                          setFormData({ ...formData, birthday: "" });
+                          setErrors((prev) => ({ ...prev, birthday: "" }));
+                        }
+                        return;
+                      }
+                      
+                      const formatted = formatDateInput(inputValue);
+                      setBirthdayDisplay(formatted);
+
+                      if (/^\d{2}\/\d{2}\/\d{4}$/.test(formatted)) {
+                        const parsed = parseDateInput(formatted);
+                        setFormData({ ...formData, birthday: parsed });
+                        
+                        const error = validateBirthday(parsed);
+                        setErrors((prev) => ({ ...prev, birthday: error }));
+
+                      } else if (formatted.length === 0) {
+                        setFormData({ ...formData, birthday: "" });
+                        setErrors((prev) => ({ ...prev, birthday: "" }));
+                      }
+                    }}
+                    onBlur={() => {
+                      if (birthdayDisplay) {
+                        if (/^\d{2}\/\d{2}\/\d{4}$/.test(birthdayDisplay)) {
+                          const parsed = parseDateInput(birthdayDisplay);
+                          const error = validateBirthday(parsed);
+                          setErrors((prev) => ({ ...prev, birthday: error }));
+
+                        } else {
+                          setErrors((prev) => ({ ...prev, birthday: "Please enter a complete date (MM/DD/YYYY)" }));
+                        }
+                        
+                      } else if (formData.birthday) {
+                        const error = validateBirthday(formData.birthday);
+                        setErrors((prev) => ({ ...prev, birthday: error }));
+                      }
+                    }}
+                    placeholder="MM/DD/YYYY"
+                    maxLength={10}
+                  />
+                </Form.Item>
+              </Col>
+              <Col xs={24} sm={12}>
+                <Form.Item
+                  label={
+                    <>
+                      Email <span style={{ color: "red" }}>*</span>
+                    </>
+                  }
+                  validateStatus={errors.email ? "error" : ""}
+                  help={errors.email}
+                >
+                  <Input
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) =>
+                      setFormData({ ...formData, email: e.target.value })
+                    }
+                    placeholder="Enter email"
+                  />
+                </Form.Item>
+              </Col>
+              <Col xs={24}>
+                <Form.Item>
+                  <Checkbox
+                    checked={formData.is_priest}
+                    onChange={(e) =>
+                      setFormData({ ...formData, is_priest: e.target.checked })
+                    }
+                  >
+                    This user is a priest
+                  </Checkbox>
+                </Form.Item>
+              </Col>
+            </Row>
+            <div style={{ marginTop: 24, display: "flex", justifyContent: "flex-end", gap: 8 }}>
+              <Button
+                onClick={() => {
+                  setShowEditModal(false);
+                  setEditingUser(null);
+                  resetForm();
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="primary"
+                onClick={handleUpdateUser}
+                loading={loading}
+                style={{ backgroundColor: "#b87d3e", borderColor: "#b87d3e" }}
+              >
+                Update User
+              </Button>
+            </div>
+          </Form>
+        </Modal>
 
         {/* Add User Modal */}
         <Modal
