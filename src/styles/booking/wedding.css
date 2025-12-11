@@ -1,13 +1,21 @@
 @import "tailwindcss";
 
+.main-holder{
+    @apply w-svw bg-white p-5 flex flex-col items-center;
+}
+
+.form-container{
+    @apply w-full grid grid-cols-4 p-10! gap-4;
+}
+
+.upload-container{
+    @apply w-full grid grid-cols-4 p-10! gap-4;
+}
 
 .input-text{
     @apply w-10/12 h-8 bg-white border border-black px-1;
 }
 
-.form-container{
-    @apply w-full bg-green-400 grid grid-cols-4 p-10! gap-4;
-}
 
 .time-container{
     @apply w-10/12 h-8 bg-white border border-black px-5! flex items-center;
@@ -18,14 +26,32 @@
 }
 
 .per-grid-container{
-    @apply w-full bg-red-500 flex justify-between p-3!;
+    @apply w-full flex flex-col justify-between p-3!;
 }
+
+.inputFile-properties {
+  @apply block w-full max-w-xs text-sm text-gray-700 
+    file:mr-4 file:py-2 file:px-4 
+    file:rounded-md file:border-0 file:bg-blue-600 
+    file:text-white file:cursor-pointer 
+    hover:file:bg-blue-700 cursor-pointer;
+}
+
 
 .image-container{
-    @apply bg-red-400 w-full h-full;
+    @apply w-full h-full flex justify-center items-center mt-3;
 }
 
+
+
+
 .image-preview{
-    @apply w-full aspect-3/5;
+    @apply w-1/2 aspect-3/5 rounded-xl border-2 border-black;
+}
+
+
+
+.submit-button{
+    @apply bg-blue-400 px-6 py-3 w-80 h-20 text-3xl rounded-xl;
 }
 

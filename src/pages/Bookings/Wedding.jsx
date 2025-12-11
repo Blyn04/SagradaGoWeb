@@ -1,4 +1,4 @@
-import { useContext, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { NavbarContext } from "../../context/AllContext";
 import "../../styles/booking/wedding.css";
 import default_profile from "../../assets/no-image.jpg";
@@ -10,6 +10,10 @@ import { MobileTimePicker } from "@mui/x-date-pickers/MobileTimePicker";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import no_image from "../../assets/blank-image.jpg";
 import { supabase } from "../../config/supabase";
+import axios from "axios";
+import { API_URL } from "../../Constants";
+
+
 
 export default function Wedding() {
   const { currentUser, bookingSelected, setBookingSelected } =
@@ -26,6 +30,34 @@ export default function Wedding() {
 
   //-------------------
 
+
+
+
+   const [form, setForm] = useState({
+    // uid: currentUser?.uid || "",
+    date: null,
+    time: null,
+    attendees: 0,
+    contact_number: "",
+    groom_first: "",
+    groom_middle: "",
+    groom_last: "",
+    bride_first: "",
+    bride_middle: "",
+    bride_last: "",
+    groom_1x1: "",
+    bride_1x1: "",
+    marriage_docu: "",
+    groom_baptismal_cert: "",
+    bride_baptismal_cert: "",
+    groom_confirmation_cert: "",
+    bride_confirmation_cert: "",
+    groom_cenomar: "",
+    bride_cenomar: "",
+    groom_permission: "",
+    bride_permission: "",
+  });
+
   const [groomFname, setGroomFname] = useState("");
   const [groomMname, setGroomMname] = useState("");
   const [groomLname, setGroomLname] = useState("");
@@ -36,23 +68,7 @@ export default function Wedding() {
   const [time, setTime] = useState("");
   const [contact, setContact] = useState("");
   const [attendees, setAttendees] = useState(0);
-
-
-  // const [groomBaptismal, setGroomBaptismal] = useState("");
-  // const [brideBaptismal, setBrideBaptismal] = useState("");
-  // const [groomConfirmation, setGroomConfirmation] = useState("");
-  // const [brideConfirmation, setBrideConfirmation] = useState("");
-  // const [groomCenomar, setGroomCenomar] = useState("");
-  // const [brideCenomar, setBrideCenomar] = useState("");
-  // const [groomPermission, setGroomPermission] = useState("");
-  // const [bridePermission, setBridePermission] = useState("");
-  // const [marriageDocu, setMarriageDocu] = useState("");
-
-  // const [isCivil, setIsCivil] = useState("");
-  // const civil_choices = [
-  //   { text: "Yes", value: "yes" },
-  //   { text: "No", value: "no" },
-  // ];
+  const [email, setEmail] = useState("");
 
   const inputText = [
     {
@@ -108,6 +124,14 @@ export default function Wedding() {
     },
 
     {
+      key: "email",
+      title: "Email",
+      type: "email",
+      onChange: setEmail,
+      value: email,
+    },
+
+    {
       key: "contact_number",
       title: "Contact Number",
       type: "text",
@@ -123,9 +147,6 @@ export default function Wedding() {
     },
   ];
 
-
-
-
   const [groomFile, setGroomFile] = useState(null);
   const [brideFile, setBrideFile] = useState(null);
 
@@ -134,8 +155,6 @@ export default function Wedding() {
 
   const [groomPhoto, setGroomPhoto] = useState("");
   const [bridePhoto, setBridePhoto] = useState("");
-
-
 
   async function uploadImage(file, namePrefix, setter) {
     const ext = file.name.split(".").pop();
@@ -152,15 +171,10 @@ export default function Wedding() {
       return;
     }
 
-    const {data} = supabase.storage.from("wedding").getPublicUrl(filePath);
-    console.log("data", data);
-    
+    const { data } = supabase.storage.from("wedding").getPublicUrl(filePath);
+
     setter(data.publicUrl);
   }
-
-
-
-  
 
   const uploadProfileImage = [
     {
@@ -179,13 +193,6 @@ export default function Wedding() {
     },
   ];
 
-
-
-
-
-  
-
-
   const [groomBapFile, setGroomBapFile] = useState(null);
   const [brideBapFile, setBrideBapFile] = useState(null);
 
@@ -195,10 +202,7 @@ export default function Wedding() {
   const [groomBaptismal, setGroomBaptismal] = useState("");
   const [brideBaptismal, setBrideBaptismal] = useState("");
 
-
-
-
-    const uploadBaptismal = [
+  const uploadBaptismal = [
     {
       key: "groom_baptismal",
       title: "Groom Baptismal Certificate Photo",
@@ -215,8 +219,6 @@ export default function Wedding() {
     },
   ];
 
-
-
   const [groomConfFile, setGroomConfFile] = useState(null);
   const [brideConfFile, setBrideConfFile] = useState(null);
 
@@ -226,13 +228,156 @@ export default function Wedding() {
   const [groomConfirmation, setGroomConfirmation] = useState("");
   const [brideConfirmation, setBrideConfirmation] = useState("");
 
+  const uploadConfirmation = [
+    {
+      key: "groom_confirmation",
+      title: "Groom Confirmation Certificate Photo",
+      fileSetter: setGroomConfFile,
+      preview: groomConfPreview,
+      previewSetter: setGroomConfPreview,
+    },
+    {
+      key: "bride_confirmation",
+      title: "Bride Confirmation Certificate Photo",
+      fileSetter: setBrideConfFile,
+      preview: brideConfPreview,
+      previewSetter: setBrideConfPreview,
+    },
+  ];
 
+  const [groomCenomarFile, setGroomCenomarFile] = useState(null);
+  const [brideCenomarFile, setBrideCenomarFile] = useState(null);
+
+  const [groomCenomarPreview, setGroomCenomarPreview] = useState("");
+  const [brideCenomarPreview, setBrideCenomarPreview] = useState("");
+
+  const [groomCenomar, setGroomCenomar] = useState("");
+  const [brideCenomar, setBrideCenomar] = useState("");
+
+  const uploadCenomar = [
+    {
+      key: "groom_cenomar",
+      title: "Groom CENOMAR Photo",
+      fileSetter: setGroomCenomarFile,
+      preview: groomCenomarPreview,
+      previewSetter: setGroomCenomarPreview,
+    },
+    {
+      key: "bride_cenomar",
+      title: "Bride CENOMAR Photo",
+      fileSetter: setBrideCenomarFile,
+      preview: brideCenomarPreview,
+      previewSetter: setBrideCenomarPreview,
+    },
+  ];
+
+  const [groomPermFile, setGroomPermFile] = useState(null);
+  const [bridePermFile, setBridePermFile] = useState(null);
+
+  const [groomPermPreview, setGroomPermPreview] = useState("");
+  const [bridePermPreview, setBridePermPreview] = useState("");
+
+  const [groomPermission, setGroomPermission] = useState("");
+  const [bridePermission, setBridePermission] = useState("");
+
+  const uploadPermission = [
+    {
+      key: "groom_permission",
+      title: "Groom Permission Photo",
+      fileSetter: setGroomPermFile,
+      preview: groomPermPreview,
+      previewSetter: setGroomPermPreview,
+    },
+    {
+      key: "bride_permission",
+      title: "Bride Permission Photo",
+      fileSetter: setBridePermFile,
+      preview: bridePermPreview,
+      previewSetter: setBridePermPreview,
+    },
+  ];
+
+  const [marriageDocuFile, setMarriageDocuFile] = useState(null);
+  const [marriagePreview, setMarriagePreview] = useState("");
+  const [marriageDocu, setMarriageDocu] = useState("");
+
+  const uploadMarriageDocu = [
+    {
+      key: "marriage_docu",
+      title: "Marriage Document",
+      fileSetter: setMarriageDocuFile,
+      preview: marriagePreview,
+      previewSetter: setMarriagePreview,
+    },
+  ];
+
+  const [isCivil, setIsCivil] = useState("");
+  const civil_choices = [
+    { text: "Yes", value: "yes" },
+    { text: "No", value: "no" },
+  ];
+
+  function generateTransactionID() {
+    const random = Math.random().toString(36).substring(2, 8).toUpperCase();
+    const timestamp = Date.now().toString().slice(-6); // last 6 digits of timestamp
+    return `TX-${timestamp}-${random}`;
+  }
 
 
   async function handleUpload() {
-    if (!groomFile && !brideFile && !groomBapFile && !brideBapFile) {
+
+    if (
+      !date ||
+      !time ||
+      attendees <= 0 ||
+      contact.trim() === "" ||
+      groomFname.trim() === "" ||
+      groomLname.trim() === "" ||
+      brideFname.trim() === "" ||
+      brideLname.trim() === ""
+    ) {
+      alert("Please fill all input fields.");
+      return;
+    }
+
+
+    if (
+      !groomFile &&
+      !brideFile &&
+      !groomBapFile &&
+      !brideBapFile &&
+      !groomConfFile &&
+      !brideConfFile &&
+      !groomCenomarFile &&
+      !brideCenomarFile &&
+      !groomPermFile &&
+      !bridePermFile &&
+      !marriageDocuFile
+    ) {
       alert("Please select files first.");
       return;
+    }
+
+
+
+    if (marriageDocuFile) {
+      await uploadImage(marriageDocuFile, `marriage_docu`, setMarriageDocu);
+    }
+
+    if (bridePermFile) {
+      await uploadImage(bridePermFile, `bride_permission`, setBridePermission);
+    }
+
+    if (groomPermFile) {
+      await uploadImage(groomPermFile, `groom_permission`, setGroomPermission);
+    }
+
+    if (groomCenomarFile) {
+      await uploadImage(groomCenomarFile, `groom_cenomar`, setGroomCenomar);
+    }
+
+    if (brideCenomarFile) {
+      await uploadImage(brideCenomarFile, `bride_cenomar`, setBrideCenomar);
     }
 
     if (groomFile) {
@@ -243,125 +388,106 @@ export default function Wedding() {
       await uploadImage(brideFile, `bride_photo`, setBridePhoto);
     }
 
-    if(groomBapFile){
+    if (groomBapFile) {
       await uploadImage(groomBapFile, `groom_baptismal`, setGroomBaptismal);
     }
 
-    if(brideBapFile){
+    if (brideBapFile) {
       await uploadImage(brideBapFile, `groom_baptismal`, setBrideBaptismal);
     }
 
+    if (groomConfFile) {
+      await uploadImage(
+        groomConfFile,
+        `groom_confirmation`,
+        setGroomConfirmation
+      );
+    }
+
+    if (brideConfFile) {
+      await uploadImage(
+        brideConfFile,
+        `bride_confirmation`,
+        setBrideConfirmation
+      );
+    }
+
     alert("Upload success!");
+
+    axios.post(`${API_URL}/createWeddingBooking`, {
+      uid: "123123123",
+      email: email,
+      transaction_id: generateTransactionID(),
+      date: date,
+      time: time,
+      attendees: attendees,
+      contact_number: contact,
+      groom_last_name: groomLname,
+      groom_first_name: groomFname,
+      groom_middle_name: groomMname,
+      groom_pic: groomPhoto,
+      bride_last_name: brideLname,
+      bride_first_name: brideFname,
+      bride_middle_name: brideMname,
+      bride_pic: bridePhoto,
+      marriage_docu: marriageDocu,
+      groom_cenomar: groomCenomar,
+      bride_cenomar: brideCenomar,
+      groom_baptismal_cert: groomBaptismal,
+      bride_baptismal_cert: brideBaptismal,
+      groom_confirmation_cert: groomConfirmation,
+      bride_confirmation_cert: brideConfirmation,
+      groom_permission: groomPermission,
+      bride_permission: bridePermission,
+    })
+
+    // setForm({
+    //   // uid: currentUser?.uid || "",
+    //   date: date,
+    //   time: time,
+    //   attendees: attendees,
+    //   contact_number: contact,
+    //   groom_first: groomFname,
+    //   groom_middle: groomMname,
+    //   groom_last: groomLname,
+    //   bride_first: brideFname,
+    //   bride_middle: brideMname,
+    //   bride_last: brideLname,
+    //   groom_1x1: groomPhoto,
+    //   bride_1x1: bridePhoto,
+    //   marriage_docu: marriageDocu,
+    //   groom_baptismal_cert: groomBaptismal,
+    //   bride_baptismal_cert: brideBaptismal,
+    //   groom_confirmation_cert: groomConfirmation,
+    //   bride_confirmation_cert: brideConfirmation,
+    //   groom_cenomar: groomCenomar,
+    //   bride_cenomar: brideCenomar,
+    //   groom_permission: groomPermission,
+    //   bride_permission: bridePermission,
+    // })
+
+
+    console.log(date)
+    console.log(time)
+    console.log(groomPhoto)
+    console.log(bridePhoto)
+    console.log(marriageDocu)
+    console.log(groomBaptismal)
+    console.log(brideBaptismal)
+    console.log(groomConfirmation)
+    console.log(brideConfirmation)
+    console.log(groomCenomar)
+    console.log(brideCenomar)
+    console.log(groomPermission)
+    console.log(bridePermission)
   }
-
-
-
-
-
-
-
-
-
-  const uploadConfirmation = [
-    {
-      key: "groom_confirmation",
-      title: "Groom Confirmation Certificate Photo",
-    },
-    {
-      key: "bride_confirmation",
-      title: "Bride Confirmation Certificate Photo",
-    },
-  ];
-
-  const uploadCenomar = [
-    { key: "groom_cenomar", title: "Groom CENOMAR Photo" },
-    { key: "bride_cenomar", title: "Bride CENOMAR Photo" },
-  ];
-
-  const uploadPermission = [
-    { key: "groom_permission", title: "Groom Permission Photo" },
-    { key: "bride_permission", title: "Bride Permission Photo" },
-  ];
-
-  const [form, setForm] = useState({
-    // uid: currentUser?.uid || "",
-    date: date,
-    time: time,
-    attendees: attendees,
-    contact_number: contact,
-    groom_first: groomFname,
-    groom_middle: groomMname,
-    groom_last: groomLname,
-    bride_first: brideFname,
-    bride_middle: brideMname,
-    bride_last: brideLname,
-    groom_1x1: groomPhoto,
-    bride_1x1: bridePhoto,
-    // marriage_docu: marriageDocu,
-    groom_baptismal_cert: groomBaptismal,
-    bride_baptismal_cert: brideBaptismal,
-    // groom_confirmation_cert: groomConfirmation,
-    // bride_confirmation_cert: brideConfirmation,
-    // groom_cenomar: groomCenomar,
-    // bride_cenomar: brideCenomar,
-    // groom_permission: groomPermission,
-    // bride_permission: bridePermission,
-  });
-
-
-
-
-
-
-
 
  
 
 
-
-
-  // async function handleSubmit() {
-
-
-
-  //   setBookingSelected(bookingSelected);
-
-  //   const dateOnly = date.split("T")[0];
-  //   setForm({
-  //     // uid: currentUser?.uid || "",
-  //     date: dateOnly,
-  //     time: time,
-  //     attendees: attendees,
-  //     contact_number: contact,
-  //     groom_first: groomFname,
-  //     groom_middle: groomMname,
-  //     groom_last: groomLname,
-  //     bride_first: brideFname,
-  //     bride_middle: brideMname,
-  //     bride_last: brideLname,
-  //     groom_1x1: groomPhoto,
-  //     bride_1x1: bridePhoto,
-  //     // marriage_docu: marriageDocu,
-  //     // groom_baptismal_cert: groomBaptismal,
-  //     // bride_baptismal_cert: brideBaptismal,
-  //     // groom_confirmation_cert: groomConfirmation,
-  //     // bride_confirmation_cert: brideConfirmation,
-  //     // groom_cenomar: groomCenomar,
-  //     // bride_cenomar: brideCenomar,
-  //     // groom_permission: groomPermission,
-  //     // bride_permission: bridePermission,
-  //   });
-  //   console.log("forms:", form);
-  // }
-
-
-
-
-  
-
   return (
-    <div className="form-container">
-      
+    <div className="main-holder">
+      <div className="form-container">
       {inputText.map((elem) => (
         <div className="flex flex-col" key={elem.key}>
           <h1>{elem.title}</h1>
@@ -421,22 +547,23 @@ export default function Wedding() {
                 onChange={(e) => elem.onChange(e.target.value)}
                 value={elem.value}
               />
-
-              <h1>{elem.value}</h1>
             </>
           )}
         </div>
       ))}
 
-       {uploadProfileImage.map((elem) => (
+      </div>
+      <div className="upload-container">
+
+      {uploadProfileImage.map((elem) => (
         <div key={elem.key} className="per-grid-container">
           <div>
+            <h1 className="text-center">{elem.title}</h1>
 
-            <h1>{elem.title}</h1>
-
-          <input
+            <input
             type="file"
             accept="image/*"
+            className="inputFile-properties"
             onChange={(e) => {
               const file = e.target.files[0];
               elem.fileSetter(file);
@@ -447,107 +574,152 @@ export default function Wedding() {
             }}
           />
           </div>
-          
 
-
-            <div className="image-container">
-              <h3>Preview:</h3>
-              <img src={elem.preview ? elem.preview : no_image} alt="Preview" className="image-preview" />
-            </div>
-          
+          <div className="image-container">
+            
+            <img
+              src={elem.preview ? elem.preview : no_image}
+              alt="Preview"
+              className="image-preview"
+            />
+          </div>
         </div>
       ))}
 
       {uploadBaptismal.map((elem) => (
         <div key={elem.key} className="per-grid-container">
           <div>
-
             <h1>{elem.title}</h1>
-
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => {
-              const file = e.target.files[0];
-              elem.fileSetter(file);
-
-              if (file) {
-                elem.previewSetter(URL.createObjectURL(file));
-              }
-            }}
-          />
-          </div>
-          
-
-
-            <div className="image-container">
-              <h3>Preview:</h3>
-              <img src={elem.preview ? elem.preview : no_image} alt="Preview" className="image-preview" />
-            </div>
-          
-        </div>
-      ))}
-{/* 
-      {uploadConfirmation.map((elem) => (
-        <div className="grid grid-cols-[3fr_1fr]" key={elem.key}>
-          <div>
-            <label className="block text-sm font-medium mb-1">
-              {elem.title}
-            </label>
 
             <input
               type="file"
               accept="image/*"
-              name={elem.key}
-              // onChange={handleFileChange}
+              className="inputFile-properties"
+              onChange={(e) => {
+                const file = e.target.files[0];
+                elem.fileSetter(file);
+
+                if (file) {
+                  elem.previewSetter(URL.createObjectURL(file));
+                }
+              }}
+            />
+          </div>
+
+          <div className="image-container">
+            
+            <img
+              src={elem.preview ? elem.preview : no_image}
+              alt="Preview"
+              className="image-preview"
             />
           </div>
         </div>
-      ))} */}
+      ))}
 
-      {/* {uploadCenomar.map((elem) => (
-        <div className="grid grid-cols-[3fr_1fr]" key={elem.key}>
+      {uploadConfirmation.map((elem) => (
+        <div key={elem.key} className="per-grid-container">
           <div>
-            <label className="block text-sm font-medium mb-1">
-              {elem.title}
-            </label>
+            <h1>{elem.title}</h1>
 
             <input
               type="file"
               accept="image/*"
-              name={elem.key}
-              // onChange={handleFileChange}
+              className="inputFile-properties"
+              onChange={(e) => {
+                const file = e.target.files[0];
+                elem.fileSetter(file);
+
+                if (file) {
+                  elem.previewSetter(URL.createObjectURL(file));
+                }
+              }}
+            />
+          </div>
+
+          <div className="image-container">
+            
+            <img
+              src={elem.preview ? elem.preview : no_image}
+              alt="Preview"
+              className="image-preview"
+            />
+          </div>
+        </div>
+      ))}
+
+      {uploadCenomar.map((elem) => (
+        <div key={elem.key} className="per-grid-container">
+          <div>
+            <h1>{elem.title}</h1>
+
+            <input
+              type="file"
+              accept="image/*"
+              className="inputFile-properties"
+              onChange={(e) => {
+                const file = e.target.files[0];
+                elem.fileSetter(file);
+
+                if (file) {
+                  elem.previewSetter(URL.createObjectURL(file));
+                }
+              }}
+            />
+          </div>
+
+          <div className="image-container">
+            
+            <img
+              src={elem.preview ? elem.preview : no_image}
+              alt="Preview"
+              className="image-preview"
             />
           </div>
         </div>
       ))}
 
       {uploadPermission.map((elem) => (
-        <div className="grid grid-cols-[3fr_1fr]" key={elem.key}>
+        <div key={elem.key} className="per-grid-container">
           <div>
-            <label className="block text-sm font-medium mb-1">
-              {elem.title}
-            </label>
+            <h1>{elem.title}</h1>
 
             <input
               type="file"
               accept="image/*"
-              name={elem.key}
-              // onChange={handleFileChange}
+              className="inputFile-properties"
+              onChange={(e) => {
+                const file = e.target.files[0];
+                elem.fileSetter(file);
+
+                if (file) {
+                  elem.previewSetter(URL.createObjectURL(file));
+                }
+              }}
+            />
+          </div>
+
+          <div className="image-container">
+            
+            <img
+              src={elem.preview ? elem.preview : no_image}
+              alt="Preview"
+              className="image-preview"
             />
           </div>
         </div>
       ))}
 
-      <div className="grid grid-cols-1 gap-2">
+      <div className="flex flex-col gap-2">
         <p>Are you civilly married?</p>
 
         <div className="flex w-auto gap-10">
           {civil_choices.map((elem) => (
-            <div className="flex items-center gap-1">
+            <div className="flex gap-1">
               <input
                 type="radio"
                 name="civil"
+                
                 value={elem.value}
                 onChange={() => setIsCivil(elem.text)}
               />
@@ -559,22 +731,77 @@ export default function Wedding() {
         {isCivil === "" ? (
           <></>
         ) : isCivil === "Yes" ? (
-          <div className="w-full flex items-center justify-between">
-            <input type="file" />
-            <p className="w-full">Upload Marriage Contract</p>
-          </div>
-        ) : (
-          <div className="flex items-center">
-            <input type="file" />
-            <p>Upload Marriage License</p>
-          </div>
-        )}
-      </div> */}
+          uploadMarriageDocu.map((elem) => (
+            <div key={elem.key} className="per-grid-container">
+              <div>
+                <h1>Upload Marriage Contract</h1>
 
-      <input
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="inputFile-properties"
+                  onChange={(e) => {
+                    const file = e.target.files[0];
+                    elem.fileSetter(file);
+
+                    if (file) {
+                      elem.previewSetter(URL.createObjectURL(file));
+                    }
+                  }}
+                />
+              </div>
+
+              <div className="image-container">
+                
+                <img
+                  src={elem.preview ? elem.preview : no_image}
+                  alt="Preview"
+                  className="image-preview"
+                />
+              </div>
+            </div>
+          ))
+        ) : (
+          uploadMarriageDocu.map((elem) => (
+            <div key={elem.key} className="per-grid-container">
+              <div>
+                <h1>Upload Marriage License</h1>
+
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="inputFile-properties"
+                  onChange={(e) => {
+                    const file = e.target.files[0];
+                    elem.fileSetter(file);
+
+                    if (file) {
+                      elem.previewSetter(URL.createObjectURL(file));
+                    }
+                  }}
+                />
+              </div>
+
+              <div className="image-container">
+                
+                <img
+                  src={elem.preview ? elem.preview : no_image}
+                  alt="Preview"
+                  className="image-preview"
+                />
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      
+    </div>
+
+    <input
         type="submit"
         value="Submit"
-        className="bg-blue-400 px-6 py-3"
+        className="submit-button"
         onClick={handleUpload}
       />
     </div>
