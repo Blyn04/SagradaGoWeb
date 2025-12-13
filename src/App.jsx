@@ -21,7 +21,8 @@ import VolunteersList from "./pages/admin/VolunteersList";
 import AddEvents from "./pages/admin/AddEvents";
 import Header from "./components/Header";
 import AdminLayout from "./components/AdminLayout";
-import AdminAnnouncements from "./pages/admin/AdminAnnouncement"; 
+import AdminAnnouncements from "./pages/admin/AdminAnnouncement";
+import AdminChat from "./components/AdminChat"; 
 
 function App() {
   const [selectedNavbar, setSelectedNavbar] = useState("Home");
@@ -63,7 +64,8 @@ function App() {
             <Route path="events" element={<AddEvents />} />
             <Route index element={<AdminDashboard />} />
             <Route path="create" element={<AddAdmin />} />
-            <Route path="announcements" element={<AdminAnnouncements />} /> 
+            <Route path="announcements" element={<AdminAnnouncements />} />
+            <Route path="chat" element={<AdminChat />} /> 
           </Route>
 
           {/* Public */}
