@@ -50,7 +50,7 @@ function App() {
       }}
     >
       <BrowserRouter>
-        <Header />   {/* If you want header everywhere */}
+        <Header />
 
         <Routes>
           {/* Admin */}

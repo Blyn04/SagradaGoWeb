@@ -33,31 +33,6 @@ export default function Wedding() {
 
 
 
-   const [form, setForm] = useState({
-    // uid: currentUser?.uid || "",
-    date: null,
-    time: null,
-    attendees: 0,
-    contact_number: "",
-    groom_first: "",
-    groom_middle: "",
-    groom_last: "",
-    bride_first: "",
-    bride_middle: "",
-    bride_last: "",
-    groom_1x1: "",
-    bride_1x1: "",
-    marriage_docu: "",
-    groom_baptismal_cert: "",
-    bride_baptismal_cert: "",
-    groom_confirmation_cert: "",
-    bride_confirmation_cert: "",
-    groom_cenomar: "",
-    bride_cenomar: "",
-    groom_permission: "",
-    bride_permission: "",
-  });
-
   const [groomFname, setGroomFname] = useState("");
   const [groomMname, setGroomMname] = useState("");
   const [groomLname, setGroomLname] = useState("");
@@ -441,30 +416,7 @@ export default function Wedding() {
       bride_permission: bridePermission,
     })
 
-    // setForm({
-    //   // uid: currentUser?.uid || "",
-    //   date: date,
-    //   time: time,
-    //   attendees: attendees,
-    //   contact_number: contact,
-    //   groom_first: groomFname,
-    //   groom_middle: groomMname,
-    //   groom_last: groomLname,
-    //   bride_first: brideFname,
-    //   bride_middle: brideMname,
-    //   bride_last: brideLname,
-    //   groom_1x1: groomPhoto,
-    //   bride_1x1: bridePhoto,
-    //   marriage_docu: marriageDocu,
-    //   groom_baptismal_cert: groomBaptismal,
-    //   bride_baptismal_cert: brideBaptismal,
-    //   groom_confirmation_cert: groomConfirmation,
-    //   bride_confirmation_cert: brideConfirmation,
-    //   groom_cenomar: groomCenomar,
-    //   bride_cenomar: brideCenomar,
-    //   groom_permission: groomPermission,
-    //   bride_permission: bridePermission,
-    // })
+
 
 
     console.log(date)
