@@ -32,6 +32,7 @@ import dayjs from "dayjs";
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
+const { Option } = Select;
 
 export default function AddEvents() {
   const [form] = Form.useForm();
@@ -41,6 +42,8 @@ export default function AddEvents() {
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [locations, setLocations] = useState([]);
+  const [dateFilter, setDateFilter] = useState("all"); 
+  const [monthFilter, setMonthFilter] = useState("all"); 
 
   useEffect(() => {
     fetchEvents();
@@ -191,6 +194,46 @@ export default function AddEvents() {
       ? { status: "past", color: "default", text: "Past" }
       : { status: "upcoming", color: "green", text: "Upcoming" };
   };
+
+  const getMonthOptions = () => {
+    const months = [
+      { value: "all", label: "All Months" },
+      { value: "0", label: "January" },
+      { value: "1", label: "February" },
+      { value: "2", label: "March" },
+      { value: "3", label: "April" },
+      { value: "4", label: "May" },
+      { value: "5", label: "June" },
+      { value: "6", label: "July" },
+      { value: "7", label: "August" },
+      { value: "8", label: "September" },
+      { value: "9", label: "October" },
+      { value: "10", label: "November" },
+      { value: "11", label: "December" },
+    ];
+    return months;
+  };
+
+  const filteredEvents = events.filter((event) => {
+    if (!event.date) return false;
+
+    const eventDate = dayjs(event.date).startOf("day");
+    const today = dayjs().startOf("day");
+
+    if (dateFilter === "upcoming") {
+      if (eventDate.isBefore(today)) return false;
+
+    } else if (dateFilter === "past") {
+      if (!eventDate.isBefore(today)) return false;
+    }
+
+    if (monthFilter !== "all") {
+      const eventMonth = eventDate.month();
+      if (eventMonth !== parseInt(monthFilter)) return false;
+    }
+
+    return true;
+  });
 
   const columns = [
     {
@@ -425,7 +468,7 @@ export default function AddEvents() {
               title={
                 <Space>
                   <CalendarOutlined />
-                  <span>All Events ({events.length})</span>
+                  <span>All Events ({filteredEvents.length})</span>
                 </Space>
               }
               extra={
@@ -438,9 +481,35 @@ export default function AddEvents() {
                 </Button>
               }
             >
+              <Space style={{ marginBottom: 16, width: "100%", display: "flex", flexWrap: "wrap" }}>
+                <Text strong>Filter by Date:</Text>
+                <Select
+                  value={dateFilter}
+                  onChange={setDateFilter}
+                  style={{ width: 150 }}
+                >
+                  <Option value="all">All Events</Option>
+                  <Option value="upcoming">Upcoming</Option>
+                  <Option value="past">Past</Option>
+                </Select>
+
+                <Text strong style={{ marginLeft: 16 }}>Filter by Month:</Text>
+                <Select
+                  value={monthFilter}
+                  onChange={setMonthFilter}
+                  style={{ width: 150 }}
+                >
+                  {getMonthOptions().map((month) => (
+                    <Option key={month.value} value={month.value}>
+                      {month.label}
+                    </Option>
+                  ))}
+                </Select>
+              </Space>
+
               <Table
                 columns={columns}
-                dataSource={events}
+                dataSource={filteredEvents}
                 rowKey="_id"
                 loading={loading}
                 pagination={{
