@@ -107,7 +107,8 @@ export default function BookingPendingRequests() {
         createdAt: b.createdAt ? new Date(b.createdAt).toISOString() : null,
         status: b.status || "pending",
         full_name: b.full_name || b.name || "N/A",
-        transaction_id: b.transaction_id || `CONF-${Date.now()}`, 
+        transaction_id: b.transaction_id || `CONF-${Date.now()}`,
+        time: b.time || null,
       }));
 
       const allBookings = [
@@ -119,6 +120,15 @@ export default function BookingPendingRequests() {
         ...(anointings.data.anointings || []).map((b) => ({ ...b, bookingType: "Anointing", typeLabel: "Anointing of the Sick" })),
         ...normalizedConfessions
       ];
+
+      if (process.env.NODE_ENV === 'development' && allBookings.length > 0) {
+        console.log('Sample booking time fields:', allBookings.slice(0, 3).map(b => ({
+          type: b.bookingType,
+          transaction_id: b.transaction_id,
+          time: b.time,
+          timeType: typeof b.time
+        })));
+      }
 
       let filtered = allBookings;
 
@@ -323,20 +333,46 @@ export default function BookingPendingRequests() {
     return booking.user?.email || booking.email || "N/A";
   };
 
-  const formatTimeOnly = (dateString) => {
-    if (!dateString) return "N/A";
-    const date = new Date(dateString);
+  const formatTimeOnly = (timeValue) => {
+    if (timeValue === null || timeValue === undefined || timeValue === '') {
+      return "N/A";
+    }
 
-    if (isNaN(date.getTime())) return "N/A";
+    const timeStr = String(timeValue).trim();
+    
+    if (!timeStr || timeStr === 'null' || timeStr === 'undefined' || timeStr === 'NaN') {
+      return "N/A";
+    }
+    
+    const timeMatch = timeStr.match(/^(\d{1,2}):(\d{2})(?::\d{2})?(?:\.[\d]+)?$/);
+    if (timeMatch) {
+      const hours24 = parseInt(timeMatch[1], 10);
+      const minutes = parseInt(timeMatch[2], 10);
 
-    let hours = date.getHours();
-    const minutes = date.getMinutes();
-    const ampm = hours >= 12 ? "PM" : "AM";
-    hours = hours % 12 || 12;
+      if (!isNaN(hours24) && !isNaN(minutes) && hours24 >= 0 && hours24 <= 23 && minutes >= 0 && minutes <= 59) {
+        const hours = hours24 % 12 || 12;
+        const ampm = hours24 >= 12 ? "PM" : "AM";
 
-    return `${hours.toString().padStart(2, "0")}:${minutes
-      .toString()
-      .padStart(2, "0")} ${ampm}`;
+        return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")} ${ampm}`;
+      }
+    }
+    
+    try {
+      const date = new Date(timeStr);
+      if (!isNaN(date.getTime()) && date instanceof Date) {
+        let hours = date.getHours();
+        const minutes = date.getMinutes();
+        const ampm = hours >= 12 ? "PM" : "AM";
+        hours = hours % 12 || 12;
+        return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")} ${ampm}`;
+      }
+
+    } catch (e) {
+      // If date parsing fails, continue to return original or N/A
+    }
+
+    console.warn('Unable to format time value:', timeValue, 'type:', typeof timeValue);
+    return "N/A";
   };
 
   const columns = [
@@ -376,9 +412,12 @@ export default function BookingPendingRequests() {
       title: "Time",
       dataIndex: "time",
       key: "time",
-      render: (_, record) => (
-        <span>{formatTimeOnly(record.time)}</span>
-      ),
+      render: (_, record) => {
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Time value for record:', record.transaction_id, 'time:', record.time, 'type:', typeof record.time);
+        }
+        return <span>{formatTimeOnly(record.time)}</span>;
+      },
     },
     {
       title: "Status",
@@ -640,7 +679,7 @@ export default function BookingPendingRequests() {
                 'main_godfather',
                 'main_godmother'
               ].includes(key)) return null;
-
+              
               const isAddressField = key === 'address';
               const showGodparentsAfterAddress = isAddressField && selectedBooking?.bookingType === "Baptism" && !godparentsShown;
               
