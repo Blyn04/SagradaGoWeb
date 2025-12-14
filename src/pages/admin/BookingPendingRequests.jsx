@@ -187,6 +187,13 @@ export default function BookingPendingRequests() {
           b.first_name,
           b.last_name,
           b.deceased_name,
+          b.deceased_age,
+          b.deceased_civil_status,
+          b.requested_by,
+          b.relationship_to_deceased,
+          b.address,
+          b.place_of_mass,
+          b.mass_address,
           b.user?.name,
           b.user?.email,
         ].filter(Boolean);
@@ -661,13 +668,69 @@ export default function BookingPendingRequests() {
             </>
           )}
 
+          {/* Burial-specific deceased information section */}
+          {selectedBooking?.bookingType === "Burial" && (
+            <>
+              {selectedBooking?.deceased_name && (
+                <Col span={12}>
+                  <Text strong>Deceased Name:</Text>
+                  <div>{selectedBooking.deceased_name}</div>
+                </Col>
+              )}
+              {selectedBooking?.deceased_age && (
+                <Col span={12}>
+                  <Text strong>Deceased Age:</Text>
+                  <div>{selectedBooking.deceased_age}</div>
+                </Col>
+              )}
+              {selectedBooking?.deceased_civil_status && (
+                <Col span={12}>
+                  <Text strong>Civil Status:</Text>
+                  <div>{selectedBooking.deceased_civil_status}</div>
+                </Col>
+              )}
+              {selectedBooking?.requested_by && (
+                <Col span={12}>
+                  <Text strong>Requested By:</Text>
+                  <div>{selectedBooking.requested_by}</div>
+                </Col>
+              )}
+              {selectedBooking?.relationship_to_deceased && (
+                <Col span={12}>
+                  <Text strong>Relationship to Deceased:</Text>
+                  <div>{selectedBooking.relationship_to_deceased}</div>
+                </Col>
+              )}
+              {selectedBooking?.address && (
+                <Col span={24}>
+                  <Text strong>Address:</Text>
+                  <div>{selectedBooking.address}</div>
+                </Col>
+              )}
+              {selectedBooking?.place_of_mass && (
+                <Col span={12}>
+                  <Text strong>Place of Mass:</Text>
+                  <div>{selectedBooking.place_of_mass}</div>
+                </Col>
+              )}
+              {selectedBooking?.mass_address && (
+                <Col span={12}>
+                  <Text strong>Mass Address:</Text>
+                  <div>{selectedBooking.mass_address}</div>
+                </Col>
+              )}
+            </>
+          )}
+
           {/* Dynamic details */}
           {(() => {
             let addressShown = false;
             let godparentsShown = false;
             
             return details.map(({ key, value }) => {
-              if (['payment_method', 'amount', 'proof_of_payment', 'full_name', 'email', 'groom_pic', 'bride_pic'].includes(key)) return null;
+              if (['payment_method', 'amount', 'proof_of_payment', 'full_name', 'email', 'groom_pic', 'bride_pic', 
+                    'deceased_name', 'deceased_age', 'deceased_civil_status', 'requested_by', 
+                    'relationship_to_deceased', 'address', 'place_of_mass', 'mass_address'].includes(key)) return null;
               
               if (selectedBooking?.bookingType === "Baptism" && [
                 'main_godfather_first_name', 
