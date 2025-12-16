@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+* {
+  font-family: 'Poppins';
+}
+
 .dashboard-container {
   padding: 24px;
   background: #f0f2f5;
@@ -24,10 +28,12 @@
 .dashboard-title {
   margin: 0;
   color: #262626;
+  font-family: 'Poppins';
 }
 
 .dashboard-subtitle {
   font-size: 16px;
+  font-family: 'Poppins';
 }
 
 .dashboard-stats-grid {
@@ -144,4 +150,3 @@
   border-color: #f5222d;
   box-shadow: 0 4px 12px rgba(245, 34, 45, 0.3);
 }
-
