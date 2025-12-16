@@ -38,6 +38,7 @@ import axios from "axios";
 import { API_URL } from "../../Constants";
 import { supabase } from "../../config/supabase";
 import dayjs from "dayjs";
+import { sacramentRequirements } from "../../utils/sacramentRequirements";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -53,6 +54,11 @@ function AdminBookingForm({ bookingType, onSuccess, onCancel }) {
   const [isCivillyMarried, setIsCivillyMarried] = useState("no");
 
   const [uploadedFiles, setUploadedFiles] = useState({});
+  const [physicalRequirements, setPhysicalRequirements] = useState({}); 
+  
+  useEffect(() => {
+    setPhysicalRequirements({});
+  }, [bookingType]);
   
   const handleSubmit = async (values) => {
     try {
@@ -77,6 +83,8 @@ function AdminBookingForm({ bookingType, onSuccess, onCancel }) {
       formData.append('contact_number', values.contact_number || '');
       formData.append('payment_method', values.payment_method || 'in_person');
       formData.append('amount', getSacramentPrice(bookingType).toString());
+ 
+      formData.append('physical_requirements', JSON.stringify(physicalRequirements));
       
       if (bookingType === 'Wedding') {
         formData.append('groom_first_name', values.groom_first_name || '');
@@ -176,6 +184,7 @@ function AdminBookingForm({ bookingType, onSuccess, onCancel }) {
           medical_condition: values.medical_condition || '',
           transaction_id: `ANOINT-${Date.now()}`,
           status: 'pending',
+          physical_requirements: physicalRequirements,
         };
         
         await axios.post(`${API_URL}/createAnointing`, payload);
@@ -190,6 +199,7 @@ function AdminBookingForm({ bookingType, onSuccess, onCancel }) {
           attendees: 1,
           transaction_id: `CONF-${Date.now()}`,
           status: 'pending',
+          physical_requirements: physicalRequirements,
         };
         
         await axios.post(`${API_URL}/createConfession`, payload);
@@ -202,6 +212,7 @@ function AdminBookingForm({ bookingType, onSuccess, onCancel }) {
       setGroomPic(null);
       setBridePic(null);
       setUploadedFiles({});
+      setPhysicalRequirements({});
       setBurialServices({
         funeral_mass: false,
         death_anniversary: false,
@@ -703,6 +714,63 @@ function AdminBookingForm({ bookingType, onSuccess, onCancel }) {
           <Input.TextArea />
         </Form.Item>
       )}
+      
+      {(() => {
+        let requirements = sacramentRequirements[bookingType] || [];
+  
+        if (bookingType === 'Wedding') {
+          requirements = requirements.filter((req) => {
+            if (req.onlyIfCivillyMarried) {
+              return isCivillyMarried === 'yes';
+            }
+            return true;
+          });
+        }
+ 
+        const uploadRequirements = requirements.filter(req => req.requiresUpload);
+        
+        if (uploadRequirements.length === 0) {
+          return null;
+        }
+        
+        return (
+          <Form.Item
+            label={
+              <span>
+                <Text strong>Document Requirements</Text>
+                <br />
+                <Text type="secondary" style={{ fontSize: '12px' }}>
+                  Check the documents that need to be submitted physically or in-hand
+                </Text>
+              </span>
+            }
+          >
+            <div style={{ 
+              border: '1px solid #d9d9d9', 
+              borderRadius: '4px', 
+              padding: '16px',
+              backgroundColor: '#fafafa'
+            }}>
+              <Space direction="vertical" style={{ width: '100%' }}>
+                {uploadRequirements.map((requirement) => (
+                  <Checkbox
+                    key={requirement.id}
+                    checked={physicalRequirements[requirement.id] || false}
+                    onChange={(e) => {
+                      setPhysicalRequirements(prev => ({
+                        ...prev,
+                        [requirement.id]: e.target.checked
+                      }));
+                    }}
+                  >
+                    {requirement.label}
+                  </Checkbox>
+                ))}
+              </Space>
+            </div>
+          </Form.Item>
+        );
+      })()}
       
       <Form.Item>
         <Space>
