@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 import { Card, Typography, Table, message, Button, Spin, Popconfirm } from "antd";
 import axios from "axios";
 import { API_URL } from "../../Constants";
+import {
+  ReloadOutlined
+} from "@ant-design/icons";
 
 const { Title } = Typography;
 
@@ -40,7 +43,7 @@ export default function VolunteersList() {
     try {
       await axios.post(`${API_URL}/updateVolunteerStatus`, { volunteer_id, status: newStatus });
       message.success(`Volunteer ${newStatus} successfully.`);
-      fetchVolunteers(); 
+      fetchVolunteers();
 
     } catch (err) {
       console.error("Error updating volunteer:", err);
@@ -109,31 +112,38 @@ export default function VolunteersList() {
 
   return (
     <div style={{ padding: "24px", background: "#f0f2f5", minHeight: "100vh" }}>
-      <Card>
-        <Title level={2}>All Volunteers</Title>
+      <div style={{ maxWidth: "1550px", margin: "0 auto", marginTop: 20 }}>
+        <div>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <Title level={2} style={{ fontFamily: 'Poppins' }}>All Volunteers</Title>
 
-        <Button
-          onClick={() => fetchVolunteers()}
-          type="primary"
-          style={{ marginBottom: 16 }}
-          loading={loading}
-        >
-          Refresh
-        </Button>
-
-        {loading ? (
-          <div style={{ textAlign: "center", padding: "50px 0" }}>
-            <Spin size="large" />
+            <Button
+              onClick={() => fetchVolunteers()}
+              style={{ marginBottom: 16 }}
+              loading={loading}
+              className="border-btn"
+              icon={<ReloadOutlined />}
+            >
+              Refresh
+            </Button>
           </div>
-        ) : (
-          <Table
-            columns={columns}
-            dataSource={volunteers}
-            pagination={{ pageSize: 10 }}
-            rowKey="_id"
-          />
-        )}
-      </Card>
+          {loading ? (
+            <div style={{ textAlign: "center", padding: "50px 0" }}>
+              <Spin size="large" />
+            </div>
+          ) : (
+            <Card>
+              <Table
+                columns={columns}
+                dataSource={volunteers}
+                pagination={{ pageSize: 10 }}
+                rowKey="_id"
+              />
+            </Card>
+          )}
+        </div>
+      </div>
     </div>
   );
+
 }
