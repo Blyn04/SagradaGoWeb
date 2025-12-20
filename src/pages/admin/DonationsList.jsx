@@ -353,7 +353,7 @@ export default function DonationsList() {
               <Statistic
                 title="Total Donations"
                 value={stats.total}
-                prefix={<DollarOutlined />}
+                prefix={<DollarOutlined style={{ marginRight: 8 }}/>}
                 valueStyle={{ color: "#1890ff" }}
               />
             </Card>
@@ -363,7 +363,7 @@ export default function DonationsList() {
               <Statistic
                 title="Pending"
                 value={stats.pending}
-                prefix={<ClockCircleOutlined />}
+                prefix={<ClockCircleOutlined style={{ marginRight: 8 }}/>}
                 valueStyle={{ color: "#fa8c16" }}
               />
             </Card>
@@ -373,7 +373,7 @@ export default function DonationsList() {
               <Statistic
                 title="Confirmed"
                 value={stats.confirmed}
-                prefix={<CheckCircleOutlined />}
+                prefix={<CheckCircleOutlined style={{ marginRight: 8 }}/>}
                 valueStyle={{ color: "#52c41a" }}
               />
             </Card>
@@ -383,7 +383,7 @@ export default function DonationsList() {
               <Statistic
                 title="Cancelled"
                 value={stats.cancelled}
-                prefix={<CloseCircleOutlined />}
+                prefix={<CloseCircleOutlined style={{ marginRight: 8 }}/>}
                 valueStyle={{ color: "#f5222d" }}
               />
             </Card>

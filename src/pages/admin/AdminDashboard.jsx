@@ -343,7 +343,7 @@ export default function AdminDashboard() {
                 <Statistic
                   title="Total Users"
                   value={stats.totalUsers}
-                  prefix={<UserOutlined />}
+                  prefix={<UserOutlined style={{ marginRight: 8 }}/>}
                   valueStyle={{ color: "#1890ff" }}
                 />
                 <div className="dashboard-stat-title">
@@ -357,7 +357,7 @@ export default function AdminDashboard() {
               <Statistic
                 title="Total Priests"
                 value={stats.totalPriests}
-                prefix={<TeamOutlined />}
+                prefix={<TeamOutlined style={{ marginRight: 8 }}/>}
                 valueStyle={{ color: "#722ed1" }}
               />
               <div className="dashboard-stat-title">
@@ -375,7 +375,7 @@ export default function AdminDashboard() {
               <Statistic
                 title="Pending Bookings"
                 value={stats.pendingBookings}
-                prefix={<CalendarOutlined />}
+                prefix={<CalendarOutlined style={{ marginRight: 8 }}/>}
                 valueStyle={{ color: "#fa8c16" }}
               />
               <div className="dashboard-stat-title">
@@ -389,7 +389,7 @@ export default function AdminDashboard() {
                 <Statistic
                   title="Total Donations"
                   value={stats.totalDonations}
-                  prefix={<DollarOutlined />}
+                  prefix={<DollarOutlined style={{ marginRight: 8 }}/>}
                   precision={2}
                   valueStyle={{ color: "#52c41a" }}
                 />
