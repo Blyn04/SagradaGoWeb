@@ -324,7 +324,7 @@ export default function AdminDashboard() {
         <div className="dashboard-header">
           <div className="dashboard-header-content">
             <div>
-              <Title level={2} className="dashboard-title">Welcome Back, Nadine!</Title>
+              <Title level={2} className="dashboard-title">Welcome Back, Abel!</Title>
               <Text type="secondary" className="dashboard-subtitle">
                 Here's what's happening today.
               </Text>
@@ -465,7 +465,10 @@ export default function AdminDashboard() {
           </Col>
         </Row>
 
-        <Card title={<Title level={4}>Calendar</Title>}>
+        <Card
+          title={<Title level={4} className="dashboard-system-overview-title">Calendar</Title>}
+          className="dashboard-system-overview-card"
+        >
           <CustomCalendar events={calendarEvents} onEventClick={handleBookingClick} />
         </Card>
       </div>

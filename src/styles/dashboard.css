@@ -127,6 +127,10 @@
   font-weight: 500;
 }
 
+.dashboard-system-overview-card {
+  margin-bottom: 20px;
+}
+
 .dashboard-loading-container {
   display: flex;
   justify-content: center;
