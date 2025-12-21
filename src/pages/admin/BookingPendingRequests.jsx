@@ -25,7 +25,6 @@ import {
   ClockCircleOutlined,
   CheckCircleOutlined,
   CloseCircleOutlined,
-  ReloadOutlined,
   SearchOutlined,
   EyeOutlined,
   CalendarOutlined,
@@ -1681,9 +1680,6 @@ export default function BookingPendingRequests() {
                 className="border-btn"
               >
                 Create Booking
-              </Button>
-              <Button icon={<ReloadOutlined />} onClick={fetchAllBookings} loading={loading} className="border-btn">
-                Refresh
               </Button>
             </Space>
           </div>

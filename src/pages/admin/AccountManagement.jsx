@@ -31,7 +31,6 @@ import {
   UserOutlined,
   TeamOutlined,
   PlusOutlined,
-  ReloadOutlined,
   SearchOutlined,
   EyeOutlined,
   EyeInvisibleOutlined,

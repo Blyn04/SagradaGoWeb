@@ -22,7 +22,6 @@ import {
   CheckCircleOutlined,
   ClockCircleOutlined,
   CloseCircleOutlined,
-  ReloadOutlined,
   SearchOutlined,
   EyeOutlined,
   PictureOutlined,
@@ -335,14 +334,6 @@ export default function DonationsList() {
                 Manage and track all donations
               </Text>
             </div>
-            <Button
-              icon={<ReloadOutlined />}
-              onClick={fetchDonations}
-              loading={loading}
-              className="border-btn"
-            >
-              Refresh
-            </Button>
           </div>
         </div>
 

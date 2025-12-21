@@ -2,9 +2,6 @@ import { useEffect, useState } from "react";
 import { Card, Typography, Table, message, Button, Spin, Popconfirm } from "antd";
 import axios from "axios";
 import { API_URL } from "../../Constants";
-import {
-  ReloadOutlined
-} from "@ant-design/icons";
 
 const { Title } = Typography;
 
@@ -116,16 +113,6 @@ export default function VolunteersList() {
         <div>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <Title level={2} style={{ fontFamily: 'Poppins' }}>All Volunteers</Title>
-
-            <Button
-              onClick={() => fetchVolunteers()}
-              style={{ marginBottom: 16 }}
-              loading={loading}
-              className="border-btn"
-              icon={<ReloadOutlined />}
-            >
-              Refresh
-            </Button>
           </div>
           {loading ? (
             <div style={{ textAlign: "center", padding: "50px 0" }}>
@@ -145,5 +132,4 @@ export default function VolunteersList() {
       </div>
     </div>
   );
-
 }
