@@ -1,9 +1,11 @@
 import { useNavigate, useLocation } from "react-router-dom";
-import { useContext } from "react";
-import { Layout, Menu, Button } from "antd";
+import { useContext, useState, useEffect } from "react";
+import { Layout, Menu, Button, Badge } from "antd";
 import { DashboardOutlined, UserOutlined, LogoutOutlined, BookOutlined, DollarOutlined, TeamOutlined, CalendarOutlined, NotificationOutlined, MessageOutlined } from "@ant-design/icons";
 import { NavbarContext } from "../context/AllContext";
 import Cookies from "js-cookie";
+import axios from "axios";
+import { API_URL } from "../Constants";
 import Logo from "../assets/sagrada.png";
 import "../styles/adminSidebar.css";
 
@@ -13,6 +15,34 @@ export default function AdminSidebar() {
   const navigate = useNavigate();
   const location = useLocation();
   const { setCurrentUser } = useContext(NavbarContext);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  const user = JSON.parse(localStorage.getItem("currentUser")) || null;
+
+  useEffect(() => {
+    fetchUnreadCount();
+    const interval = setInterval(fetchUnreadCount, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const fetchUnreadCount = async () => {
+    try {
+      if (!user?.uid) return;
+
+      const response = await axios.post(`${API_URL}/getNotifications`, {
+        recipient_id: user.uid,
+        recipient_type: "admin",
+        limit: 1,
+      });
+
+      if (response.data) {
+        setUnreadCount(response.data.unreadCount || 0);
+      }
+      
+    } catch (error) {
+      console.error("Error fetching unread count:", error);
+    }
+  };
 
   const menuItems = [
     {
@@ -54,6 +84,23 @@ export default function AdminSidebar() {
       key: "/admin/announcements",
       icon: <NotificationOutlined />,
       label: "Announcements",
+    },
+    {
+      key: "/admin/notifications",
+      icon: <NotificationOutlined />,
+      label: (
+        <span style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <span>Notifications</span>
+          {unreadCount > 0 && (
+            <Badge
+              count={unreadCount}
+              style={{
+                backgroundColor: "#b87d3e",
+              }}
+            />
+          )}
+        </span>
+      ),
     },
     {
       key: "/admin/chat",

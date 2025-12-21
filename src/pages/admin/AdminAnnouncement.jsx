@@ -17,7 +17,6 @@ import {
   PlusOutlined,
   EditOutlined,
   DeleteOutlined,
-  ReloadOutlined,
 } from "@ant-design/icons";
 import axios from "axios";
 import { API_URL } from "../../Constants";
@@ -191,14 +190,6 @@ export default function AdminAnnouncements() {
 
             <Space>
               <Button
-                icon={<ReloadOutlined />}
-                onClick={fetchAnnouncements}
-                className="border-btn"
-              >
-                Refresh
-              </Button>
-
-              <Button
                 type="primary"
                 icon={<PlusOutlined />}
                 onClick={openCreate}
@@ -295,5 +286,4 @@ export default function AdminAnnouncements() {
       </div>
     </div>
   );
-
 }

@@ -23,6 +23,7 @@ import Header from "./components/Header";
 import AdminLayout from "./components/AdminLayout";
 import AdminAnnouncements from "./pages/admin/AdminAnnouncement";
 import AdminChat from "./components/AdminChat";
+import Notifications from "./components/Notifications";
 
 function AppContent() {
   const location = useLocation();
@@ -48,6 +49,7 @@ function AppContent() {
           <Route path="create" element={<AddAdmin />} />
           <Route path="announcements" element={<AdminAnnouncements />} />
           <Route path="chat" element={<AdminChat />} />
+          <Route path="notifications" element={<Notifications />} />
         </Route>
 
         {/* Public */}
