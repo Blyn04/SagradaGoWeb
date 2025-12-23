@@ -22,6 +22,7 @@ export default function AdminChat() {
   const [unreadCount, setUnreadCount] = useState(0);
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
+  const selectedChatRef = useRef(null);
 
   useEffect(() => {
     let API_BASE = API_URL;
@@ -51,10 +52,26 @@ export default function AdminChat() {
       setChats(chats || []);
       const totalUnread = chats?.reduce((sum, chat) => sum + (chat.unreadCount || 0), 0) || 0;
       setUnreadCount(totalUnread);
+
+      const currentSelectedChat = selectedChatRef.current;
+      if (currentSelectedChat && chats) {
+        const updatedChat = chats.find(c => c.userId === currentSelectedChat.userId);
+
+        if (updatedChat) {
+          setSelectedChat(updatedChat);
+          selectedChatRef.current = updatedChat;
+
+          if (updatedChat.messages && JSON.stringify(updatedChat.messages) !== JSON.stringify(currentSelectedChat.messages)) {
+            setMessages(updatedChat.messages || []);
+            scrollToBottom();
+          }
+        }
+      }
     });
 
     newSocket.on("receive-message", ({ message }) => {
-      if (selectedChat && selectedChat.userId === message.senderId) {
+      const currentSelectedChat = selectedChatRef.current;
+      if (currentSelectedChat && currentSelectedChat.userId === message.senderId) {
         setMessages((prev) => [...prev, message]);
         scrollToBottom();
       }
@@ -75,8 +92,21 @@ export default function AdminChat() {
         return updatedChats;
       });
 
-      if (selectedChat && selectedChat.userId === chat.userId) {
-        setMessages((prev) => [...prev, message]);
+      const currentSelectedChat = selectedChatRef.current;
+      if (currentSelectedChat && currentSelectedChat.userId === chat.userId) {
+  
+        if (chat.messages && Array.isArray(chat.messages)) {
+          setMessages(chat.messages);
+
+        } else {
+          setMessages((prev) => [...prev, message]);
+        }
+
+        setSelectedChat((prev) => {
+          const updated = { ...prev, ...chat };
+          selectedChatRef.current = updated;
+          return updated;
+        });
         scrollToBottom();
       }
     });
@@ -84,6 +114,7 @@ export default function AdminChat() {
     newSocket.on("selected-chat", ({ chat }) => {
       if (chat) {
         setSelectedChat(chat);
+        selectedChatRef.current = chat;
         setMessages(chat.messages || []);
         scrollToBottom();
 
@@ -106,12 +137,25 @@ export default function AdminChat() {
     };
   }, []);
 
+  useEffect(() => {
+    if (socket && chats.length > 0 && !selectedChat) {
+      const firstChat = chats[0];
+      selectedChatRef.current = firstChat;
+      socket.emit("select-chat", { userId: firstChat.userId });
+    }
+  }, [socket, chats, selectedChat]);
+
+  useEffect(() => {
+    selectedChatRef.current = selectedChat;
+  }, [selectedChat]);
+
   const fetchChats = async () => {
     try {
       const response = await axios.get(`${API_URL}/chat/getAllChats`);
-      setChats(response.data.chats || []);
+      const fetchedChats = response.data.chats || [];
+      setChats(fetchedChats);
 
-      const totalUnread = response.data.chats?.reduce(
+      const totalUnread = fetchedChats.reduce(
         (sum, chat) => sum + (chat.unreadCount || 0),
         0
       ) || 0;
@@ -125,6 +169,7 @@ export default function AdminChat() {
 
   const handleSelectChat = (chat) => {
     if (socket) {
+      selectedChatRef.current = chat;
       socket.emit("select-chat", { userId: chat.userId });
     }
   };
