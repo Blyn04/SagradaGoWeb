@@ -24,6 +24,7 @@ import AdminLayout from "./components/AdminLayout";
 import AdminAnnouncements from "./pages/admin/AdminAnnouncement";
 import AdminChat from "./components/AdminChat";
 import Notifications from "./components/Notifications";
+import ProfilePage from "./pages/ProfilePage";
 
 function AppContent() {
   const location = useLocation();
@@ -41,6 +42,7 @@ function AppContent() {
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<AdminDashboard />} />
           <Route path="dashboard" element={<AdminDashboard />} />
+          <Route path="profile" element={<ProfilePage />} />
           <Route path="account-management" element={<AccountManagement />} />
           <Route path="bookings" element={<BookingPendingRequests />} />
           <Route path="donations" element={<DonationsList />} />

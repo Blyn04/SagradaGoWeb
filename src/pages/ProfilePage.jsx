@@ -1,11 +1,28 @@
 import React, { useState, useEffect, useContext } from "react";
+import { useNavigate } from "react-router-dom";
 import { NavbarContext } from "../context/AllContext"; 
 import "../styles/profile.css"; 
-import { Modal, Button } from "antd";
+import { Modal, Button, message, Spin } from "antd";
+import axios from "axios";
+import Cookies from "js-cookie";
+import { API_URL } from "../Constants";
+import dayjs from "dayjs";
 
 export default function ProfilePage({ user, onLogout, updateUser }) {
-  const { currentUser: contextUser } = useContext(NavbarContext); 
-  const currentUser = contextUser || user; 
+  const { currentUser: contextUser, setCurrentUser } = useContext(NavbarContext); 
+  const navigate = useNavigate();
+  
+  const getStoredUser = () => {
+    try {
+      const stored = localStorage.getItem("currentUser");
+      return stored ? JSON.parse(stored) : null;
+
+    } catch (e) {
+      return null;
+    }
+  };
+  
+  const currentUser = contextUser || user || getStoredUser(); 
 
   const [formData, setFormData] = useState({
     first_name: currentUser?.first_name || "",
@@ -35,7 +52,13 @@ export default function ProfilePage({ user, onLogout, updateUser }) {
     }
   }, [currentUser]);
 
-  if (!currentUser) return <p>Loading profile...</p>;
+  if (!currentUser) {
+    return (
+      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "400px" }}>
+        <Spin size="large" tip="Loading profile..." />
+      </div>
+    );
+  }
 
   const validateField = (field, value) => {
     let error = "";
@@ -105,24 +128,42 @@ export default function ProfilePage({ user, onLogout, updateUser }) {
   };
 
   const handleSave = async () => {
-    if (!validateForm()) return alert("Please fix the errors in the form.");
+    if (!validateForm()) {
+      message.error("Please fix the errors in the form.");
+      return;
+    }
 
     setIsSaving(true);
     try {
-      if (!updateUser) return alert("updateUser function not provided.");
-
-      const result = await updateUser(formData);
-      if (result.success) {
-        alert(result.message || "Profile updated successfully!");
-        setIsEditing(false);
-
-      } else {
-        alert(result.message || "Failed to update profile.");
+      if (!currentUser?.uid) {
+        message.error("User ID not found.");
+        return;
       }
+
+      const formattedBirthday = formData.birthday
+        ? dayjs(formData.birthday).format("YYYY-MM-DD")
+        : "";
+
+      await axios.put(`${API_URL}/updateUser`, {
+        uid: currentUser.uid,
+        first_name: formData.first_name,
+        middle_name: formData.middle_name,
+        last_name: formData.last_name,
+        contact_number: formData.contact_number,
+        birthday: formattedBirthday,
+        email: formData.email,
+      });
+
+      const updatedUser = { ...currentUser, ...formData };
+      setCurrentUser(updatedUser);
+      localStorage.setItem("currentUser", JSON.stringify(updatedUser));
+
+      message.success("Profile updated successfully!");
+      setIsEditing(false);
 
     } catch (err) {
       console.error(err);
-      alert("An unexpected error occurred.");
+      message.error(err.response?.data?.message || "Failed to update profile. Please try again.");
 
     } finally {
       setIsSaving(false);
@@ -147,7 +188,16 @@ export default function ProfilePage({ user, onLogout, updateUser }) {
 
   const handleLogoutConfirm = () => {
     setShowLogoutModal(false);
-    if (onLogout) onLogout();
+    if (onLogout) {
+      onLogout();
+
+    } else {
+      Cookies.remove("email");
+      setCurrentUser({});
+      localStorage.removeItem("currentUser");
+      navigate("/");
+      window.location.reload();
+    }
   };
 
   const fullName = `${currentUser?.first_name || ""} ${currentUser?.middle_name || ""} ${currentUser?.last_name || ""}`;
@@ -237,7 +287,7 @@ export default function ProfilePage({ user, onLogout, updateUser }) {
       </Button>
 
       <Modal
-        visible={showLogoutModal}
+        open={showLogoutModal}
         title="Confirm Logout"
         onCancel={() => setShowLogoutModal(false)}
         onOk={handleLogoutConfirm}
