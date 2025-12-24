@@ -9,6 +9,7 @@ import {
   UserAddOutlined,
   BookOutlined,
   HeartOutlined,
+  RobotOutlined,
 } from "@ant-design/icons";
 import axios from "axios";
 import dayjs from "dayjs";
@@ -28,6 +29,8 @@ export default function AdminDashboard() {
   const [donationReportData, setDonationReportData] = useState([]);
   const [bookingReportData, setBookingReportData] = useState([]);
   const [systemReportData, setSystemReportData] = useState([]);
+  const [aiAnalysis, setAiAnalysis] = useState("");
+  const [loadingAI, setLoadingAI] = useState(false);
   const [stats, setStats] = useState({
     totalUsers: 0,
     totalPriests: 0,
@@ -40,7 +43,26 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     fetchDashboardData();
+    fetchAIAnalysis();
   }, []);
+
+  const fetchAIAnalysis = async () => {
+    try {
+      setLoadingAI(true);
+      const response = await axios.get(`${API_URL}/admin/ai/stats`);
+
+      if (response.data.success && response.data.analysis) {
+        setAiAnalysis(response.data.analysis);
+      }
+
+    } catch (error) {
+      console.error("Error fetching AI analysis:", error);
+      setAiAnalysis("Unable to generate AI analysis at this time.");
+      
+    } finally {
+      setLoadingAI(false);
+    }
+  };
 
   const fetchDashboardData = async () => {
     try {
@@ -418,6 +440,52 @@ export default function AdminDashboard() {
             })}
           </Row>
         </Card>
+
+        {/* AI Stats Analysis */}
+        <Row gutter={[16, 16]}>
+          <Col xs={24} lg={24}>
+            <Card 
+              title={
+                <Space>
+                  <RobotOutlined style={{ color: "#1890ff" }} />
+                  <Title level={4} className="dashboard-system-overview-title" style={{ margin: 0 }}>
+                    AI-Powered Insights
+                  </Title>
+                </Space>
+              } 
+              className="dashboard-system-overview-card"
+              extra={
+                <Button 
+                  type="link" 
+                  onClick={fetchAIAnalysis} 
+                  loading={loadingAI}
+                  icon={<RobotOutlined />}
+                >
+                  Refresh Analysis
+                </Button>
+              }
+            >
+              {loadingAI ? (
+                <div style={{ textAlign: "center", padding: "20px" }}>
+                  <Spin size="large" tip="Generating AI insights..." />
+                </div>
+              ) : aiAnalysis ? (
+                <div style={{ 
+                  padding: "16px", 
+                  backgroundColor: "#f5f5f5", 
+                  borderRadius: "8px",
+                  whiteSpace: "pre-wrap",
+                  lineHeight: "1.8",
+                  fontSize: "14px"
+                }}>
+                  {aiAnalysis}
+                </div>
+              ) : (
+                <Empty description="No AI analysis available" />
+              )}
+            </Card>
+          </Col>
+        </Row>
 
         {/* System Overview */}
         <Row gutter={[16, 16]}>
