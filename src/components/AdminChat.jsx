@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useContext } from "react";
 import { io } from "socket.io-client";
 import { Layout, List, Input, Button, Badge, Avatar, Typography, message, Card, Empty } from "antd";
-import { MessageOutlined, SendOutlined, UserOutlined } from "@ant-design/icons";
+import { MessageOutlined, SendOutlined, UserOutlined, SearchOutlined } from "@ant-design/icons";
 import { API_URL } from "../Constants";
 import { NavbarContext } from "../context/AllContext";
 import axios from "axios";
@@ -20,6 +20,7 @@ export default function AdminChat() {
   const [inputMessage, setInputMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [searchQuery, setSearchQuery] = useState("");
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
   const selectedChatRef = useRef(null);
@@ -276,6 +277,15 @@ export default function AdminChat() {
       : lastMsg.message;
   };
 
+  const filteredChats = chats.filter((chat) => {
+    if (!searchQuery.trim()) return true;
+    const query = searchQuery.toLowerCase();
+    return (
+      chat.userName?.toLowerCase().includes(query) ||
+      chat.userEmail?.toLowerCase().includes(query)
+    );
+  });
+
   return (
     <div style={{ padding: "24px", background: "#f0f2f5", minHeight: "100vh" }}>
       <div style={{ maxWidth: "1550px", margin: "0 auto" }}>
@@ -297,16 +307,29 @@ export default function AdminChat() {
             }}
           >
             <div style={{ padding: "16px", borderBottom: "1px solid #e8e8e8" }}>
-              <Text strong style={{ fontSize: "18px" }}>Chats</Text>
-              {unreadCount > 0 && <Badge count={unreadCount} style={{ marginLeft: "8px" }} />}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+                <Text strong style={{ fontSize: "18px" }}>Chats</Text>
+                {unreadCount > 0 && <Badge count={unreadCount} style={{ marginLeft: "8px" }} />}
+              </div>
+              <Input
+                placeholder="Search users..."
+                prefix={<SearchOutlined style={{ color: "#8c8c8c" }} />}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                allowClear
+                style={{ borderRadius: "6px" }}
+              />
             </div>
 
             <div style={{ overflowY: "auto", flex: 1 }}>
-              {chats.length === 0 ? (
-                <Empty description="No active chats" style={{ marginTop: "50px" }} />
+              {filteredChats.length === 0 ? (
+                <Empty 
+                  description={searchQuery ? "No users found" : "No active chats"} 
+                  style={{ marginTop: "50px" }} 
+                />
               ) : (
                 <List
-                  dataSource={chats}
+                  dataSource={filteredChats}
                   renderItem={(chat) => (
                     <List.Item
                       style={{
