@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
-import { NavbarContext } from "../context/AllContext"; 
-import "../styles/profile.css"; 
+import { NavbarContext } from "../context/AllContext";
+import "../styles/profile.css";
 import { Modal, Button, message, Spin } from "antd";
 import axios from "axios";
 import Cookies from "js-cookie";
@@ -9,9 +9,9 @@ import { API_URL } from "../Constants";
 import dayjs from "dayjs";
 
 export default function ProfilePage({ user, onLogout, updateUser }) {
-  const { currentUser: contextUser, setCurrentUser } = useContext(NavbarContext); 
+  const { currentUser: contextUser, setCurrentUser } = useContext(NavbarContext);
   const navigate = useNavigate();
-  
+
   const getStoredUser = () => {
     try {
       const stored = localStorage.getItem("currentUser");
@@ -21,8 +21,8 @@ export default function ProfilePage({ user, onLogout, updateUser }) {
       return null;
     }
   };
-  
-  const currentUser = contextUser || user || getStoredUser(); 
+
+  const currentUser = contextUser || user || getStoredUser();
 
   const [formData, setFormData] = useState({
     first_name: currentUser?.first_name || "",
@@ -66,25 +66,37 @@ export default function ProfilePage({ user, onLogout, updateUser }) {
     switch (field) {
       case "first_name":
       case "last_name":
-        if (!value.trim()) error = `${field.replace("_", " ")} is required`;
-        else if (!/^[a-zA-Z\s\-']+$/.test(value)) error = "Must contain only letters";
-        else if (value.trim().length < 2) error = "Must be at least 2 characters";
+        if (!value.trim()) {
+          error = `${field.replace("_", " ")} is required.`;
+        } else if (!/^[a-zA-Z\s\-']+$/.test(value)) {
+          error = "This field must contain letters only.";
+        } else if (value.trim().length < 2) {
+          error = "This field must be at least 2 characters long.";
+        }
         break;
 
       case "middle_name":
-        if (value && !/^[a-zA-Z\s\-']+$/.test(value)) error = "Must contain only letters";
+        if (value && !/^[a-zA-Z\s\-']+$/.test(value)) {
+          error = "This field must contain letters only.";
+        }
         break;
 
       case "contact_number":
-        if (!value.trim()) error = "Contact number is required";
-        else if (!/^[0-9]+$/.test(value)) error = "Must contain only digits";
-        else if (value.length !== 11) error = "Must be exactly 11 digits";
+        if (!value.trim()) {
+          error = "Contact number is required.";
+        } else if (!/^[0-9]+$/.test(value)) {
+          error = "Contact number must contain digits only.";
+        } else if (value.length !== 11) {
+          error = "Contact number must be exactly 11 digits.";
+        }
         break;
 
       case "email":
-        if (!value.trim()) error = "Email is required";
-
-        else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) error = "Invalid email address";
+        if (!value.trim()) {
+          error = "Email address is required.";
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+          error = "Please enter a valid email address.";
+        }
         break;
 
       default:
@@ -107,8 +119,6 @@ export default function ProfilePage({ user, onLogout, updateUser }) {
   };
 
   const validateForm = () => {
-    const fields = ["first_name", "last_name", "middle_name", "email", "contact_number"];
-    let hasErrors = false;
     const newErrors = {};
     const newTouched = {};
 
@@ -135,15 +145,6 @@ export default function ProfilePage({ user, onLogout, updateUser }) {
 
     setIsSaving(true);
     try {
-      if (!currentUser?.uid) {
-        message.error("User ID not found.");
-        return;
-      }
-
-      const formattedBirthday = formData.birthday
-        ? dayjs(formData.birthday).format("YYYY-MM-DD")
-        : "";
-
       await axios.put(`${API_URL}/updateUser`, {
         uid: currentUser.uid,
         first_name: formData.first_name,
@@ -160,7 +161,6 @@ export default function ProfilePage({ user, onLogout, updateUser }) {
 
       message.success("Profile updated successfully!");
       setIsEditing(false);
-
     } catch (err) {
       console.error(err);
       message.error(err.response?.data?.message || "Failed to update profile. Please try again.");
@@ -168,22 +168,6 @@ export default function ProfilePage({ user, onLogout, updateUser }) {
     } finally {
       setIsSaving(false);
     }
-  };
-
-  const handleCancel = () => {
-    if (currentUser) {
-      setFormData({
-        first_name: currentUser.first_name || "",
-        middle_name: currentUser.middle_name || "",
-        last_name: currentUser.last_name || "",
-        email: currentUser.email || "",
-        contact_number: currentUser.contact_number || "",
-        birthday: currentUser.birthday || "",
-      });
-    }
-    setErrors({});
-    setTouched({});
-    setIsEditing(false);
   };
 
   const handleLogoutConfirm = () => {
@@ -200,89 +184,55 @@ export default function ProfilePage({ user, onLogout, updateUser }) {
     }
   };
 
-  const fullName = `${currentUser?.first_name || ""} ${currentUser?.middle_name || ""} ${currentUser?.last_name || ""}`;
-
   return (
     <div className="profileContainer">
-      <h2>{fullName}</h2>
-      <p>{currentUser?.email}</p>
+      <h2 className="pageTitle">Profile Information</h2>
 
-      <div className="formGroup">
-        <label>First Name</label>
-        <input
-          type="text"
-          value={formData.first_name}
-          onChange={(e) => handleInputChange("first_name", e.target.value)}
-          onBlur={() => handleBlur("first_name")}
-          disabled={!isEditing}
-        />
-        {errors.first_name && <span className="error">{errors.first_name}</span>}
+      <div className="formGrid">
+        {[
+          ["First Name", "first_name"],
+          ["Middle Name", "middle_name"],
+          ["Last Name", "last_name"],
+          ["Contact Number", "contact_number"],
+          ["Email", "email"],
+        ].map(([label, field]) => (
+          <div className="formGroup" key={field}>
+            <label>{label}</label>
+            <input
+              value={formData[field]}
+              onChange={(e) => handleChange(field, e.target.value)}
+              onBlur={() => handleBlur(field)}
+              disabled={!isEditing}
+            />
+            {errors[field] && <span className="error">{errors[field]}</span>}
+          </div>
+        ))}
       </div>
 
-      <div className="formGroup">
-        <label>Middle Name</label>
-        <input
-          type="text"
-          value={formData.middle_name}
-          onChange={(e) => handleInputChange("middle_name", e.target.value)}
-          onBlur={() => handleBlur("middle_name")}
-          disabled={!isEditing}
-        />
-        {errors.middle_name && <span className="error">{errors.middle_name}</span>}
-      </div>
-
-      <div className="formGroup">
-        <label>Last Name</label>
-        <input
-          type="text"
-          value={formData.last_name}
-          onChange={(e) => handleInputChange("last_name", e.target.value)}
-          onBlur={() => handleBlur("last_name")}
-          disabled={!isEditing}
-        />
-        {errors.last_name && <span className="error">{errors.last_name}</span>}
-      </div>
-
-      <div className="formGroup">
-        <label>Contact Number</label>
-        <input
-          type="text"
-          value={formData.contact_number}
-          onChange={(e) => handleInputChange("contact_number", e.target.value)}
-          onBlur={() => handleBlur("contact_number")}
-          disabled={!isEditing}
-        />
-        {errors.contact_number && <span className="error">{errors.contact_number}</span>}
-      </div>
-
-      <div className="formGroup">
-        <label>Email</label>
-        <input
-          type="email"
-          value={formData.email}
-          onChange={(e) => handleInputChange("email", e.target.value)}
-          onBlur={() => handleBlur("email")}
-          disabled={!isEditing}
-        />
-        {errors.email && <span className="error">{errors.email}</span>}
-      </div>
-
-      {!isEditing ? (
-        <Button type="primary" onClick={() => setIsEditing(true)}>
-          Edit Profile
-        </Button>
-      ) : (
-        <div style={{ display: "flex", gap: "10px" }}>
-          <Button onClick={handleCancel} disabled={isSaving}>
-            Cancel
+      <div className="actionRow">
+        {!isEditing ? (
+          <Button className="border-btn" onClick={() => setIsEditing(true)}>
+            Edit Profile
           </Button>
-          <Button type="primary" onClick={handleSave} loading={isSaving}>
-            Save
-          </Button>
-        </div>
-      )}
+        ) : (
+          <>
+            <Button className="border-btn2" onClick={() => setIsEditing(false)}>Cancel</Button>
+            <Button
+              className="filled-btn"
+              loading={isSaving}
+              onClick={handleSave}
+            >
+              Save Changes
+            </Button>
+          </>
+        )}
+      </div>
 
-      <Button type="default" danger style={{ marginTop: "20px" }} onClick={() => setShowLogoutModal(true)}>
+      <Button
+        danger
+        className="logoutBtn"
+        onClick={() => setShowLogoutModal(true)}
+      >
         Logout
       </Button>
 
@@ -292,7 +242,7 @@ export default function ProfilePage({ user, onLogout, updateUser }) {
         onCancel={() => setShowLogoutModal(false)}
         onOk={handleLogoutConfirm}
       >
-        <p>Are you sure you want to logout?</p>
+        Are you sure you want to logout?
       </Modal>
     </div>
   );
