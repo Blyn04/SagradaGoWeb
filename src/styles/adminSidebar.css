@@ -135,10 +135,14 @@
   fill: #ffffff !important;
 }
 
+.custom-admin-menu .ant-menu-title-content span {
+  color: inherit !important;
+}
+
 /* Download App Section */
 .admin-download-app {
   margin: 16px;
-  margin-top: 55px;
+  margin-top: 0px;
   padding: 16px;
   background: rgba(255, 255, 255, 0.08);
   border-radius: 14px;

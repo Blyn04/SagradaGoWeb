@@ -158,7 +158,7 @@ export default function AdminSidebar() {
         <div className="download-subtitle">
           Get faster access on your phone!
         </div>
-        <Button type="primary" block className="download-btn">
+        <Button block className="download-btn">
           Download
         </Button>
       </div>
