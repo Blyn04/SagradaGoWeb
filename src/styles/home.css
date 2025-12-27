@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 .home-main-container {
-  @apply w-svw h-40;
+  background: #f6f6f6;
 }
 
 

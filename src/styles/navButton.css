@@ -1,21 +1,52 @@
-@import "tailwindcss";
-
-
-.nav-container{
-    @apply w-full h-full;
-}
-.nav-button{
-    @apply w-40 h-full flex py-4! justify-center items-center text-xl cursor-pointer;
+.nav-container {
+    width: 100%;
+    height: 100%;
+    position: relative;
 }
 
-.dropdown-container{
-    @apply absolute top-full z-10 w-max bg-white flex flex-col shadow-lg text-xl gap-4;
+.nav-button {
+    width: 160px;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 16px 0;
+    font-size: 16px;
+    font-weight: 500;
+    color: #555;
+    cursor: pointer;
+    background: none;
+    border: none;
+    outline: none;
 }
 
-.dropdown-container a{
-    @apply px-4! py-2!;
+.nav-button.underline {
+    text-decoration: underline;
 }
 
-.dropdown-container a:hover{
-    @apply bg-gray-400;
+.dropdown-container {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: 10;
+    min-width: 200px;
+    background-color: #fff;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    box-shadow: 0 6px 6px rgba(0, 0, 0, 0.1);
+    border-radius: 0 0 8px 8px;
+}
+
+.dropdown-container a {
+    padding: 8px 12px;
+    font-size: 15px;
+    font-weight: 500;
+    color: #555;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.dropdown-container a:hover {
+    background-color: #e0e0e0;
 }
