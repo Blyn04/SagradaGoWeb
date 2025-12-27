@@ -44,7 +44,6 @@ export default function Header() {
 
   return (
     <div className="header-main-container">
-      {/* Left: Logo */}
       <img
         src={Logo}
         alt="Logo"
@@ -52,7 +51,6 @@ export default function Header() {
         onClick={() => navigate("/")}
       />
 
-      {/* Center: Navbar */}
       <div className="navbar-container">
         {navbar.map((elem) => (
           <NavButton
@@ -69,11 +67,11 @@ export default function Header() {
         ))}
       </div>
 
-      {/* Right: Sign-in / Logout */}
       <div className="signin-container">
         {email ? (
           <button
-            className="p-2 rounded hover:bg-gray-200 transition"
+            className="border-btn"
+            style={{ padding: "8px 15px" }}
             title="Logout"
             onClick={() => {
               Cookies.remove("email");
@@ -85,10 +83,11 @@ export default function Header() {
           </button>
         ) : (
           <button
-            className="px-4 py-2 rounded text-white bg-[#6B5F32] text-[14px] font-medium hover:opacity-90 transition"
+            className="border-btn"
+            style={{ padding: "8px 15px", fontSize: "14px " }}
             onClick={() => setShowSignin(true)}
           >
-            Sign in
+            Sign In
           </button>
         )}
       </div>

@@ -1,17 +1,66 @@
-@import "tailwindcss";
-
 .header-main-container {
-  @apply w-full h-20 sticky top-0 z-50 bg-white shadow-md flex items-center px-8 justify-between;
+  width: 100%;
+  height: 75px;
+  padding: 0 40px;
+  /* border-radius: 0 0 15px 15px; */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  background: #ffffff;
+  border-bottom: 1px solid #eee;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+
+  position: sticky;
+  top: 0;
+  z-index: 1000;
 }
 
 .header-logo {
-  @apply w-16 h-auto cursor-pointer select-none;
+  height: 48px;
+  width: auto;
+  cursor: pointer;
+  transition: transform 0.25s ease;
+}
+
+.header-logo:hover {
+  transform: scale(1.05);
 }
 
 .navbar-container {
-  @apply flex justify-center flex-1 gap-6 text-[19px]; /* center navbar, small gaps */
+  display: flex;
+  align-items: center;
+  gap: 28px;
 }
 
 .signin-container {
-  @apply flex items-center gap-4;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.nav-button {
+  font-size: 16px;
+  font-weight: 500;
+  color: #555;
+}
+
+.nav-dropdown {
+  font-size: 16px;
+  font-weight: 500;
+  color: #555;
+}
+
+.nav-dropdown {
+  font-size: 16px;
+  font-weight: 500;
+  color: #555;
+  background-color: #fff;
+  padding: 8px 12px;
+  border-radius: 4px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+}
+.nav-dropdown:hover {
+  background-color: #f0f0f0;
 }
