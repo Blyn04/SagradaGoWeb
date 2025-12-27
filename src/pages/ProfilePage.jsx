@@ -2,13 +2,15 @@ import React, { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { NavbarContext } from "../context/AllContext";
 import "../styles/profile.css";
-import { Modal, Button, message, Spin, Image } from "antd";
+import { Modal, Button, message, Spin, Image, Carousel } from "antd";
 import axios from "axios";
 import Cookies from "js-cookie";
 import { API_URL } from "../Constants";
 import dayjs from "dayjs";
 
-import profileBanner from "../assets/SAGRADA-FAMILIA-PARISH.jpg";
+import banner1 from "../assets/SAGRADA-FAMILIA-PARISH.jpg";
+import banner2 from "../assets/christmas.jpg";
+import banner3 from "../assets/dyd.jpg";
 
 export default function ProfilePage({ user, onLogout, updateUser }) {
   const { currentUser: contextUser, setCurrentUser } = useContext(NavbarContext);
@@ -189,15 +191,21 @@ export default function ProfilePage({ user, onLogout, updateUser }) {
   return (
     <div className="profileContainer">
       <div className="profileBanner">
-        <Image
-          src={profileBanner}
-          alt="Profile Banner"
-          width={'100%'}
-          height={400}
-          style={{ objectFit: "cover", borderRadius: "10px 10px 0 0" }}
-          fallback="/no-image.jpg"
-          preview={false}
-        />
+        <Carousel autoplay autoplaySpeed={4000} dots effect="fade">
+          {[banner1, banner2, banner3].map((img, index) => (
+            <div key={index}>
+              <Image
+                src={img}
+                alt={`Profile Banner ${index + 1}`}
+                width="100%"
+                height={400}
+                style={{ objectFit: "cover" }}
+                fallback="/no-image.jpg"
+                preview={false}
+              />
+            </div>
+          ))}
+        </Carousel>
       </div>
 
       <div style={{ padding: 32 }}>
