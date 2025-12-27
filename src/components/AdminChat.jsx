@@ -53,14 +53,14 @@ export default function AdminChat() {
       setChats(chats || []);
       const totalUnread = chats?.reduce((sum, chat) => sum + (chat.unreadCount || 0), 0) || 0;
       setUnreadCount(totalUnread);
-      
+
       const currentSelectedChat = selectedChatRef.current;
       if (currentSelectedChat && chats) {
         const updatedChat = chats.find(c => c.userId === currentSelectedChat.userId);
         if (updatedChat) {
           setSelectedChat(updatedChat);
           selectedChatRef.current = updatedChat;
-  
+
           if (updatedChat.messages && JSON.stringify(updatedChat.messages) !== JSON.stringify(currentSelectedChat.messages)) {
             setMessages(updatedChat.messages || []);
             scrollToBottom();
@@ -294,7 +294,7 @@ export default function AdminChat() {
             background: "#f0f2f5",
             borderRadius: "8px",
             overflow: "hidden",
-            minHeight: "95vh",
+            height: "95vh",
           }}
         >
           <Sider
@@ -323,9 +323,9 @@ export default function AdminChat() {
 
             <div style={{ overflowY: "auto", flex: 1 }}>
               {filteredChats.length === 0 ? (
-                <Empty 
-                  description={searchQuery ? "No users found" : "No active chats"} 
-                  style={{ marginTop: "50px" }} 
+                <Empty
+                  description={searchQuery ? "No users found" : "No active chats"}
+                  style={{ marginTop: "50px" }}
                 />
               ) : (
                 <List
@@ -430,10 +430,10 @@ export default function AdminChat() {
                       style={{ flex: 1 }}
                     />
                     <Button
-                      type="primary"
                       icon={<SendOutlined />}
                       onClick={sendMessage}
                       disabled={!inputMessage.trim()}
+                      className="filled-btn"
                       style={{ background: "#b87d3e", borderColor: "#b87d3e" }}
                     >
                       Send
