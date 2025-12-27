@@ -1,10 +1,15 @@
 .profileContainer {
   max-width: 1550px;
-  margin: 40px auto;
-  padding: 32px;
+  margin: 30px auto;
   background: #ffffff;
   border-radius: 18px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.profileBanner img {
+  width: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .pageTitle {

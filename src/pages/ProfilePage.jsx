@@ -2,11 +2,13 @@ import React, { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { NavbarContext } from "../context/AllContext";
 import "../styles/profile.css";
-import { Modal, Button, message, Spin } from "antd";
+import { Modal, Button, message, Spin, Image } from "antd";
 import axios from "axios";
 import Cookies from "js-cookie";
 import { API_URL } from "../Constants";
 import dayjs from "dayjs";
+
+import profileBanner from "../assets/SAGRADA-FAMILIA-PARISH.jpg";
 
 export default function ProfilePage({ user, onLogout, updateUser }) {
   const { currentUser: contextUser, setCurrentUser } = useContext(NavbarContext);
@@ -186,65 +188,85 @@ export default function ProfilePage({ user, onLogout, updateUser }) {
 
   return (
     <div className="profileContainer">
-      <div style={{ display: "flex", justifyContent: "space-between", alignContent: "center", marginBottom: 40 }}>
-        <div>
-          <h2 className="pageTitle">Profile Information</h2>
-          <p style={{ marginTop: -20 }}>
-            Manage your personal information and ensure your account details are
-            accurate and current.
-          </p>
-        </div>
-
-        <div className="actionRow">
-          {!isEditing ? (
-            <Button className="border-btn" onClick={() => setIsEditing(true)}>
-              Edit Profile
-            </Button>
-          ) : (
-            <>
-              <Button className="border-btn2" onClick={() => setIsEditing(false)}>Cancel</Button>
-              <Button
-                className="filled-btn"
-                loading={isSaving}
-                onClick={handleSave}
-              >
-                Save Changes
-              </Button>
-            </>
-          )}
-        </div>
+      <div className="profileBanner">
+        <Image
+          src={profileBanner}
+          alt="Profile Banner"
+          width={'100%'}
+          height={400}
+          style={{ objectFit: "cover", borderRadius: "10px 10px 0 0" }}
+          fallback="/no-image.jpg"
+          preview={false}
+        />
       </div>
 
-      <div className="formGrid">
-        {[
-          ["First Name", "first_name"],
-          ["Middle Name", "middle_name"],
-          ["Last Name", "last_name"],
-          ["Contact Number", "contact_number"],
-          ["Email", "email"],
-        ].map(([label, field]) => (
-          <div className="formGroup" key={field}>
-            <label>{label}</label>
-            <input
-              value={formData[field]}
-              onChange={(e) => handleChange(field, e.target.value)}
-              onBlur={() => handleBlur(field)}
-              disabled={!isEditing}
-            />
-            {errors[field] && <span className="error">{errors[field]}</span>}
+      <div style={{ padding: 32 }}>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: 40,
+            marginTop: 10
+          }}
+        >
+          <div>
+            <h2 className="pageTitle">Profile Information</h2>
+            <p style={{ marginTop: -20 }}>
+              Manage your personal information and ensure your account details are
+              accurate and current.
+            </p>
           </div>
-        ))}
+
+          <div className="actionRow">
+            {!isEditing ? (
+              <Button className="border-btn" onClick={() => setIsEditing(true)}>
+                Edit Profile
+              </Button>
+            ) : (
+              <>
+                <Button className="border-btn2" onClick={() => setIsEditing(false)}>Cancel</Button>
+                <Button
+                  className="filled-btn"
+                  loading={isSaving}
+                  onClick={handleSave}
+                >
+                  Save Changes
+                </Button>
+              </>
+            )}
+          </div>
+        </div>
+
+        <div className="formGrid">
+          {[
+            ["First Name", "first_name"],
+            ["Middle Name", "middle_name"],
+            ["Last Name", "last_name"],
+            ["Contact Number", "contact_number"],
+            ["Email", "email"],
+          ].map(([label, field]) => (
+            <div className="formGroup" key={field}>
+              <label>{label}</label>
+              <input
+                value={formData[field]}
+                onChange={(e) => handleChange(field, e.target.value)}
+                onBlur={() => handleBlur(field)}
+                disabled={!isEditing}
+              />
+              {errors[field] && <span className="error">{errors[field]}</span>}
+            </div>
+          ))}
+        </div>
+
+        <Button
+          danger
+          className="logoutBtn"
+          onClick={() => setShowLogoutModal(true)}
+        >
+          Logout
+        </Button>
       </div>
-
-
-
-      <Button
-        danger
-        className="logoutBtn"
-        onClick={() => setShowLogoutModal(true)}
-      >
-        Logout
-      </Button>
 
       <Modal
         open={showLogoutModal}
