@@ -287,8 +287,8 @@ export default function Wedding() {
 
   function generateTransactionID() {
     const random = Math.random().toString(36).substring(2, 8).toUpperCase();
-    const timestamp = Date.now().toString().slice(-6); // last 6 digits of timestamp
-    return `TX-${timestamp}-${random}`;
+    const timestamp = Date.now().toString().slice(-6);
+    return `WD-${timestamp}-${random}`;
   }
 
   async function handleUpload() {
@@ -417,11 +417,16 @@ export default function Wedding() {
             {elem.type === "date" ? (
               <>
                 <DatePicker
-                  selected={date ? new Date(date) : null}
-                  onChange={(v) => setDate(v ? v.toISOString() : "")}
+                  selected={elem.value ? new Date(elem.value) : null}
+                  onChange={(v) => elem.onChange(v ? v.toISOString() : "")}
                   className="input-text"
                   dateFormat="yyyy-MM-dd"
                   excludeDates={occupiedDates}
+                  showYearDropdown
+                  showMonthDropdown
+                  dropdownMode="select"
+                  minDate={new Date(1900, 0, 1)}
+                  maxDate={new Date()}
                 />
               </>
             ) : elem.type === "time" ? (
@@ -552,7 +557,6 @@ export default function Wedding() {
                 }}
               />
             </div>
-
           </div>
         ))}
 
@@ -575,7 +579,6 @@ export default function Wedding() {
                 }}
               />
             </div>
-
           </div>
         ))}
 
