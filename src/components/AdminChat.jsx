@@ -173,6 +173,32 @@ export default function AdminChat() {
     selectedChatRef.current = selectedChat;
   }, [selectedChat]);
 
+  useEffect(() => {
+    if (socket && selectedChat && selectedChat.userId) {
+      markAsSeen(selectedChat.userId);
+
+      const interval = setInterval(() => {
+        if (socket && selectedChat && selectedChat.userId) {
+          markAsSeen(selectedChat.userId);
+        }
+      }, 2000); 
+      
+      return () => clearInterval(interval);
+    }
+  }, [socket, selectedChat?.userId]);
+
+  useEffect(() => {
+    if (socket && selectedChat && selectedChat.userId && messages.length > 0) {
+      const hasUnreadUserMessages = messages.some(
+        msg => msg.senderType === "user" && !msg.seenAt
+      );
+      
+      if (hasUnreadUserMessages) {
+        markAsSeen(selectedChat.userId);
+      }
+    }
+  }, [messages, socket, selectedChat?.userId]);
+
   const fetchChats = async () => {
     try {
       const response = await axios.get(`${API_URL}/chat/getAllChats`);
@@ -218,7 +244,6 @@ export default function AdminChat() {
       if (socket) {
         socket.emit("mark-as-seen", { userId, viewerType: "admin" });
       }
-      
     } catch (error) {
       console.error("Error marking as seen:", error);
     }
