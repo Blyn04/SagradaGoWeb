@@ -53,14 +53,14 @@ export default function AdminChat() {
       setChats(chats || []);
       const totalUnread = chats?.reduce((sum, chat) => sum + (chat.unreadCount || 0), 0) || 0;
       setUnreadCount(totalUnread);
-
+      
       const currentSelectedChat = selectedChatRef.current;
       if (currentSelectedChat && chats) {
         const updatedChat = chats.find(c => c.userId === currentSelectedChat.userId);
         if (updatedChat) {
           setSelectedChat(updatedChat);
           selectedChatRef.current = updatedChat;
-
+  
           if (updatedChat.messages && JSON.stringify(updatedChat.messages) !== JSON.stringify(currentSelectedChat.messages)) {
             setMessages(updatedChat.messages || []);
             scrollToBottom();
@@ -83,6 +83,21 @@ export default function AdminChat() {
           msg._id === messageId || msg.id === messageId ? { ...msg, seenAt } : msg
         )
       );
+    });
+
+    newSocket.on("messages-seen", ({ userId, seenAt, messageIds }) => {
+      const currentSelectedChat = selectedChatRef.current;
+      if (currentSelectedChat && currentSelectedChat.userId === userId) {
+        setMessages((prev) =>
+          prev.map((msg) => {
+            const msgId = msg._id?.toString() || msg.id?.toString();
+            if (messageIds && messageIds.includes(msgId)) {
+              return { ...msg, seenAt };
+            }
+            return msg;
+          })
+        );
+      }
     });
 
     newSocket.on("new-message", ({ chat, message }) => {
@@ -128,6 +143,8 @@ export default function AdminChat() {
         if (chat.unreadCount > 0) {
           markAsRead(chat.userId);
         }
+
+        markAsSeen(chat.userId);
       }
     });
 
@@ -178,6 +195,7 @@ export default function AdminChat() {
     if (socket) {
       selectedChatRef.current = chat;
       socket.emit("select-chat", { userId: chat.userId });
+      markAsSeen(chat.userId);
     }
   };
 
@@ -192,6 +210,17 @@ export default function AdminChat() {
 
     } catch (error) {
       console.error("Error marking as read:", error);
+    }
+  };
+
+  const markAsSeen = async (userId) => {
+    try {
+      if (socket) {
+        socket.emit("mark-as-seen", { userId, viewerType: "admin" });
+      }
+      
+    } catch (error) {
+      console.error("Error marking as seen:", error);
     }
   };
 
@@ -280,10 +309,9 @@ export default function AdminChat() {
   const filteredChats = chats.filter((chat) => {
     if (!searchQuery.trim()) return true;
     const query = searchQuery.toLowerCase();
-    return (
-      chat.userName?.toLowerCase().includes(query) ||
-      chat.userEmail?.toLowerCase().includes(query)
-    );
+    const userName = (chat.userName || "").toLowerCase();
+    const lastMessage = getLastMessage(chat).toLowerCase();
+    return userName.includes(query) || lastMessage.includes(query);
   });
 
   return (
@@ -295,6 +323,7 @@ export default function AdminChat() {
             borderRadius: "8px",
             overflow: "hidden",
             height: "95vh",
+            maxHeight: "95vh",
           }}
         >
           <Sider
@@ -312,20 +341,20 @@ export default function AdminChat() {
                 {unreadCount > 0 && <Badge count={unreadCount} style={{ marginLeft: "8px" }} />}
               </div>
               <Input
-                placeholder="Search users..."
-                prefix={<SearchOutlined style={{ color: "#8c8c8c" }} />}
+                placeholder="Search chats..."
+                prefix={<SearchOutlined />}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 allowClear
-                style={{ borderRadius: "6px" }}
+                style={{ marginBottom: "8px" }}
               />
             </div>
 
             <div style={{ overflowY: "auto", flex: 1 }}>
               {filteredChats.length === 0 ? (
-                <Empty
-                  description={searchQuery ? "No users found" : "No active chats"}
-                  style={{ marginTop: "50px" }}
+                <Empty 
+                  description={searchQuery ? "No chats found" : "No active chats"} 
+                  style={{ marginTop: "50px" }} 
                 />
               ) : (
                 <List
@@ -366,18 +395,18 @@ export default function AdminChat() {
           </Sider>
 
           {/* Main chat area */}
-          <Content style={{ display: "flex", flexDirection: "column", background: "#f0f2f5" }}>
+          <Content style={{ display: "flex", flexDirection: "column", background: "#f0f2f5", height: "100%", overflow: "hidden" }}>
             {selectedChat ? (
               <>
                 {/* Header */}
-                <div style={{ padding: "16px", borderBottom: "1px solid #e8e8e8", background: "#fff" }}>
+                <div style={{ padding: "16px", borderBottom: "1px solid #e8e8e8", background: "#fff", flexShrink: 0 }}>
                   <Text strong>{selectedChat.userName}</Text>
                 </div>
 
                 {/* Messages container */}
                 <div
                   ref={messagesContainerRef}
-                  style={{ flex: 1, overflowY: "auto", padding: "16px", background: "#fafafa" }}
+                  style={{ flex: 1, overflowY: "auto", overflowX: "hidden", padding: "16px", background: "#fafafa", minHeight: 0 }}
                 >
                   {messages.length === 0 ? (
                     <Empty description="No messages yet. Start the conversation!" />
@@ -410,11 +439,29 @@ export default function AdminChat() {
                       </div>
                     ))
                   )}
+                  
+                  {/* Seen indicator at bottom - only for LAST admin message */}
+                  {(() => {
+                    if (messages.length === 0) return null;
+                    const adminMessages = messages.filter(msg => msg.senderType === "admin");
+                    const lastAdminMessage = adminMessages[adminMessages.length - 1];
+                    if (lastAdminMessage && lastAdminMessage.seenAt) {
+                      return (
+                        <div style={{ textAlign: "right", marginTop: "4px", marginRight: "16px", marginBottom: "8px" }}>
+                          <Text style={{ fontSize: "11px", color: "#8c8c8c", fontStyle: "italic" }}>
+                            Seen {formatSeenTime(lastAdminMessage.seenAt)}
+                          </Text>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
+                  
                   <div ref={messagesEndRef} />
                 </div>
 
                 {/* Input box */}
-                <div style={{ padding: "16px", borderTop: "1px solid #e8e8e8", background: "#fff" }}>
+                <div style={{ padding: "16px", borderTop: "1px solid #e8e8e8", background: "#fff", flexShrink: 0 }}>
                   <div style={{ display: "flex", gap: "8px" }}>
                     <TextArea
                       value={inputMessage}
@@ -430,10 +477,10 @@ export default function AdminChat() {
                       style={{ flex: 1 }}
                     />
                     <Button
+                      type="primary"
                       icon={<SendOutlined />}
                       onClick={sendMessage}
                       disabled={!inputMessage.trim()}
-                      className="filled-btn"
                       style={{ background: "#b87d3e", borderColor: "#b87d3e" }}
                     >
                       Send
