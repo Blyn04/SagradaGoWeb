@@ -50,7 +50,11 @@ export default function AccountManagement() {
   const [filterType, setFilterType] = useState("all");
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
+  const [viewingUser, setViewingUser] = useState(null);
+  const [userDonations, setUserDonations] = useState([]);
+  const [loadingDonations, setLoadingDonations] = useState(false);
 
   const [formData, setFormData] = useState({
     first_name: "",
@@ -243,6 +247,7 @@ export default function AccountManagement() {
     if (password.length < 6) {
       return "Password must be at least 6 characters";
     }
+
     return "";
   };
 
@@ -254,6 +259,7 @@ export default function AccountManagement() {
     if (password !== confirmPassword) {
       return "Passwords do not match";
     }
+
     return "";
   };
 
@@ -268,7 +274,7 @@ export default function AccountManagement() {
     
     if (limited.length === 11) {
       const error = validateContactNumber(limited);
-      
+
       if (error) {
         setErrors((prev) => ({ ...prev, contact_number: error }));
       }
@@ -404,6 +410,28 @@ export default function AccountManagement() {
     });
   };
 
+  const handleViewDetails = async (user) => {
+    setViewingUser(user);
+    setShowDetailsModal(true);
+    setUserDonations([]);
+    
+    if (!user.is_priest && user.uid) {
+      try {
+        setLoadingDonations(true);
+        const response = await axios.get(`${API_URL}/admin/getDonationsByUser/${user.uid}`);
+        if (response.data && response.data.donations) {
+          setUserDonations(response.data.donations);
+        }
+
+      } catch (error) {
+        console.error("Error fetching user donations:", error);
+
+      } finally {
+        setLoadingDonations(false);
+      }
+    }
+  };
+
   const handleEditUser = (user) => {
     setEditingUser(user);
     const birthdayValue = user.birthday ? dayjs(user.birthday).format("MM/DD/YYYY") : "";
@@ -423,6 +451,7 @@ export default function AccountManagement() {
     });
     setBirthdayDisplay(birthdayValue);
     setErrors({});
+    setShowDetailsModal(false);
     setShowEditModal(true);
   };
 
@@ -580,10 +609,9 @@ export default function AccountManagement() {
       render: (_, record) => (
         <Space>
           <Button
-            icon={<EditOutlined />}
-            onClick={() => handleEditUser(record)}
+            onClick={() => handleViewDetails(record)}
           >
-            Edit
+            View Details
           </Button>
           <Button
             type={record.is_priest ? "default" : "primary"}
@@ -695,6 +723,192 @@ export default function AccountManagement() {
             }}
           />
         </Card>
+
+        {/* User Details Modal */}
+        <Modal
+          title="User/Priest Details"
+          open={showDetailsModal}
+          onCancel={() => {
+            setShowDetailsModal(false);
+            setViewingUser(null);
+          }}
+          footer={null}
+          width={700}
+          maskClosable={true}
+        >
+          {viewingUser && (
+            <div>
+              <Row gutter={[16, 16]}>
+                <Col xs={24} sm={12}>
+                  <div style={{ marginBottom: 16 }}>
+                    <Text strong style={{ display: "block", marginBottom: 4, color: "#666" }}>
+                      First Name
+                    </Text>
+                    <Text>{viewingUser.first_name || "N/A"}</Text>
+                  </div>
+                </Col>
+                <Col xs={24} sm={12}>
+                  <div style={{ marginBottom: 16 }}>
+                    <Text strong style={{ display: "block", marginBottom: 4, color: "#666" }}>
+                      Middle Name
+                    </Text>
+                    <Text>{viewingUser.middle_name || "N/A"}</Text>
+                  </div>
+                </Col>
+                <Col xs={24} sm={12}>
+                  <div style={{ marginBottom: 16 }}>
+                    <Text strong style={{ display: "block", marginBottom: 4, color: "#666" }}>
+                      Last Name
+                    </Text>
+                    <Text>{viewingUser.last_name || "N/A"}</Text>
+                  </div>
+                </Col>
+                <Col xs={24} sm={12}>
+                  <div style={{ marginBottom: 16 }}>
+                    <Text strong style={{ display: "block", marginBottom: 4, color: "#666" }}>
+                      Email
+                    </Text>
+                    <Text>{viewingUser.email || "N/A"}</Text>
+                  </div>
+                </Col>
+                <Col xs={24} sm={12}>
+                  <div style={{ marginBottom: 16 }}>
+                    <Text strong style={{ display: "block", marginBottom: 4, color: "#666" }}>
+                      Contact Number
+                    </Text>
+                    <Text>{viewingUser.contact_number || "N/A"}</Text>
+                  </div>
+                </Col>
+                <Col xs={24} sm={12}>
+                  <div style={{ marginBottom: 16 }}>
+                    <Text strong style={{ display: "block", marginBottom: 4, color: "#666" }}>
+                      Birthday
+                    </Text>
+                    <Text>{viewingUser.birthday ? formatDate(viewingUser.birthday) : "N/A"}</Text>
+                  </div>
+                </Col>
+                <Col xs={24} sm={12}>
+                  <div style={{ marginBottom: 16 }}>
+                    <Text strong style={{ display: "block", marginBottom: 4, color: "#666" }}>
+                      Role
+                    </Text>
+                    <Tag color={viewingUser.is_priest ? "purple" : "blue"} icon={viewingUser.is_priest ? <TeamOutlined /> : <UserOutlined />}>
+                      {viewingUser.is_priest ? "Priest" : "User"}
+                    </Tag>
+                  </div>
+                </Col>
+                <Col xs={24} sm={12}>
+                  <div style={{ marginBottom: 16 }}>
+                    <Text strong style={{ display: "block", marginBottom: 4, color: "#666" }}>
+                      Account Status
+                    </Text>
+                    <Tag color={viewingUser.is_active !== false ? "green" : "red"}>
+                      {viewingUser.is_active !== false ? "Active" : "Inactive"}
+                    </Tag>
+                  </div>
+                </Col>
+                {viewingUser.is_priest && (
+                  <>
+                    <Col xs={24} sm={12}>
+                      <div style={{ marginBottom: 16 }}>
+                        <Text strong style={{ display: "block", marginBottom: 4, color: "#666" }}>
+                          Previous Parish
+                        </Text>
+                        <Text>{viewingUser.previous_parish || "N/A"}</Text>
+                      </div>
+                    </Col>
+                    <Col xs={24} sm={12}>
+                      <div style={{ marginBottom: 16 }}>
+                        <Text strong style={{ display: "block", marginBottom: 4, color: "#666" }}>
+                          Residency
+                        </Text>
+                        <Text>{viewingUser.residency || "N/A"}</Text>
+                      </div>
+                    </Col>
+                  </>
+                )}
+                {!viewingUser.is_priest && (
+                  <>
+                    <Col xs={24} sm={12}>
+                      <div style={{ marginBottom: 16 }}>
+                        <Text strong style={{ display: "block", marginBottom: 4, color: "#666" }}>
+                          Total Donations
+                        </Text>
+                        {loadingDonations ? (
+                          <Spin size="small" />
+                        ) : (
+                          <Text>
+                            {userDonations.length > 0
+                              ? `${userDonations.length} donation(s)`
+                              : "No donations"}
+                          </Text>
+                        )}
+                      </div>
+                    </Col>
+                    {loadingDonations ? (
+                      <Col xs={24}>
+                        <div style={{ textAlign: "center", padding: "20px" }}>
+                          <Spin tip="Loading donations..." />
+                        </div>
+                      </Col>
+                    ) : userDonations.length > 0 && (
+                      <Col xs={24}>
+                        <div style={{ marginBottom: 16 }}>
+                          <Text strong style={{ display: "block", marginBottom: 8, color: "#666" }}>
+                            Donation Details
+                          </Text>
+                          <div style={{ maxHeight: "200px", overflowY: "auto", border: "1px solid #f0f0f0", borderRadius: "4px", padding: "12px" }}>
+                            {userDonations.map((donation, index) => (
+                              <div key={donation._id || index} style={{ marginBottom: index < userDonations.length - 1 ? 12 : 0, paddingBottom: index < userDonations.length - 1 ? 12 : 0, borderBottom: index < userDonations.length - 1 ? "1px solid #f0f0f0" : "none" }}>
+                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                  <div>
+                                    <Text strong>₱{donation.amount?.toLocaleString() || "0"}</Text>
+                                    <Text style={{ marginLeft: 8, color: "#666" }}>
+                                      ({donation.paymentMethod || "N/A"})
+                                    </Text>
+                                  </div>
+                                  <Tag color={donation.status === "confirmed" ? "green" : donation.status === "pending" ? "orange" : "red"}>
+                                    {donation.status || "N/A"}
+                                  </Tag>
+                                </div>
+                                {donation.intercession && (
+                                  <Text style={{ display: "block", marginTop: 4, fontSize: "12px", color: "#999" }}>
+                                    Intercession: {donation.intercession}
+                                  </Text>
+                                )}
+                                <Text style={{ display: "block", marginTop: 4, fontSize: "11px", color: "#999" }}>
+                                  {donation.createdAt ? formatDate(donation.createdAt) : "N/A"}
+                                </Text>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </Col>
+                    )}
+                  </>
+                )}
+              </Row>
+              <div style={{ marginTop: 24, display: "flex", justifyContent: "flex-end", gap: 8 }}>
+                <Button
+                  onClick={() => {
+                    setShowDetailsModal(false);
+                    setViewingUser(null);
+                  }}
+                >
+                  Close
+                </Button>
+                <Button
+                  type="primary"
+                  icon={<EditOutlined />}
+                  onClick={() => handleEditUser(viewingUser)}
+                  style={{ backgroundColor: "#b87d3e", borderColor: "#b87d3e" }}
+                >
+                  Edit User
+                </Button>
+              </div>
+            </div>
+          )}
+        </Modal>
 
         {/* Edit User Modal */}
         <Modal
