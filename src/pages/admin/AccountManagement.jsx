@@ -228,6 +228,32 @@ export default function AccountManagement() {
       return "Contact number must be exactly 11 digits";
     }
 
+    if (!trimmed.startsWith("09")) {
+      return "Contact number must start with 09 (Philippine mobile number format)";
+    }
+
+    return "";
+  };
+
+  const validatePassword = (password) => {
+    if (!password) {
+      return "Password is required";
+    }
+
+    if (password.length < 6) {
+      return "Password must be at least 6 characters";
+    }
+    return "";
+  };
+
+  const validatePasswordMatch = (password, confirmPassword) => {
+    if (!confirmPassword) {
+      return "Please confirm your password";
+    }
+
+    if (password !== confirmPassword) {
+      return "Passwords do not match";
+    }
     return "";
   };
 
@@ -238,6 +264,14 @@ export default function AccountManagement() {
 
     if (errors.contact_number) {
       setErrors((prev) => ({ ...prev, contact_number: "" }));
+    }
+    
+    if (limited.length === 11) {
+      const error = validateContactNumber(limited);
+      
+      if (error) {
+        setErrors((prev) => ({ ...prev, contact_number: error }));
+      }
     }
   };
 
@@ -257,12 +291,14 @@ export default function AccountManagement() {
       newErrors.birthday = birthdayError;
     }
 
-    if (!formData.password) newErrors.password = "Password is required";
-    if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = "Passwords do not match";
+    const passwordError = validatePassword(formData.password);
+    if (passwordError) {
+      newErrors.password = passwordError;
     }
-    if (formData.password && formData.password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters";
+
+    const confirmPasswordError = validatePasswordMatch(formData.password, formData.confirmPassword);
+    if (confirmPasswordError) {
+      newErrors.confirmPassword = confirmPasswordError;
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -743,7 +779,7 @@ export default function AccountManagement() {
                         setErrors((prev) => ({ ...prev, contact_number: error }));
                       }
                     }}
-                    placeholder="Enter 11-digit contact number"
+                    placeholder="09XXXXXXXXX (11 digits, starts with 09)"
                     maxLength={11}
                   />
                 </Form.Item>
@@ -975,7 +1011,7 @@ export default function AccountManagement() {
                         setErrors((prev) => ({ ...prev, contact_number: error }));
                       }
                     }}
-                    placeholder="Enter 11-digit contact number"
+                    placeholder="09XXXXXXXXX (11 digits, starts with 09)"
                     maxLength={11}
                   />
                 </Form.Item>
@@ -1072,9 +1108,30 @@ export default function AccountManagement() {
                 >
                   <Input.Password
                     value={formData.password}
-                    onChange={(e) =>
-                      setFormData({ ...formData, password: e.target.value })
-                    }
+                    onChange={(e) => {
+                      const newPassword = e.target.value;
+                      setFormData({ ...formData, password: newPassword });
+                      // Clear password error when typing
+                      if (errors.password) {
+                        setErrors((prev) => ({ ...prev, password: "" }));
+                      }
+                      // Re-validate confirm password if it exists
+                      if (formData.confirmPassword) {
+                        const confirmError = validatePasswordMatch(newPassword, formData.confirmPassword);
+                        setErrors((prev) => ({ ...prev, confirmPassword: confirmError }));
+                      }
+                    }}
+                    onBlur={() => {
+                      const error = validatePassword(formData.password);
+                      if (error) {
+                        setErrors((prev) => ({ ...prev, password: error }));
+                      }
+                      // Also validate confirm password match
+                      if (formData.confirmPassword) {
+                        const confirmError = validatePasswordMatch(formData.password, formData.confirmPassword);
+                        setErrors((prev) => ({ ...prev, confirmPassword: confirmError }));
+                      }
+                    }}
                     placeholder="Enter password"
                     iconRender={(visible) =>
                       visible ? <EyeOutlined /> : <EyeInvisibleOutlined />
@@ -1094,9 +1151,27 @@ export default function AccountManagement() {
                 >
                   <Input.Password
                     value={formData.confirmPassword}
-                    onChange={(e) =>
-                      setFormData({ ...formData, confirmPassword: e.target.value })
-                    }
+                    onChange={(e) => {
+                      const newConfirmPassword = e.target.value;
+                      setFormData({ ...formData, confirmPassword: newConfirmPassword });
+                      // Clear error when typing
+                      if (errors.confirmPassword) {
+                        setErrors((prev) => ({ ...prev, confirmPassword: "" }));
+                      }
+                      // Validate match if password exists
+                      if (formData.password) {
+                        const error = validatePasswordMatch(formData.password, newConfirmPassword);
+                        if (error) {
+                          setErrors((prev) => ({ ...prev, confirmPassword: error }));
+                        }
+                      }
+                    }}
+                    onBlur={() => {
+                      if (formData.password) {
+                        const error = validatePasswordMatch(formData.password, formData.confirmPassword);
+                        setErrors((prev) => ({ ...prev, confirmPassword: error }));
+                      }
+                    }}
                     placeholder="Confirm password"
                     iconRender={(visible) =>
                       visible ? <EyeOutlined /> : <EyeInvisibleOutlined />
