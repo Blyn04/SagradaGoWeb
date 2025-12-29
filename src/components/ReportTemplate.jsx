@@ -35,10 +35,12 @@ const imageToBase64 = (imagePath) => {
       try {
         const dataURL = canvas.toDataURL('image/png');
         resolve(dataURL);
+
       } catch (e) {
         reject(e);
       }
     };
+    
     img.onerror = reject;
     const imageSrc = typeof imagePath === 'string' ? imagePath : (imagePath?.default || imagePath);
     img.src = imageSrc;
@@ -100,10 +102,11 @@ export default function ReportTemplate({ title, columns, data, exportType = "pdf
         }
       }
     }
-
+    
     let logoBase64 = null;
     try {
       logoBase64 = await imageToBase64(Logo);
+      
     } catch (error) {
       console.warn('Could not convert logo to base64:', error);
     }
@@ -515,8 +518,7 @@ export default function ReportTemplate({ title, columns, data, exportType = "pdf
             {title}
           </Title>
           <Text style={{ fontFamily: 'Poppins' }} type="secondary">
-            {formattedData.length} {formattedData.length === 1 ? "record" : "records"} • Generated on{" "}
-            {dayjs().format("MMMM DD, YYYY")}
+            {formattedData.length} {formattedData.length === 1 ? "record" : "records"}
           </Text>
         </div>
         <Button type="primary" icon={<DownloadOutlined />} onClick={handleExport} size="large" className="border-btn">
@@ -538,6 +540,11 @@ export default function ReportTemplate({ title, columns, data, exportType = "pdf
           )}
         </>
       )}
+      <div style={{ marginTop: 24, textAlign: "center", paddingTop: 16, borderTop: "1px solid #f0f0f0" }}>
+        <Text style={{ fontFamily: 'Poppins' }} type="secondary">
+          Generated on {dayjs().format("MMMM DD, YYYY")}
+        </Text>
+      </div>
     </Card>
   );
 }

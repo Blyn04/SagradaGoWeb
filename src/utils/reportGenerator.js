@@ -18,19 +18,14 @@ export const generatePDFReport = async ({ title, columns, data, logoBase64 }) =>
         doc.addImage(logoBase64, 'PNG', 14, 10, 25, 25);
         logoLoaded = true;
         logoRight = 14 + 25 + 5;
-
       } catch (logoError) {
         console.warn('Could not add logo to PDF:', logoError);
       }
     }
-
+    
     doc.setFontSize(16);
     doc.setFont(undefined, 'bold');
     doc.text('Sagrada Familia', logoRight, 20);
-    
-    doc.setFontSize(10);
-    doc.setFont(undefined, 'normal');
-    doc.text(`Generated on: ${currentDate}`, logoRight, 28);
     
     doc.setFontSize(14);
     doc.setFont(undefined, 'bold');
@@ -65,6 +60,15 @@ export const generatePDFReport = async ({ title, columns, data, logoBase64 }) =>
       styles: { fontSize: 10 },
     });
 
+    const finalY = doc.lastAutoTable && doc.lastAutoTable.finalY 
+      ? doc.lastAutoTable.finalY + 10 
+      : doc.internal.pageSize.height - 20;
+    doc.setFontSize(10);
+    doc.setFont(undefined, 'normal');
+    const pageWidth = doc.internal.pageSize.width;
+    const textWidth = doc.getTextWidth(`Generated on: ${currentDate}`);
+    doc.text(`Generated on: ${currentDate}`, (pageWidth - textWidth) / 2, finalY);
+
     doc.save(`${titleStr.replace(/\s+/g, "_")}.pdf`);
 
   } catch (error) {
@@ -84,10 +88,9 @@ export const generateExcelReport = ({ fileName, data }) => {
     }
 
     const headers = data.length > 0 ? Object.keys(data[0]) : [];
-
+    
     const headerData = [
       ['Sagrada Familia', ...Array(headers.length - 1).fill('')],
-      [`Generated on: ${currentDate}`, ...Array(headers.length - 1).fill('')],
       ['', ...Array(headers.length - 1).fill('')],
       headers, 
     ];
@@ -97,9 +100,12 @@ export const generateExcelReport = ({ fileName, data }) => {
     });
 
     const worksheetData = [...headerData, ...dataArray];
+
+    worksheetData.push(['', ...Array(headers.length - 1).fill('')]);
+    worksheetData.push([`Generated on: ${currentDate}`, ...Array(headers.length - 1).fill('')]);
     
     const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
-  
+    
     const maxWidth = 30;
     worksheet['!cols'] = headers.map(() => ({ wch: maxWidth }));
     
