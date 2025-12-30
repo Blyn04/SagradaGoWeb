@@ -131,7 +131,7 @@ export default function AdminAnnouncements() {
       const titleMatch = announcement.title?.toLowerCase().includes(query);
       const contentMatch = announcement.content?.toLowerCase().includes(query);
       const authorMatch = announcement.author?.toLowerCase().includes(query);
-      
+
       if (!titleMatch && !contentMatch && !authorMatch) {
         return false;
       }
@@ -150,7 +150,7 @@ export default function AdminAnnouncements() {
     {
       title: "Content",
       dataIndex: "content",
-      width: "45%",
+      width: "30%",
       render: (text) => (
         <div style={{ whiteSpace: "pre-wrap" }}>
           <Text>{text}</Text>
@@ -177,7 +177,8 @@ export default function AdminAnnouncements() {
         <Space>
           <Button
             icon={<EditOutlined />}
-            type="primary"
+            className="border-btn"
+            style={{ padding: "15px 14px" }}
             onClick={() => openEdit(record)}
           >
             Edit
@@ -189,7 +190,8 @@ export default function AdminAnnouncements() {
             cancelText="No"
             onConfirm={() => deleteAnnouncement(record._id)}
           >
-            <Button danger icon={<DeleteOutlined />} />
+            <Button danger className="dangerborder-btn"
+              style={{ padding: "15px 14px" }} icon={<DeleteOutlined style={{ color: "#ff4d4f" }} />} />
           </Popconfirm>
         </Space>
       ),
@@ -234,7 +236,7 @@ export default function AdminAnnouncements() {
                   }}
                 />
               </div>
-              
+
               <div>
                 <Text strong style={{ fontFamily: 'Poppins', fontSize: 14, display: 'block', marginBottom: 8 }}>Filter by Priority:</Text>
                 <Select
@@ -269,6 +271,7 @@ export default function AdminAnnouncements() {
                 columns={columns}
                 rowKey="_id"
                 pagination={{ pageSize: 5 }}
+                scroll={{ y: 600 }}
               />
             </Card>
           )}

@@ -199,6 +199,28 @@
   border-color: #FFC942 !important;
 }
 
+.dangerborder-btn {
+  border: 1px solid #c90000;
+  background: transparent;
+  color: #c90000;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 500;
+  border-radius: 6px;
+  transition: all 0.25s ease;
+  padding: 20px 18px;
+}
+
+.dangerborder-btn:hover,
+.dangerborder-btn:focus {
+  background: #c90000 !important;
+  color: #424242 !important;
+  border-color: #c90000 !important;
+}
+
+.dangerborder-btn .anticon {
+  color: #ff4d4f !important;
+}
+
 .border-btn2 {
   border: 1px solid #424242;
   background: transparent;
