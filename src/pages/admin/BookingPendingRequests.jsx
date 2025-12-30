@@ -815,8 +815,13 @@ export default function BookingPendingRequests() {
   const [dateFilterTab, setDateFilterTab] = useState("all");
   const [adminComment, setAdminComment] = useState("");
   const [confirmModalVisible, setConfirmModalVisible] = useState(false);
-  const [pendingAction, setPendingAction] = useState(null);
+  const [pendingAction, setPendingAction] = useState(null); 
   const [quickComment, setQuickComment] = useState("");
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [editForm] = Form.useForm();
+  const [editDate, setEditDate] = useState(null);
+  const [editTime, setEditTime] = useState(null);
+  const [editLoading, setEditLoading] = useState(false);
 
   useEffect(() => {
     fetchAllBookings();
@@ -830,9 +835,11 @@ export default function BookingPendingRequests() {
       if (response.data && response.data.priests) {
         setPriests(response.data.priests);
       }
+
     } catch (error) {
       console.error("Error fetching priests:", error);
       message.error("Failed to load priests list");
+
     } finally {
       setLoadingPriests(false);
     }
@@ -1057,7 +1064,7 @@ export default function BookingPendingRequests() {
         return;
       }
     }
-    
+
     setPendingAction({ bookingId, bookingType, status });
     setConfirmModalVisible(true);
     setQuickComment("");
@@ -1077,6 +1084,65 @@ export default function BookingPendingRequests() {
       pendingAction.status,
       quickComment || null
     );
+  };
+
+  const handleEditBooking = async (values) => {
+    if (!selectedBooking) return;
+
+    try {
+      setEditLoading(true);
+
+      const endpointMap = {
+        Wedding: "updateWedding",
+        Baptism: "updateBaptism",
+        Burial: "updateBurial",
+        Communion: "updateCommunion",
+        Confirmation: "updateConfirmation",
+        Anointing: "updateAnointing",
+        Confession: "updateConfession",
+      };
+
+      const endpoint = endpointMap[selectedBooking.bookingType];
+      if (!endpoint) {
+        message.error("Invalid booking type");
+        return;
+      }
+
+      let timeString = selectedBooking.time;
+      if (editTime) {
+        const timeValue = editTime.toDate();
+        timeString = `${timeValue.getHours().toString().padStart(2, '0')}:${timeValue.getMinutes().toString().padStart(2, '0')}`;
+      }
+
+      let dateISO = selectedBooking.date;
+      if (editDate) {
+        dateISO = editDate.toDate().toISOString();
+      }
+
+      const updateData = {
+        transaction_id: selectedBooking.transaction_id,
+        date: dateISO,
+        time: timeString,
+      };
+
+      await axios.put(`${API_URL}/${endpoint}`, updateData);
+
+      message.success("Booking updated successfully!");
+      setEditModalVisible(false);
+      editForm.resetFields();
+      setEditDate(null);
+      setEditTime(null);
+      fetchAllBookings();
+      setDetailModalVisible(false);
+      setSelectedBooking(null);
+
+    } catch (error) {
+      console.error("Error updating booking:", error);
+      message.error(error.response?.data?.message || "Failed to update booking. Please try again.");
+    
+    } finally {
+      setEditLoading(false);
+    }
   };
 
   const formatDate = (dateString) => {
@@ -2045,7 +2111,12 @@ export default function BookingPendingRequests() {
                 style={{ padding: '10px' }}
                 icon={<EditOutlined />}
                 onClick={() => {
-                  // Edit booking function to be implemented
+                  setEditModalVisible(true);
+                  const bookingDate = selectedBooking.date ? dayjs(selectedBooking.date) : null;
+                  const bookingTime = selectedBooking.time ? dayjs(selectedBooking.time, 'HH:mm') : null;
+                  setEditDate(bookingDate);
+                  setEditTime(bookingTime);
+                  editForm.setFieldsValue({});
                 }}
               >
                 Edit Booking
@@ -2241,6 +2312,73 @@ export default function BookingPendingRequests() {
               showCount
             />
           </div>
+        </Modal>
+
+        {/* Edit Booking Modal */}
+        <Modal
+          title="Edit Booking"
+          open={editModalVisible}
+          onCancel={() => {
+            setEditModalVisible(false);
+            editForm.resetFields();
+            setEditDate(null);
+            setEditTime(null);
+          }}
+          footer={null}
+          width={700}
+        >
+          {selectedBooking && (
+            <Form
+              form={editForm}
+              layout="vertical"
+              onFinish={handleEditBooking}
+            >
+              <Row gutter={16}>
+                <Col span={12}>
+                  <Form.Item
+                    label="Date"
+                    rules={[{ required: true, message: 'Please select date' }]}
+                  >
+                    <DatePicker
+                      style={{ width: '100%' }}
+                      value={editDate}
+                      onChange={(value) => setEditDate(value ? dayjs(value) : null)}
+                      format="YYYY-MM-DD"
+                    />
+                  </Form.Item>
+                </Col>
+                <Col span={12}>
+                  <Form.Item
+                    label="Time"
+                    rules={[{ required: true, message: 'Please select time' }]}
+                  >
+                    <TimePicker
+                      style={{ width: '100%' }}
+                      value={editTime}
+                      onChange={(value) => setEditTime(value ? dayjs(value) : null)}
+                      format="HH:mm"
+                    />
+                  </Form.Item>
+                </Col>
+              </Row>
+
+              <Form.Item>
+                <Space>
+                  <Button type="primary" htmlType="submit" loading={editLoading}>
+                    Update Booking
+                  </Button>
+                  <Button onClick={() => {
+                    setEditModalVisible(false);
+                    editForm.resetFields();
+                    setEditDate(null);
+                    setEditTime(null);
+                  }}>
+                    Cancel
+                  </Button>
+                </Space>
+              </Form.Item>
+            </Form>
+          )}
         </Modal>
       </div>
     </div>
