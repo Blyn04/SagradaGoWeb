@@ -190,7 +190,7 @@ export default function AddEvents() {
 
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
-    return dayjs(dateString).format("MMMM DD, YYYY");
+    return dayjs(dateString).format("MMM DD, YYYY");
   };
 
   const isEventPast = (dateString) => {
@@ -250,7 +250,7 @@ export default function AddEvents() {
       const titleMatch = event.title?.toLowerCase().includes(query);
       const locationMatch = event.location?.toLowerCase().includes(query);
       const descriptionMatch = event.description?.toLowerCase().includes(query);
-      
+
       if (!titleMatch && !locationMatch && !descriptionMatch) {
         return false;
       }
@@ -280,12 +280,14 @@ export default function AddEvents() {
       title: "Title",
       dataIndex: "title",
       key: "title",
+      width: 150,
       render: (text) => <Text strong>{text}</Text>,
     },
     {
       title: "Date",
       dataIndex: "date",
       key: "date",
+      width: 130,
       render: (date) => formatDate(date),
       sorter: (a, b) => {
         if (!a.date) return 1;
@@ -296,6 +298,7 @@ export default function AddEvents() {
     {
       title: "Status",
       key: "status",
+      width: 110,
       render: (_, record) => {
         const statusInfo = getEventStatus(record.date);
         return (
@@ -317,11 +320,13 @@ export default function AddEvents() {
       title: "Location",
       dataIndex: "location",
       key: "location",
+      width: 130,
     },
     {
       title: "Created",
       dataIndex: "createdAt",
       key: "createdAt",
+      width: 130,
       render: (date) => dayjs(date).format("MMM DD, YYYY"),
     },
     {
@@ -368,7 +373,7 @@ export default function AddEvents() {
 
         <Row gutter={[24, 24]}>
           {/* Form Section */}
-          <Col xs={24} lg={10}>
+          <Col xs={24} lg={8}>
             <Card>
               <Form
                 form={form}
@@ -492,7 +497,7 @@ export default function AddEvents() {
           </Col>
 
           {/* Events List Section */}
-          <Col xs={24} lg={14}>
+          <Col xs={24} lg={16}>
             <Card
               title={
                 <Space>
@@ -508,9 +513,9 @@ export default function AddEvents() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   allowClear
-                  style={{ width: 300, marginBottom: 8 }}
+                  style={{ width: 400, marginBottom: 8 }}
                 />
-                
+
                 <Text strong>Filter by Date:</Text>
                 <Select
                   value={dateFilter}
@@ -545,7 +550,7 @@ export default function AddEvents() {
                   pageSize: 10,
                   showSizeChanger: true,
                 }}
-                scroll={{ x: 800 }}
+                scroll={{ y: 500 }}
                 locale={{
                   emptyText: "No events found. Create your first event!",
                 }}
