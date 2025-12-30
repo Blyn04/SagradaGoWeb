@@ -209,7 +209,7 @@ export default function SignInPage() {
           inputPassword
         );
         const uid = userCredential.user.uid;
-        
+
         const adminResponse = await axios.post(`${API_URL}/findAdmin`, { uid });
         if (adminResponse.data.user) {
           const adminUser = adminResponse.data.user;
@@ -241,7 +241,7 @@ export default function SignInPage() {
         inputEmail,
         inputPassword
       );
-      
+
       const user = userCredential.user;
       const uid = user.uid;
 
@@ -292,11 +292,10 @@ export default function SignInPage() {
       {showSignup ? (
         <SignUpPage />
       ) : (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/30 backdrop-blur-sm z-50">
-          <div className="bg-white rounded-2xl shadow-xl p-8 flex flex-col justify-center items-center gap-2 w-[300px]">
-            <div className="w-full flex justify-end">
+        <div className="modal-overlay">
+          <div className="modal-card">
+            <div className="modal-close">
               <button
-                className="cursor-pointer"
                 onClick={() => {
                   setShowSignin(false);
                   setShowSignup(false);
@@ -306,61 +305,53 @@ export default function SignInPage() {
               </button>
             </div>
 
-            <h1 className="text-black font-semibold text-lg mb-2">Sign In</h1>
+            <h1 className="modal-title">Sign In</h1>
+            <p className="modal-subtitle">Enter your registered email and password.</p>
 
-            <label className="text-black w-full">Email</label>
+            <label>Email</label>
             <input
               type="email"
               value={inputEmail}
               onChange={(e) => setInputEmail(e.target.value)}
-              className="bg-white border rounded-md px-2 py-1 w-full"
-              placeholder="Enter your email"
+              className="modal-input"
+              placeholder="youremail@example.com"
             />
 
-            <label className="text-black w-full">Password</label>
-            <div className="relative w-full">
+            <label>Password</label>
+            <div className="modal-password-wrapper">
               <input
                 type={showPass ? "text" : "password"}
                 value={inputPassword}
                 onChange={(e) => setInputPassword(e.target.value)}
-                className="bg-white border rounded-md px-2 py-1 w-full"
-                placeholder="Enter your password"
+                className="modal-input"
+                placeholder="**********"
               />
               <button
                 type="button"
                 onClick={() => setShowPass(!showPass)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-sm text-gray-600"
+                className="password-toggle"
               >
                 {showPass ? "Hide" : "Show"}
               </button>
             </div>
 
-            {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+            {error && <p className="modal-error">{error}</p>}
 
-            <Button
-              color={"#b87d3e"}
-              textColor={"#ffffff"}
-              text={loading ? "Signing in..." : "Sign in"}
+            <button
+              className="filled-btn"
+              style={{ padding: '8px', fontSize: '14px' }}
               onClick={SignIn}
               disabled={loading}
-            />
+            >
+              {loading ? "Signing in..." : "Sign In"}
+            </button>
 
             <button
               onClick={() => setShowSignup(true)}
-              className="cursor-pointer hover:underline text-sm mt-2"
+              className="modal-link"
             >
               No account yet? Sign up
             </button>
-
-            {/* <button
-              onClick={() => {
-                setShowSignin(false);
-                navigate("/admin/login");
-              }}
-              className="cursor-pointer hover:underline text-sm mt-2"
-            >
-              Are you an admin?
-            </button> */}
           </div>
         </div>
       )}
