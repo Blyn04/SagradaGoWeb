@@ -28,7 +28,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [calendarEvents, setCalendarEvents] = useState([]);
   const [selectedBooking, setSelectedBooking] = useState(null);
-  const [dayBookings, setDayBookings] = useState([]); 
+  const [dayBookings, setDayBookings] = useState([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [donationReportData, setDonationReportData] = useState([]);
   const [bookingReportData, setBookingReportData] = useState([]);
@@ -77,7 +77,7 @@ export default function AdminDashboard() {
       });
 
       const recentMonths = Object.keys(donationsByMonth).sort().slice(-6);
-      const trend = recentMonths.length >= 2 
+      const trend = recentMonths.length >= 2
         ? (donationsByMonth[recentMonths[recentMonths.length - 1]] > donationsByMonth[recentMonths[recentMonths.length - 2]] ? "increasing" : "decreasing")
         : "stable";
 
@@ -108,7 +108,7 @@ export default function AdminDashboard() {
         const trendText = trend === "increasing" ? "increasing" : trend === "decreasing" ? "decreasing" : "stable";
         const recentTotal = recentMonths.reduce((sum, month) => sum + (donationsByMonth[month] || 0), 0);
         insights += `• Donation trend shows ${trendText} activity with ${recentTotal} donation${recentTotal !== 1 ? "s" : ""} across the last ${recentMonths.length} month${recentMonths.length !== 1 ? "s" : ""}.\n\n`;
-      
+
       } else {
         insights += "• No donation timeline data available yet.\n\n";
       }
@@ -126,7 +126,7 @@ export default function AdminDashboard() {
 
         if (otherMethods) {
           insights += `• ${topMethod[0]} is the most popular payment method at ${topPercentage}%, followed by ${otherMethods}.\n\n`;
-        
+
         } else {
           insights += `• All donations are processed through ${topMethod[0]} (100%).\n\n`;
         }
@@ -150,11 +150,11 @@ export default function AdminDashboard() {
 
         if (otherTypes) {
           insights += `• ${topType[0]} leads with ${topPercentage}% of bookings, followed by ${otherTypes}.\n\n`;
-        
+
         } else {
           insights += `• All bookings are for ${topType[0]} (100%).\n\n`;
         }
-      
+
       } else {
         insights += "• No booking type data available.\n\n";
       }
@@ -163,7 +163,7 @@ export default function AdminDashboard() {
       const statusOrder = { "confirmed": 1, "pending": 2, "cancelled": 3, "rejected": 4 };
       const sortedStatuses = Object.entries(bookingsByStatus)
         .sort((a, b) => (statusOrder[a[0].toLowerCase()] || 999) - (statusOrder[b[0].toLowerCase()] || 999));
-      
+
       if (sortedStatuses.length > 0) {
         const totalBookings = bookings.length;
         const statusSummary = sortedStatuses.map(([status, count]) => {
@@ -171,7 +171,7 @@ export default function AdminDashboard() {
           return `${status.charAt(0).toUpperCase() + status.slice(1)} (${percentage}%)`;
         }).join(", ");
         insights += `• Booking status distribution: ${statusSummary}.\n\n`;
-      
+
       } else {
         insights += "• No booking status data available.\n\n";
       }
@@ -184,7 +184,7 @@ export default function AdminDashboard() {
         const latestMonth = bookingMonths[bookingMonths.length - 1];
         const latestCount = bookingsByMonth[latestMonth] || 0;
         insights += `• Recent booking activity shows ${recentBookingTotal} booking${recentBookingTotal !== 1 ? "s" : ""} across ${bookingMonths.length} month${bookingMonths.length !== 1 ? "s" : ""}, with ${latestCount} booking${latestCount !== 1 ? "s" : ""} in ${dayjs(latestMonth).format("MMM YYYY")}.\n\n`;
-      
+
       } else {
         insights += "• No booking timeline data available.\n\n";
       }
@@ -406,7 +406,7 @@ export default function AdminDashboard() {
       setDayBookings([]);
       setSelectedBooking(bookingOrBookings);
     }
-    
+
     setIsModalVisible(true);
   };
 
@@ -486,6 +486,8 @@ export default function AdminDashboard() {
               {dayBookings.map((booking, index) => (
                 <Button
                   key={index}
+                  className="border-btn"
+                  style={{ padding: '15px 10px' }}
                   type={selectedBooking === booking ? "primary" : "default"}
                   size="small"
                   onClick={() => handleSelectBooking(booking)}
@@ -496,7 +498,7 @@ export default function AdminDashboard() {
             </Space>
           </div>
         )}
-        
+
         <Row gutter={[16, 16]}>
           <Col span={24}>
             <Text strong>Booking Type:</Text>
@@ -570,7 +572,7 @@ export default function AdminDashboard() {
                 <Statistic
                   title="Total Users"
                   value={stats.totalUsers}
-                  prefix={<UserOutlined style={{ marginRight: 8 }}/>}
+                  prefix={<UserOutlined style={{ marginRight: 8 }} />}
                   valueStyle={{ color: "#1890ff" }}
                 />
                 <div className="dashboard-stat-title">
@@ -584,7 +586,7 @@ export default function AdminDashboard() {
               <Statistic
                 title="Total Priests"
                 value={stats.totalPriests}
-                prefix={<TeamOutlined style={{ marginRight: 8 }}/>}
+                prefix={<TeamOutlined style={{ marginRight: 8 }} />}
                 valueStyle={{ color: "#722ed1" }}
               />
               <div className="dashboard-stat-title">
@@ -602,7 +604,7 @@ export default function AdminDashboard() {
               <Statistic
                 title="Pending Bookings"
                 value={stats.pendingBookings}
-                prefix={<CalendarOutlined style={{ marginRight: 8 }}/>}
+                prefix={<CalendarOutlined style={{ marginRight: 8 }} />}
                 valueStyle={{ color: "#fa8c16" }}
               />
               <div className="dashboard-stat-title">
@@ -616,7 +618,7 @@ export default function AdminDashboard() {
                 <Statistic
                   title="Total Donations"
                   value={stats.totalDonations}
-                  prefix={<PesoIcon style={{ marginRight: 8, fontSize: 16 }}/>}
+                  prefix={<PesoIcon style={{ marginRight: 8, fontSize: 16 }} />}
                   precision={2}
                   valueStyle={{ color: "#52c41a" }}
                 />
@@ -653,7 +655,7 @@ export default function AdminDashboard() {
         {/* AI Stats Analysis */}
         <Row gutter={[16, 16]}>
           <Col xs={24} lg={24}>
-            <Card 
+            <Card
               title={
                 <Space>
                   <RobotOutlined style={{ color: "#1890ff" }} />
@@ -661,12 +663,12 @@ export default function AdminDashboard() {
                     AI-Powered Insights
                   </Title>
                 </Space>
-              } 
+              }
               className="dashboard-system-overview-card"
               extra={
-                <Button 
-                  type="link" 
-                  onClick={fetchAIAnalysis} 
+                <Button
+                  type="link"
+                  onClick={fetchAIAnalysis}
                   loading={loadingAI}
                   icon={<RobotOutlined />}
                 >
@@ -679,9 +681,9 @@ export default function AdminDashboard() {
                   <Spin size="large" tip="Generating AI insights..." />
                 </div>
               ) : aiAnalysis ? (
-                <div style={{ 
-                  padding: "16px", 
-                  backgroundColor: "#f5f5f5", 
+                <div style={{
+                  padding: "16px",
+                  backgroundColor: "#f5f5f5",
                   borderRadius: "8px",
                   whiteSpace: "pre-wrap",
                   lineHeight: "1.8",
@@ -739,8 +741,8 @@ export default function AdminDashboard() {
         reportType="system"
       />
 
-      <div>
-          <Row gutter={[16, 16]}>
+      <div className="dashboard-content">
+        <Row gutter={[16, 16]}>
           <Col xs={24} lg={24}>
             <Card title={<Title level={4} className="dashboard-system-overview-title">System Overview</Title>} className="dashboard-system-overview-card">
               <Row gutter={[16, 16]}>
