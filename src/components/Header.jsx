@@ -9,7 +9,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import Logo from "../assets/sagrada.png";
 
 export default function Header() {
-  const { setSelectedNavbar, setShowSignin, currentUser, setActiveDropdown } =
+  const { setSelectedNavbar, setShowSignin, setShowSignup, currentUser, setActiveDropdown } =
     useContext(NavbarContext);
   const navigate = useNavigate();
   const email = Cookies.get("email");
@@ -60,6 +60,7 @@ export default function Header() {
             onClick={() => {
               setSelectedNavbar(elem.id);
               if (elem.id !== "book") navigate(elem.path);
+              setShowSignin(false)
             }}
             onMouseEnter={() => handleMouseEnter(elem.id)}
             onMouseLeave={() => handleMouseLeave(elem.id)}
@@ -85,7 +86,10 @@ export default function Header() {
           <button
             className="border-btn"
             style={{ padding: "8px 15px", fontSize: "14px " }}
-            onClick={() => setShowSignin(true)}
+            onClick={() => {
+              setShowSignin(true)
+              setShowSignup(false)
+            }}
           >
             Sign In
           </button>

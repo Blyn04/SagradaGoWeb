@@ -15,6 +15,8 @@ export default function NavButton({
     activeDropdown,
     setActiveDropdown,
     setBookingSelected,
+    setShowSignin,
+    setShowSignup
   } = useContext(NavbarContext);
   const navigate = useNavigate();
 
@@ -32,6 +34,8 @@ export default function NavButton({
     setActiveDropdown(false);
     setBookingSelected(serviceText);
     navigate(path);
+    setShowSignin(false);
+    setShowSignup(false);
   };
 
   const dropdownMenu = (
