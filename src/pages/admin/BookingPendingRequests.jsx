@@ -815,7 +815,7 @@ export default function BookingPendingRequests() {
   const [dateFilterTab, setDateFilterTab] = useState("all");
   const [adminComment, setAdminComment] = useState("");
   const [confirmModalVisible, setConfirmModalVisible] = useState(false);
-  const [pendingAction, setPendingAction] = useState(null);
+  const [pendingAction, setPendingAction] = useState(null); 
   const [quickComment, setQuickComment] = useState("");
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [editForm] = Form.useForm();
@@ -875,7 +875,6 @@ export default function BookingPendingRequests() {
       if (showLoading) {
         setLoading(true);
       }
-      
       const [weddings, baptisms, burials, communions, confirmations, anointings, confessions] = await Promise.all([
         axios.get(`${API_URL}/admin/getAllWeddings`).catch(() => ({ data: { weddings: [] } })),
         axios.get(`${API_URL}/admin/getAllBaptisms`).catch(() => ({ data: { baptisms: [] } })),
@@ -886,17 +885,36 @@ export default function BookingPendingRequests() {
         axios.get(`${API_URL}/admin/getAllConfessions`).catch(() => ({ data: { bookings: [] } })),
       ]);
 
-      const normalizedConfessions = (confessions.data.bookings || []).map((b) => ({
-        ...b,
-        bookingType: "Confession",
-        typeLabel: "Confession",
-        date: b.date ? new Date(b.date).toISOString() : null,
-        createdAt: b.createdAt ? new Date(b.createdAt).toISOString() : null,
-        status: b.status || "pending",
-        full_name: b.full_name || b.name || "N/A",
-        transaction_id: b.transaction_id || `CONF-${Date.now()}`,
-        time: b.time || null,
-      }));
+      const confessionBookings = confessions.data.bookings || [];
+      const normalizedConfessions = await Promise.all(
+        confessionBookings.map(async (b) => {
+          let userData = b.user;
+          
+          if (!userData && b.uid && b.uid !== 'admin') {
+            try {
+              const userResponse = await axios.post(`${API_URL}/findUser`, { uid: b.uid });
+              if (userResponse.data && userResponse.data.user) {
+                userData = userResponse.data.user;
+              }
+
+            } catch (error) {
+              console.error(`Error fetching user data for confession booking ${b.transaction_id}:`, error);
+            }
+          }
+
+          return {
+            ...b,
+            bookingType: "Confession",
+            typeLabel: "Confession",
+            date: b.date ? new Date(b.date).toISOString() : null,
+            createdAt: b.createdAt ? new Date(b.createdAt).toISOString() : null,
+            status: b.status || "pending",
+            user: userData || b.user, 
+            transaction_id: b.transaction_id || `CONF-${Date.now()}`,
+            time: b.time || null,
+          };
+        })
+      );
 
       const allBookings = [
         ...(weddings.data.weddings || []).map((b) => ({ ...b, bookingType: "Wedding", typeLabel: "Wedding" })),
@@ -1241,7 +1259,14 @@ export default function BookingPendingRequests() {
       );
 
     } else {
-      return booking.user?.name || booking.name || booking.full_name || `${booking.first_name || ""} ${booking.last_name || ""}`.trim() || "N/A";
+      if (booking.user) {
+        const userFullName = `${booking.user.first_name || ""} ${booking.user.middle_name || ""} ${booking.user.last_name || ""}`.trim();
+        
+        if (userFullName) return userFullName;
+
+        if (booking.user.name) return booking.user.name;
+      }
+      return booking.name || booking.full_name || `${booking.first_name || ""} ${booking.last_name || ""}`.trim() || "N/A";
     }
   };
 
