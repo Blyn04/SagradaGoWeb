@@ -53,7 +53,7 @@ export default function SignUpPage() {
       );
       const user = userCredential.user;
       const uid = user.uid;
-      
+
 
 
       await sendEmailVerification(user);
@@ -72,7 +72,7 @@ export default function SignUpPage() {
         uid: uid
       });
 
-      
+
       // setInputFname("")
       // setInputMname("")
       // setInputLname("")
@@ -93,11 +93,10 @@ export default function SignUpPage() {
   }
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black/30 backdrop-blur-sm z-50">
-      <div className="bg-white rounded-2xl shadow-xl p-8! flex flex-col justify-center items-center w-8/12">
-        <div className="w-full flex justify-end py-3">
+    <div className="modal-overlay">
+      <div className="modal-card">
+        <div className="modal-close">
           <button
-            className="text-gray-500 hover:text-gray-700 text-lg cursor-pointer"
             onClick={() => {
               setShowSignup(false);
               setShowSignin(false);
@@ -106,166 +105,126 @@ export default function SignUpPage() {
             ✕
           </button>
         </div>
-        <div className="w-full flex justify-center items-center my-5!">
-          <h1 className="text-3xl">Create an Account</h1>
 
-        </div>
+        <h1 className="modal-title">Create an Account</h1>
+        <p className="modal-subtitle">Enter necessary details to register.</p>
 
-        <div className="w-full h-full grid grid-cols-3 gap-7 mb-5!">
+        <div className="modal-grid">
           <div>
-            <p>First Name</p>
+            <label>First Name</label>
             <input
               type="text"
               value={inputFname}
               onChange={(e) => setInputFname(e.target.value)}
-              className="input-properties"
+              className="modal-input"
             />
           </div>
           <div>
-            <p>Middle Name</p>
+            <label>Middle Name</label>
             <input
               type="text"
               value={inputMname}
               onChange={(e) => setInputMname(e.target.value)}
-              className="input-properties"
+              className="modal-input"
             />
           </div>
           <div>
-            <p>Last Name</p>
+            <label>Last Name</label>
             <input
               type="text"
               value={inputLname}
               onChange={(e) => setInputLname(e.target.value)}
-              className="input-properties"
+              className="modal-input"
             />
           </div>
-
-          {/* Gender */}
-          {/* <div className="flex flex-col w-full">
-            <p>Gender</p>
-            {["Male", "Female", "None"].map((g) => (
-              <label key={g}>
-                <input
-                  type="radio"
-                  name="gender"
-                  value={g}
-                  checked={inputGender === g}
-                  onChange={(e) => setInputGender(e.target.value)}
-                />{" "}
-                {g === "None" ? "Prefer not to say" : g.charAt(0).toUpperCase() + g.slice(1)}
-              </label>
-            ))}
-          </div> */}
-
-          {/* Contact */}
-          <div>
-            <p>Contact Number</p>
-            <input
-              type="text"
-              value={inputContactNumber}
-              onChange={(e) => setInputContactNumber(e.target.value)}
-              className="input-properties"
-            />
+          <div style={{ display: 'flex', gap: '16px' }}>
+            <div style={{ flex: 1 }}>
+              <label>Contact Number</label>
+              <input
+                type="text"
+                value={inputContactNumber}
+                onChange={(e) => setInputContactNumber(e.target.value)}
+                className="modal-input"
+              />
+            </div>
+            <div style={{ flex: 1 }}>
+              <label>Birthday</label>
+              <input
+                type="date"
+                value={inputBirthday}
+                onChange={(e) => setInputBirthday(e.target.value)}
+                className="modal-input"
+              />
+            </div>
           </div>
 
-          {/* Civil Status */}
-          {/* <div className="w-full flex flex-col">
-            <p>Civil Status</p>
-            {["Single", "Married", "Widowed", "Divorced"].map((status) => (
-              <label key={status}>
-                <input
-                  type="radio"
-                  name="civil"
-                  value={status}
-                  checked={inputCivilStatus === status}
-                  onChange={(e) => setInputCivilStatus(e.target.value)}
-                />{" "}
-                {status}
-              </label>
-            ))}
-          </div> */}
-
           <div>
-            <p>Birthday</p>
-            <input
-              type="date"
-              value={inputBirthday}
-              onChange={(e) => setInputBirthday(e.target.value)}
-              className="input-properties"
-            />
-          </div>
-
-          {/* Email */}
-          <div>
-            <p>Email</p>
+            <label>Email</label>
             <input
               type="email"
               value={inputEmail}
               onChange={(e) => setInputEmail(e.target.value)}
-              className="input-properties"
+              className="modal-input"
             />
           </div>
-
-          {/* Password */}
           <div>
-            <p>Password</p>
-            <div className="flex items-center w-10/12 overflow-hidden border border-black rounded-md">
+            <label>Password</label>
+            <div className="modal-password-wrapper">
               <input
                 type={showPass ? "text" : "password"}
                 value={inputPassword}
                 onChange={(e) => setInputPassword(e.target.value)}
-                className="flex-1 px-1! outline-none"
+                className="modal-input"
               />
               <button
                 type="button"
                 onClick={() => setShowPass(!showPass)}
-                className="w-auto h-full px-3 text-white text-sm font-medium transition cursor-pointer"
+                className="password-toggle"
               >
-                {showPass ? "👁️" : "🚫"}
+                {showPass ? "Hide" : "Show"}
               </button>
             </div>
           </div>
-
-          <div></div>
-          <div></div>
           <div>
-            <p>Re-type Password</p>
-            <div className="flex items-center w-10/12 overflow-hidden border border-black rounded-md">
+            <label>Re-type Password</label>
+            <div className="modal-password-wrapper">
               <input
                 type={showRepass ? "text" : "password"}
                 value={inputRepass}
                 onChange={(e) => setInputRepass(e.target.value)}
-                className="flex-1 px-1! outline-none"
+                className="modal-input"
               />
               <button
                 type="button"
                 onClick={() => setShowRepass(!showRepass)}
-                className="w-auto h-full px-3 text-white text-sm font-medium transition cursor-pointer"
+                className="password-toggle"
               >
-                {showRepass ? "👁️" : "🚫"}
+                {showRepass ? "Hide" : "Show"}
               </button>
             </div>
           </div>
         </div>
 
-        <Button
-          color="#b87d3e"
-          textColor="#ffffff"
-          text={loading ? "Signing up..." : "Sign up"}
+        <button
+          className="filled-btn"
+          style={{ padding: '8px', fontSize: '14px' }}
           onClick={handleSignup}
           disabled={loading}
-        />
+        >
+          {loading ? "Signing up..." : "Sign Up"}
+        </button>
 
         <button
           onClick={() => {
             setShowSignup(false);
             setShowSignin(true);
           }}
-          className="text-sm text-[#b87d3e] hover:underline cursor-pointer mt-3!"
+          className="modal-link"
         >
-          Already have an account?
+          Already have an account? Sign In
         </button>
       </div>
     </div>
+
   );
 }
