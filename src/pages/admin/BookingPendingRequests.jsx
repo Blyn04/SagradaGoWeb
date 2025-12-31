@@ -61,6 +61,7 @@ function AdminBookingForm({ bookingType, onSuccess, onCancel }) {
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [users, setUsers] = useState([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
+  const [birthdayDisplay, setBirthdayDisplay] = useState("");
 
   useEffect(() => {
     setPhysicalRequirements({});
@@ -87,6 +88,112 @@ function AdminBookingForm({ bookingType, onSuccess, onCancel }) {
     } finally {
       setLoadingUsers(false);
     }
+  };
+
+  // Contact number validation
+  const validateContactNumber = (_, value) => {
+    if (!value) {
+      return Promise.reject(new Error('Contact number is required'));
+    }
+
+    const trimmed = value.trim();
+
+    if (!/^\d+$/.test(trimmed)) {
+      return Promise.reject(new Error('Contact number must contain only numbers'));
+    }
+
+    if (trimmed.length !== 11) {
+      return Promise.reject(new Error('Contact number must be exactly 11 digits'));
+    }
+
+    if (!trimmed.startsWith("09")) {
+      return Promise.reject(new Error('Contact number must start with 09 (Philippine mobile number format)'));
+    }
+
+    return Promise.resolve();
+  };
+
+  // Date formatting functions
+  const formatDateInput = (value) => {
+    const numbers = value.replace(/\D/g, "");
+
+    if (numbers.length <= 2) {
+      return numbers;
+    } else if (numbers.length <= 4) {
+      return `${numbers.slice(0, 2)}/${numbers.slice(2)}`;
+    } else {
+      return `${numbers.slice(0, 2)}/${numbers.slice(2, 4)}/${numbers.slice(4, 8)}`;
+    }
+  };
+
+  const parseDateInput = (value) => {
+    if (!value) return "";
+
+    if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      return value;
+    }
+
+    const match = value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    if (match) {
+      const [, month, day, year] = match;
+      return `${year}-${month}-${day}`;
+    }
+
+    return value;
+  };
+
+  const validateBirthday = (_, value) => {
+    if (!value) {
+      return Promise.reject(new Error('Birthday is required'));
+    }
+
+    // Check if it's already in MM/DD/YYYY format
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(value)) {
+      // Parse MM/DD/YYYY format
+      const [month, day, year] = value.split('/');
+      let date = dayjs(`${year}-${month}-${day}`, "YYYY-MM-DD", true);
+      
+      if (!date.isValid()) {
+        return Promise.reject(new Error('Please enter a valid date (MM/DD/YYYY)'));
+      }
+
+      const today = dayjs();
+      const minDate = dayjs().subtract(120, "years");
+
+      if (date.isAfter(today)) {
+        return Promise.reject(new Error('Birthday cannot be in the future'));
+      }
+
+      if (date.isBefore(minDate)) {
+        return Promise.reject(new Error('Please enter a valid birthday (not more than 120 years ago)'));
+      }
+
+      return Promise.resolve();
+    }
+
+    // If not in correct format, try to parse it anyway
+    const dateString = parseDateInput(value);
+    let date = dayjs(dateString, "YYYY-MM-DD", true);
+    if (!date.isValid()) {
+      date = dayjs(dateString);
+    }
+
+    if (!date.isValid()) {
+      return Promise.reject(new Error('Please enter a valid date (MM/DD/YYYY)'));
+    }
+
+    const today = dayjs();
+    const minDate = dayjs().subtract(120, "years");
+
+    if (date.isAfter(today)) {
+      return Promise.reject(new Error('Birthday cannot be in the future'));
+    }
+
+    if (date.isBefore(minDate)) {
+      return Promise.reject(new Error('Please enter a valid birthday (not more than 120 years ago)'));
+    }
+
+    return Promise.resolve();
   };
 
   const handleSubmit = async (values) => {
@@ -252,6 +359,7 @@ function AdminBookingForm({ bookingType, onSuccess, onCancel }) {
       setUploadedFiles({});
       setPhysicalRequirements({});
       setSelectedUserId(null);
+      setBirthdayDisplay("");
       setBurialServices({
         funeral_mass: false,
         death_anniversary: false,
@@ -388,9 +496,19 @@ function AdminBookingForm({ bookingType, onSuccess, onCancel }) {
           <Form.Item
             label="Contact Number"
             name="contact_number"
-            rules={[{ required: true, message: 'Please enter contact number' }]}
+            rules={[{ validator: validateContactNumber }]}
           >
-            <Input placeholder="Enter contact number" />
+            <Input 
+              placeholder="09XXXXXXXXX (11 digits, starts with 09)"
+              maxLength={11}
+              onChange={(e) => {
+                const value = e.target.value;
+                const numericOnly = value.replace(/\D/g, "");
+                const limited = numericOnly.slice(0, 11);
+                // Update form field value
+                form.setFieldsValue({ contact_number: limited });
+              }}
+            />
           </Form.Item>
         </Col>
         {(bookingType !== 'Confession' && bookingType !== 'Anointing') && (
@@ -571,9 +689,43 @@ function AdminBookingForm({ bookingType, onSuccess, onCancel }) {
               <Form.Item
                 label="Birthday (MM/DD/YYYY)"
                 name="candidate_birthday"
-                rules={[{ required: true }]}
+                rules={[{ validator: validateBirthday }]}
+                help="Format: MM/DD/YYYY"
               >
-                <Input placeholder="MM/DD/YYYY" />
+                <Input 
+                  placeholder="MM/DD/YYYY"
+                  maxLength={10}
+                  value={birthdayDisplay}
+                  onChange={(e) => {
+                    const inputValue = e.target.value;
+                    if (inputValue.length < birthdayDisplay.length) {
+                      setBirthdayDisplay(inputValue);
+                      form.setFieldsValue({ candidate_birthday: inputValue });
+                      if (inputValue.length === 0) {
+                        form.setFieldsValue({ candidate_birthday: "" });
+                      }
+                      return;
+                    }
+
+                    const formatted = formatDateInput(inputValue);
+                    setBirthdayDisplay(formatted);
+                    form.setFieldsValue({ candidate_birthday: formatted });
+
+                    if (/^\d{2}\/\d{2}\/\d{4}$/.test(formatted)) {
+                      form.validateFields(['candidate_birthday']);
+                    }
+                  }}
+                  onBlur={() => {
+                    if (birthdayDisplay) {
+                      if (/^\d{2}\/\d{2}\/\d{4}$/.test(birthdayDisplay)) {
+                        form.validateFields(['candidate_birthday']);
+                      } else {
+                        form.setFieldsValue({ candidate_birthday: "" });
+                        setBirthdayDisplay("");
+                      }
+                    }
+                  }}
+                />
               </Form.Item>
             </Col>
             <Col span={12}>
@@ -658,9 +810,14 @@ function AdminBookingForm({ bookingType, onSuccess, onCancel }) {
           <Form.Item
             label="Marriage Type"
             name="marriage_type"
-            rules={[{ required: true }]}
+            rules={[{ required: true, message: 'Please select marriage type' }]}
           >
-            <Input />
+            <Select placeholder="Select marriage type">
+              <Option value="Church">Church</Option>
+              <Option value="Civil">Civil</Option>
+              <Option value="Catholic">Catholic</Option>
+              <Option value="Other">Other</Option>
+            </Select>
           </Form.Item>
 
           <Form.Item
@@ -731,9 +888,13 @@ function AdminBookingForm({ bookingType, onSuccess, onCancel }) {
               <Form.Item
                 label="Civil Status"
                 name="deceased_civil_status"
-                rules={[{ required: true }]}
+                rules={[{ required: true, message: 'Please select civil status' }]}
               >
-                <Input />
+                <Select placeholder="Select civil status">
+                  <Option value="Single">Single</Option>
+                  <Option value="Married">Married</Option>
+                  <Option value="Widowed">Widowed</Option>
+                </Select>
               </Form.Item>
             </Col>
           </Row>
