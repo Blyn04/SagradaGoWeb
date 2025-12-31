@@ -52,6 +52,7 @@ export default function AccountManagement() {
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [activeTab, setActiveTab] = useState("all");
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -87,7 +88,7 @@ export default function AccountManagement() {
 
   useEffect(() => {
     filterUsers();
-  }, [users, searchTerm, filterType]);
+  }, [users, searchTerm, filterType, statusFilter]);
 
   useEffect(() => {
     if (activeTab === "users") {
@@ -125,6 +126,14 @@ export default function AccountManagement() {
 
     } else if (filterType === "users") {
       filtered = filtered.filter((user) => user.is_priest === false);
+    }
+
+    if (statusFilter !== "all") {
+      const isActive = statusFilter === "active";
+      filtered = filtered.filter((user) => {
+        const userIsActive = user.is_active === true;
+        return userIsActive === isActive;
+      });
     }
 
     if (searchTerm) {
@@ -822,19 +831,43 @@ export default function AccountManagement() {
         {/* Search Field and Tabs Combined */}
         <Card style={{ marginBottom: 24, padding: 0 }}>
           <div style={{ padding: "16px 24px", borderBottom: "1px solid #f0f0f0" }}>
-            <Input
-              placeholder="Search by name, email, or contact number..."
-              prefix={<SearchOutlined style={{ marginRight: 8 }} />}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              allowClear
-              style={{
-                fontFamily: 'Poppins, sans-serif',
-                fontWeight: 500,
-                padding: '10px 12px',
-                height: '42px',
-              }}
-            />
+            <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-end' }}>
+              <div style={{ flex: 1 }}>
+                <Text strong style={{ fontFamily: 'Poppins', fontSize: 14, display: 'block', marginBottom: 8 }}>Search:</Text>
+                <Input
+                  placeholder="Search by name, email, or contact number..."
+                  prefix={<SearchOutlined style={{ marginRight: 8 }} />}
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  allowClear
+                  style={{
+                    fontFamily: 'Poppins, sans-serif',
+                    fontWeight: 500,
+                    padding: '10px 12px',
+                    height: '42px',
+                    width: '100%',
+                  }}
+                />
+              </div>
+              <div style={{ flex: '0 0 200px' }}>
+                <Text strong style={{ fontFamily: 'Poppins', fontSize: 14, display: 'block', marginBottom: 8 }}>Filter by Status:</Text>
+                <Select
+                  value={statusFilter}
+                  onChange={setStatusFilter}
+                  style={{
+                    width: '100%',
+                    fontFamily: 'Poppins, sans-serif',
+                    fontWeight: 500,
+                    height: '42px',
+                  }}
+                  placeholder="Select status"
+                >
+                  <Option value="all">All Status</Option>
+                  <Option value="active">Active</Option>
+                  <Option value="disabled">Disabled</Option>
+                </Select>
+              </div>
+            </div>
           </div>
           <div style={{ padding: "16px 24px" }}>
             <Segmented
