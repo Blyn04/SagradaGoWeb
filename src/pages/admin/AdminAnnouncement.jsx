@@ -218,8 +218,8 @@ export default function AdminAnnouncements() {
 
           {/* Filters */}
           <Card style={{ marginBottom: 16 }}>
-            <Space direction="vertical" style={{ width: '100%' }} size="middle">
-              <div>
+            <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-end' }}>
+              <div style={{ flex: 1 }}>
                 <Text strong style={{ fontFamily: 'Poppins', fontSize: 14, display: 'block', marginBottom: 8 }}>Search Announcements:</Text>
                 <Input
                   placeholder="Search by title, content, or author..."
@@ -235,7 +235,7 @@ export default function AdminAnnouncements() {
                 />
               </div>
 
-              <div>
+              <div style={{ flex: '0 0 250px' }}>
                 <Text strong style={{ fontFamily: 'Poppins', fontSize: 14, display: 'block', marginBottom: 8 }}>Filter by Priority:</Text>
                 <Select
                   value={priorityFilter}
@@ -254,7 +254,7 @@ export default function AdminAnnouncements() {
                   <Option value="urgent">Urgent</Option>
                 </Select>
               </div>
-            </Space>
+            </div>
           </Card>
 
           {/* Table */}
