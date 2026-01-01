@@ -155,7 +155,7 @@ function AdminBookingForm({ bookingType, onSuccess, onCancel }) {
     if (/^\d{2}\/\d{2}\/\d{4}$/.test(value)) {
       const [month, day, year] = value.split('/');
       let date = dayjs(`${year}-${month}-${day}`, "YYYY-MM-DD", true);
-      
+
       if (!date.isValid()) {
         return Promise.reject(new Error('Please enter a valid date (MM/DD/YYYY)'));
       }
@@ -220,8 +220,8 @@ function AdminBookingForm({ bookingType, onSuccess, onCancel }) {
 
       console.log('Creating booking for user UID:', selectedUserId);
       console.log('Booking type:', bookingType);
-      
-      formData.append('uid', selectedUserId); 
+
+      formData.append('uid', selectedUserId);
       formData.append('full_name', values.full_name || '');
       formData.append('email', values.email || '');
       formData.append('date', combinedDateTime.toISOString());
@@ -479,7 +479,7 @@ function AdminBookingForm({ bookingType, onSuccess, onCancel }) {
             name="full_name"
             rules={[{ required: true, message: 'Please enter full name' }]}
           >
-            <Input 
+            <Input
               placeholder="Enter full name"
               onChange={(e) => handleNameInput('full_name', e.target.value)}
             />
@@ -503,7 +503,7 @@ function AdminBookingForm({ bookingType, onSuccess, onCancel }) {
             name="contact_number"
             rules={[{ validator: validateContactNumber }]}
           >
-            <Input 
+            <Input
               placeholder="09XXXXXXXXX (11 digits, starts with 09)"
               maxLength={11}
               onChange={(e) => {
@@ -696,7 +696,7 @@ function AdminBookingForm({ bookingType, onSuccess, onCancel }) {
                 rules={[{ validator: validateBirthday }]}
                 help="Format: MM/DD/YYYY"
               >
-                <Input 
+                <Input
                   placeholder="MM/DD/YYYY"
                   maxLength={10}
                   value={birthdayDisplay}
@@ -1151,7 +1151,7 @@ export default function BookingPendingRequests() {
       const normalizedConfessions = await Promise.all(
         confessionBookings.map(async (b) => {
           let userData = b.user;
-          
+
           // If user object is missing but uid exists, fetch user data
           if (!userData && b.uid && b.uid !== 'admin') {
             try {
@@ -2232,10 +2232,12 @@ export default function BookingPendingRequests() {
                   Booking Pending Requests
                 </Title>
                 {isPolling && (
-                  <Tag color="green" style={{ 
-                    display: "flex", 
-                    alignItems: "center", 
-                    gap: 6
+                  <Tag color="green" style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                    fontFamily: 'Poppins',
+                    fontWeight: 500
                   }}>
                     <span style={{
                       width: 8,
@@ -2244,7 +2246,7 @@ export default function BookingPendingRequests() {
                       backgroundColor: "#52c41a",
                       display: "inline-block",
                       boxShadow: "0 0 0 0 rgba(82, 196, 26, 1)",
-                      animation: "pulse 2s infinite"
+                      animation: "pulse 2s infinite",
                     }}></span>
                     Live
                   </Tag>
