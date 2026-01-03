@@ -41,10 +41,6 @@
   margin-bottom: 24px;
 }
 
-.dashboard-stat-card {
-  /* Card styles are handled by Ant Design Card component */
-}
-
 .dashboard-stat-title {
   margin-top: 8px;
   font-family: 'Poppins';
@@ -91,17 +87,9 @@
   font-family: 'Poppins';
 }
 
-.dashboard-recent-users-card {
-  /* Card styles handled by Ant Design */
-}
-
 .dashboard-recent-users-title {
   margin: 0;
   font-family: 'Poppins';
-}
-
-.dashboard-system-overview-card {
-  /* Card styles handled by Ant Design */
 }
 
 .dashboard-system-overview-title {
