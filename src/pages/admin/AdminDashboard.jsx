@@ -715,7 +715,7 @@ export default function AdminDashboard() {
             </Card>
           </Col>
           <Col xs={24} lg={12}>
-            <div style={{ marginTop: -20, width: '103%' }}>
+            <div style={{ marginTop: -22, width: '103%' }}>
               <ReportTemplate
                 title={<span className="report-template-title">System Overview Report</span>}
                 columns={systemOverviewColumns}
