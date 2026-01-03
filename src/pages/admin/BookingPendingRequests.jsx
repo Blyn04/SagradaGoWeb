@@ -552,7 +552,7 @@ function AdminBookingForm({ bookingType, onSuccess, onCancel }) {
               style={{ width: '100%' }}
               value={time ? dayjs(time) : null}
               onChange={(value) => setTime(value ? value.toDate() : null)}
-              format="HH:mm"
+              format="h:mm A"
               minuteStep={10}
             />
           </Form.Item>
@@ -2719,7 +2719,7 @@ export default function BookingPendingRequests() {
                       style={{ width: '100%' }}
                       value={editTime}
                       onChange={(value) => setEditTime(value ? dayjs(value) : null)}
-                      format="HH:mm"
+                      format="h:mm A"
                       minuteStep={10}
                     />
                   </Form.Item>
