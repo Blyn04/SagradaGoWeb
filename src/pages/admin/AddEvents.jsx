@@ -104,8 +104,79 @@ export default function AddEvents() {
     }
   };
 
+  const timeToMinutes = (timeStr) => {
+    if (!timeStr) return null;
+    let parsed = dayjs(timeStr, "h:mm A", true);
+    if (parsed.isValid()) {
+      return parsed.hour() * 60 + parsed.minute();
+    }
+
+    parsed = dayjs(timeStr, "HH:mm", true);
+    if (parsed.isValid()) {
+      return parsed.hour() * 60 + parsed.minute();
+    }
+    return null;
+  };
+
+  const checkTimeConflict = (date, timeStart, timeEnd, location, excludeEventId = null) => {
+    if (!timeStart || !timeEnd || !location) return null;
+
+    const eventDate = date.format("YYYY-MM-DD");
+    const startMinutes = timeToMinutes(timeStart.format("h:mm A"));
+    const endMinutes = timeToMinutes(timeEnd.format("h:mm A"));
+
+    if (startMinutes === null || endMinutes === null) return null;
+
+    const conflictingEvent = events.find((event) => {
+      if (excludeEventId && event._id === excludeEventId) return false;
+
+      const eventDateStr = dayjs(event.date).format("YYYY-MM-DD");
+      if (eventDateStr !== eventDate || event.location !== location) {
+        return false;
+      }
+
+      if (!event.time_start || !event.time_end) return false;
+
+      const existingStart = timeToMinutes(event.time_start);
+      const existingEnd = timeToMinutes(event.time_end);
+
+      if (existingStart === null || existingEnd === null) return false;
+
+      return startMinutes < existingEnd && endMinutes > existingStart;
+    });
+
+    return conflictingEvent;
+  };
+
   const handleSubmit = async (values) => {
     try {
+      if (values.time_start && values.time_end) {
+        const startMinutes = timeToMinutes(values.time_start.format("h:mm A"));
+        const endMinutes = timeToMinutes(values.time_end.format("h:mm A"));
+
+        if (startMinutes !== null && endMinutes !== null && endMinutes <= startMinutes) {
+          message.error("End time must be after start time.");
+          return;
+        }
+      }
+
+      if (values.time_start && values.time_end && values.location && values.date) {
+        const conflictingEvent = checkTimeConflict(
+          values.date,
+          values.time_start,
+          values.time_end,
+          values.location,
+          editingEvent?._id
+        );
+
+        if (conflictingEvent) {
+          message.error(
+            `Time conflict detected! There is already an event "${conflictingEvent.title}" scheduled at ${conflictingEvent.location} on ${formatDate(conflictingEvent.date)} from ${conflictingEvent.time_start} to ${conflictingEvent.time_end}.`
+          );
+          return;
+        }
+      }
+
       setLoading(true);
       const formData = new FormData();
 
@@ -488,6 +559,17 @@ export default function AddEvents() {
                         placeholder="Select start time"
                         minuteStep={10}
                         use12Hours
+                        onChange={() => {
+                          const timeStart = form.getFieldValue('time_start');
+                          const timeEnd = form.getFieldValue('time_end');
+                          if (timeStart && timeEnd) {
+                            const startMinutes = timeStart.hour() * 60 + timeStart.minute();
+                            const endMinutes = timeEnd.hour() * 60 + timeEnd.minute();
+                            if (endMinutes <= startMinutes) {
+                              form.setFieldsValue({ time_end: null });
+                            }
+                          }
+                        }}
                       />
                     </Form.Item>
                   </Col>
@@ -495,6 +577,30 @@ export default function AddEvents() {
                     <Form.Item
                       name="time_end"
                       label="End Time"
+                      dependencies={['time_start']}
+                      rules={[
+                        ({ getFieldValue }) => ({
+                          validator(_, value) {
+                            if (!value) {
+                              return Promise.resolve();
+                            }
+
+                            const timeStart = getFieldValue('time_start');
+                            if (!timeStart) {
+                              return Promise.resolve();
+                            }
+
+                            const startMinutes = timeStart.hour() * 60 + timeStart.minute();
+                            const endMinutes = value.hour() * 60 + value.minute();
+                            
+                            if (endMinutes <= startMinutes) {
+                              return Promise.reject(new Error('End time must be after start time'));
+                            }
+
+                            return Promise.resolve();
+                          },
+                        }),
+                      ]}
                     >
                       <TimePicker
                         style={{ width: "100%" }}
@@ -503,6 +609,49 @@ export default function AddEvents() {
                         placeholder="Select end time"
                         minuteStep={10}
                         use12Hours
+                        disabledTime={() => {
+                          const timeStart = form.getFieldValue('time_start');
+                          if (!timeStart) {
+                            return {};
+                          }
+                          
+                          const startHour = timeStart.hour();
+                          const startMinute = timeStart.minute();
+                          const startTotalMinutes = startHour * 60 + startMinute;
+                          
+                          return {
+                            disabledHours: () => {
+                              const hours = [];
+                              for (let h = 0; h < 24; h++) {
+                                const hourMinutes = h * 60;
+                                if (hourMinutes + 59 < startTotalMinutes) {
+                                  hours.push(h);
+                                }
+                              }
+
+                              return hours;
+                            },
+                            disabledMinutes: (selectedHour) => {
+                              if (!selectedHour) return [];
+                              
+                              const hourMinutes = selectedHour * 60;
+                              const minutes = [];
+
+                              if (selectedHour === startHour) {
+                                for (let m = 0; m <= startMinute; m += 10) {
+                                  minutes.push(m);
+                                }
+
+                              } else if (hourMinutes < startTotalMinutes) {
+                                for (let m = 0; m < 60; m += 10) {
+                                  minutes.push(m);
+                                }
+                              }
+                              
+                              return minutes;
+                            },
+                          };
+                        }}
                       />
                     </Form.Item>
                   </Col>
