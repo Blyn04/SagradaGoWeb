@@ -1,14 +1,13 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useState } from "react";
 import { NavbarContext } from "../../context/AllContext";
 import "../../styles/booking/wedding.css";
-import default_profile from "../../assets/no-image.jpg";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import dayjs from "dayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { MobileTimePicker } from "@mui/x-date-pickers/MobileTimePicker";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import no_image from "../../assets/blank-image.jpg";
+
 import { supabase } from "../../config/supabase";
 import axios from "axios";
 import { API_URL } from "../../Constants";
@@ -124,8 +123,6 @@ export default function Wedding() {
   const [groomPreview, setGroomPreview] = useState("");
   const [bridePreview, setBridePreview] = useState("");
 
-  const [groomPhoto, setGroomPhoto] = useState("");
-  const [bridePhoto, setBridePhoto] = useState("");
 
   async function uploadImage(file, namePrefix) {
     const ext = file.name.split(".").pop();
@@ -168,8 +165,6 @@ export default function Wedding() {
   const [groomBapPreview, setGroomBapPreview] = useState("");
   const [brideBapPreview, setBrideBapPreview] = useState("");
 
-  const [groomBaptismal, setGroomBaptismal] = useState("");
-  const [brideBaptismal, setBrideBaptismal] = useState("");
 
   const uploadBaptismal = [
     {
@@ -194,8 +189,6 @@ export default function Wedding() {
   const [groomConfPreview, setGroomConfPreview] = useState("");
   const [brideConfPreview, setBrideConfPreview] = useState("");
 
-  const [groomConfirmation, setGroomConfirmation] = useState("");
-  const [brideConfirmation, setBrideConfirmation] = useState("");
 
   const uploadConfirmation = [
     {
@@ -220,8 +213,7 @@ export default function Wedding() {
   const [groomCenomarPreview, setGroomCenomarPreview] = useState("");
   const [brideCenomarPreview, setBrideCenomarPreview] = useState("");
 
-  const [groomCenomar, setGroomCenomar] = useState("");
-  const [brideCenomar, setBrideCenomar] = useState("");
+
 
   const uploadCenomar = [
     {
@@ -246,8 +238,7 @@ export default function Wedding() {
   const [groomPermPreview, setGroomPermPreview] = useState("");
   const [bridePermPreview, setBridePermPreview] = useState("");
 
-  const [groomPermission, setGroomPermission] = useState("");
-  const [bridePermission, setBridePermission] = useState("");
+
 
   const uploadPermission = [
     {
@@ -268,7 +259,7 @@ export default function Wedding() {
 
   const [marriageDocuFile, setMarriageDocuFile] = useState(null);
   const [marriagePreview, setMarriagePreview] = useState("");
-  const [marriageDocu, setMarriageDocu] = useState("");
+
 
   const uploadMarriageDocu = [
     {
