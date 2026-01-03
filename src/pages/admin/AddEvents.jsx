@@ -112,8 +112,8 @@ export default function AddEvents() {
       formData.append("title", values.title);
       formData.append("type", values.type || "event");
       formData.append("date", values.date.format("YYYY-MM-DD"));
-      formData.append("time_start", values.time_start ? values.time_start.format("HH:mm") : "");
-      formData.append("time_end", values.time_end ? values.time_end.format("HH:mm") : "");
+      formData.append("time_start", values.time_start ? values.time_start.format("h:mm A") : "");
+      formData.append("time_end", values.time_end ? values.time_end.format("h:mm A") : "");
       formData.append("location", values.location);
 
       if (values.description) {
@@ -159,12 +159,22 @@ export default function AddEvents() {
 
   const handleEdit = (event) => {
     setEditingEvent(event);
+    
+    const parseTime = (timeStr) => {
+      if (!timeStr) return null;
+      let parsed = dayjs(timeStr, "h:mm A", true);
+      if (parsed.isValid()) return parsed;
+      parsed = dayjs(timeStr, "HH:mm", true);
+      if (parsed.isValid()) return parsed;
+      return null;
+    };
+    
     form.setFieldsValue({
       type: event.type || "event",
       title: event.title,
       date: event.date ? dayjs(event.date) : null,
-      time_start: event.time_start ? dayjs(event.time_start, "HH:mm") : null,
-      time_end: event.time_end ? dayjs(event.time_end, "HH:mm") : null,
+      time_start: parseTime(event.time_start),
+      time_end: parseTime(event.time_end),
       location: event.location,
       description: event.description || "",
     });
@@ -474,8 +484,10 @@ export default function AddEvents() {
                       <TimePicker
                         style={{ width: "100%" }}
                         size="large"
-                        format="HH:mm"
+                        format="h:mm A"
                         placeholder="Select start time"
+                        minuteStep={10}
+                        use12Hours
                       />
                     </Form.Item>
                   </Col>
@@ -487,8 +499,10 @@ export default function AddEvents() {
                       <TimePicker
                         style={{ width: "100%" }}
                         size="large"
-                        format="HH:mm"
+                        format="h:mm A"
                         placeholder="Select end time"
+                        minuteStep={10}
+                        use12Hours
                       />
                     </Form.Item>
                   </Col>
