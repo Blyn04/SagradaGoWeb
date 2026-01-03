@@ -57,6 +57,7 @@ export default function AccountManagement() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [showAddAdminModal, setShowAddAdminModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [viewingUser, setViewingUser] = useState(null);
   const [userDonations, setUserDonations] = useState([]);
@@ -81,6 +82,18 @@ export default function AccountManagement() {
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const [adminFormData, setAdminFormData] = useState({
+    first_name: "",
+    middle_name: "",
+    last_name: "",
+    contact_number: "",
+    birthday: "",
+    profile: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+  });
 
   useEffect(() => {
     fetchUsers();
@@ -416,6 +429,70 @@ export default function AccountManagement() {
     }
   };
 
+  const handleAddAdmin = async () => {
+    if (!adminFormData.email || !adminFormData.password || !adminFormData.first_name || !adminFormData.last_name) {
+      message.error("Please fill out all required fields.");
+      return;
+    }
+    if (adminFormData.password !== adminFormData.confirmPassword) {
+      message.error("Passwords do not match!");
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        adminFormData.email,
+        adminFormData.password
+      );
+      const user = userCredential.user;
+      const uid = user.uid;
+
+      await sendEmailVerification(user);
+
+      await axios.post(`${API_URL}/createAdmin`, {
+        first_name: adminFormData.first_name,
+        middle_name: adminFormData.middle_name,
+        last_name: adminFormData.last_name,
+        contact_number: adminFormData.contact_number,
+        birthday: adminFormData.birthday,
+        profile: adminFormData.profile,
+        email: adminFormData.email,
+        password: adminFormData.password,
+        uid: uid,
+      });
+
+      message.success("Admin account created successfully!");
+      setShowAddAdminModal(false);
+      setAdminFormData({
+        first_name: "",
+        middle_name: "",
+        last_name: "",
+        contact_number: "",
+        birthday: "",
+        profile: "",
+        email: "",
+        password: "",
+        confirmPassword: "",
+      });
+      fetchUsers();
+
+    } catch (error) {
+      console.error("Error creating admin:", error);
+      if (error.response) {
+        message.error(error.response.data.message || "Failed to create admin.");
+      } else if (error.code === "auth/email-already-in-use") {
+        message.error("Email is already in use.");
+      } else {
+        message.error("Failed to create admin. Please try again.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleUpdateRole = async (uid, newRole) => {
     Modal.confirm({
       title: "Confirm Role Change",
@@ -444,11 +521,11 @@ export default function AccountManagement() {
 
   const handleToggleAccountStatus = async (uid, currentStatus, userName, userRecord = null) => {
     const isCurrentlyActive = currentStatus === true;
-    const willEnable = !isCurrentlyActive; 
+    const willEnable = !isCurrentlyActive;
 
     Modal.confirm({
       title: willEnable ? "Enable Account" : "Disable Account",
-      content: willEnable 
+      content: willEnable
         ? `Are you sure you want to enable the account for ${userName}? The user will be able to log in again.`
         : `Are you sure you want to disable the account for ${userName}? The user will not be able to log in until the account is re-enabled.`,
       okText: willEnable ? "Enable" : "Disable",
@@ -596,7 +673,7 @@ export default function AccountManagement() {
         if (formData.residency) {
           updatePayload.residency = formData.residency;
         }
-        
+
       } else {
         updatePayload.previous_parish = undefined;
         updatePayload.residency = undefined;
@@ -708,7 +785,7 @@ export default function AccountManagement() {
       render: (_, record) => {
         const isActive = record.is_active === true;
         const userName = `${record.first_name} ${record.last_name}`.trim() || record.email;
-        
+
         return (
           <Space>
             <Button
@@ -814,7 +891,18 @@ export default function AccountManagement() {
               <Button
                 icon={<PlusOutlined />}
                 onClick={() => {
-                  navigate("/admin/create");
+                  setAdminFormData({
+                    first_name: "",
+                    middle_name: "",
+                    last_name: "",
+                    contact_number: "",
+                    birthday: "",
+                    profile: "",
+                    email: "",
+                    password: "",
+                    confirmPassword: "",
+                  });
+                  setShowAddAdminModal(true);
                 }}
                 className="border-btn"
               >
@@ -933,11 +1021,11 @@ export default function AccountManagement() {
             scroll={{ x: 1000 }}
             locale={{
               emptyText: (
-                <Empty 
+                <Empty
                   description={
                     activeTab === "users" ? "No users found" :
-                    activeTab === "priests" ? "No priests found" :
-                    "No accounts found"
+                      activeTab === "priests" ? "No priests found" :
+                        "No accounts found"
                   }
                 />
               ),
@@ -1128,8 +1216,8 @@ export default function AccountManagement() {
                   danger={viewingUser.is_active === true}
                   icon={viewingUser.is_active === true ? <StopOutlined /> : <CheckCircleOutlined />}
                   onClick={() => handleToggleAccountStatus(
-                    viewingUser.uid, 
-                    viewingUser.is_active, 
+                    viewingUser.uid,
+                    viewingUser.is_active,
                     `${viewingUser.first_name} ${viewingUser.last_name}`.trim() || viewingUser.email,
                     viewingUser
                   )}
@@ -1698,6 +1786,199 @@ export default function AccountManagement() {
             </div>
           </Form>
         </Modal>
+
+        {/* Add Admin Modal */}
+        <Modal
+          title="Add New Admin"
+          open={showAddAdminModal}
+          onCancel={() => {
+            setShowAddAdminModal(false);
+            setAdminFormData({
+              first_name: "",
+              middle_name: "",
+              last_name: "",
+              contact_number: "",
+              birthday: "",
+              profile: "",
+              email: "",
+              password: "",
+              confirmPassword: "",
+            });
+          }}
+          footer={null}
+          width={800}
+          maskClosable={true}
+        >
+          <Form layout="vertical">
+            <Row gutter={16}>
+              <Col xs={24} sm={8}>
+                <Form.Item
+                  label={
+                    <>
+                      First Name <span style={{ color: "red" }}>*</span>
+                    </>
+                  }
+                >
+                  <Input
+                    value={adminFormData.first_name}
+                    onChange={(e) =>
+                      setAdminFormData({ ...adminFormData, first_name: e.target.value })
+                    }
+                    placeholder="Enter first name"
+                  />
+                </Form.Item>
+              </Col>
+              <Col xs={24} sm={8}>
+                <Form.Item label="Middle Name">
+                  <Input
+                    value={adminFormData.middle_name}
+                    onChange={(e) =>
+                      setAdminFormData({ ...adminFormData, middle_name: e.target.value })
+                    }
+                    placeholder="Enter middle name"
+                  />
+                </Form.Item>
+              </Col>
+              <Col xs={24} sm={8}>
+                <Form.Item
+                  label={
+                    <>
+                      Last Name <span style={{ color: "red" }}>*</span>
+                    </>
+                  }
+                >
+                  <Input
+                    value={adminFormData.last_name}
+                    onChange={(e) =>
+                      setAdminFormData({ ...adminFormData, last_name: e.target.value })
+                    }
+                    placeholder="Enter last name"
+                  />
+                </Form.Item>
+              </Col>
+              <Col xs={24} sm={8}>
+                <Form.Item label="Contact Number">
+                  <Input
+                    value={adminFormData.contact_number}
+                    onChange={(e) =>
+                      setAdminFormData({ ...adminFormData, contact_number: e.target.value })
+                    }
+                    placeholder="Enter contact number"
+                  />
+                </Form.Item>
+              </Col>
+              <Col xs={24} sm={8}>
+                <Form.Item label="Birthday">
+                  <Input
+                    type="date"
+                    value={adminFormData.birthday}
+                    onChange={(e) =>
+                      setAdminFormData({ ...adminFormData, birthday: e.target.value })
+                    }
+                  />
+                </Form.Item>
+              </Col>
+              <Col xs={24} sm={8}>
+                <Form.Item label="Profile Picture">
+                  <Input
+                    value={adminFormData.profile}
+                    onChange={(e) =>
+                      setAdminFormData({ ...adminFormData, profile: e.target.value })
+                    }
+                    placeholder="Enter profile picture URL"
+                  />
+                </Form.Item>
+              </Col>
+              <Col xs={24} sm={12}>
+                <Form.Item
+                  label={
+                    <>
+                      Email <span style={{ color: "red" }}>*</span>
+                    </>
+                  }
+                >
+                  <Input
+                    type="email"
+                    value={adminFormData.email}
+                    onChange={(e) =>
+                      setAdminFormData({ ...adminFormData, email: e.target.value })
+                    }
+                    placeholder="Enter email"
+                  />
+                </Form.Item>
+              </Col>
+              <Col xs={24} sm={12}>
+                <Form.Item
+                  label={
+                    <>
+                      Password <span style={{ color: "red" }}>*</span>
+                    </>
+                  }
+                >
+                  <Input.Password
+                    value={adminFormData.password}
+                    onChange={(e) =>
+                      setAdminFormData({ ...adminFormData, password: e.target.value })
+                    }
+                    placeholder="Enter password"
+                    iconRender={(visible) =>
+                      visible ? <EyeOutlined /> : <EyeInvisibleOutlined />
+                    }
+                  />
+                </Form.Item>
+              </Col>
+              <Col xs={24} sm={12}>
+                <Form.Item
+                  label={
+                    <>
+                      Confirm Password <span style={{ color: "red" }}>*</span>
+                    </>
+                  }
+                >
+                  <Input.Password
+                    value={adminFormData.confirmPassword}
+                    onChange={(e) =>
+                      setAdminFormData({ ...adminFormData, confirmPassword: e.target.value })
+                    }
+                    placeholder="Confirm password"
+                    iconRender={(visible) =>
+                      visible ? <EyeOutlined /> : <EyeInvisibleOutlined />
+                    }
+                  />
+                </Form.Item>
+              </Col>
+            </Row>
+            <div style={{ marginTop: 24, display: "flex", justifyContent: "flex-end", gap: 8 }}>
+              <Button
+                onClick={() => {
+                  setShowAddAdminModal(false);
+                  setAdminFormData({
+                    first_name: "",
+                    middle_name: "",
+                    last_name: "",
+                    contact_number: "",
+                    birthday: "",
+                    profile: "",
+                    email: "",
+                    password: "",
+                    confirmPassword: "",
+                  });
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="filled-btn"
+                style={{ padding: '10px' }}
+                onClick={handleAddAdmin}
+                loading={loading}
+              >
+                Create Admin
+              </Button>
+            </div>
+          </Form>
+        </Modal>
+
       </div>
     </div>
   );
