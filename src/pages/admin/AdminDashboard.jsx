@@ -687,7 +687,7 @@ export default function AdminDashboard() {
                     borderRadius: "12px",
                     fontSize: "15px",
                     lineHeight: 1.7,
-                    height: "500px",
+                    height: "495px",
                     overflowY: "auto",
                     color: "#333",
                   }}
