@@ -24,6 +24,7 @@ import AdminLayout from "./components/AdminLayout";
 import AdminAnnouncements from "./pages/admin/AdminAnnouncement";
 import AdminChat from "./components/AdminChat";
 import Notifications from "./components/Notifications";
+import FloatingButton from "./components/FloatingButton";
 import ProfilePage from "./pages/ProfilePage";
 
 function AppContent() {
@@ -35,7 +36,8 @@ function AppContent() {
   return (
     <>
       {!isAdminRoute && <Header />}
-
+      {!isAdminRoute && <FloatingButton />}
+      
       <Routes>
         {/* Admin */}
         <Route path="/admin/login" element={<AdminLogin />} />
