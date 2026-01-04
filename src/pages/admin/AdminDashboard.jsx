@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Card, Row, Col, Statistic, Button, Space, Tag, Typography, Spin, Empty, Calendar, Modal } from "antd";
+import { Card, Row, Col, Statistic, Button, Space, Tag, Typography, Spin, Empty, Calendar, Modal, Select } from "antd";
 import {
   UserOutlined,
   TeamOutlined,
@@ -16,6 +16,8 @@ import { API_URL } from "../../Constants";
 import "../../styles/dashboard.css";
 import CustomCalendar from "../../components/CustomCalendar";
 import ReportTemplate from "../../components/ReportTemplate";
+
+const { Option } = Select;
 
 const { Title, Text } = Typography;
 
@@ -36,6 +38,7 @@ export default function AdminDashboard() {
   const [monthlyDonationsData, setMonthlyDonationsData] = useState([]);
   const [aiAnalysis, setAiAnalysis] = useState("");
   const [loadingAI, setLoadingAI] = useState(false);
+  const [bookingMonthFilter, setBookingMonthFilter] = useState(null);
   const [stats, setStats] = useState({
     totalUsers: 0,
     totalPriests: 0,
@@ -549,6 +552,20 @@ export default function AdminDashboard() {
     { title: "Value", dataIndex: "value", key: "value" },
   ];
 
+  const getBookingMonthOptions = () => {
+    const options = [{ value: null, label: "All Months" }];
+    const currentDate = dayjs();
+
+    for (let i = 0; i < 12; i++) {
+      const monthDate = currentDate.subtract(i, "month");
+      const value = monthDate.format("YYYY-MM");
+      const label = monthDate.format("MMMM YYYY");
+      options.push({ value, label });
+    }
+    
+    return options;
+  };
+
   return (
     <div className="dashboard-container">
       <div className="dashboard-content">
@@ -798,6 +815,33 @@ export default function AdminDashboard() {
             columns={bookingColumns}
             data={bookingReportData}
             reportType="booking"
+            monthFilter={bookingMonthFilter}
+            filter={
+              <Row gutter={[16, 16]} align="middle">
+                <Col flex="auto">
+                  <Text strong>Filter by Month:</Text>
+                </Col>
+                <Col flex="200px">
+                  <Select
+                    style={{
+                      width: "100%",
+                      fontFamily: "Poppins, sans-serif",
+                      fontWeight: 500,
+                    }}
+                    value={bookingMonthFilter}
+                    onChange={setBookingMonthFilter}
+                    placeholder="Select month"
+                    allowClear
+                  >
+                    {getBookingMonthOptions().map((option) => (
+                      <Option key={option.value || "all"} value={option.value}>
+                        {option.label}
+                      </Option>
+                    ))}
+                  </Select>
+                </Col>
+              </Row>
+            }
           />
         </Col>
       </Row>

@@ -51,7 +51,7 @@ const { Title, Text } = Typography;
 
 const COLORS = ["#1890ff", "#52c41a", "#fa8c16", "#f5222d", "#722ed1", "#13c2c2", "#eb2f96"];
 
-export default function ReportTemplate({ title, columns, data, exportType = "pdf", reportType = "general", monthFilter = null }) {
+export default function ReportTemplate({ title, columns, data, exportType = "pdf", reportType = "general", monthFilter = null, filter = null }) {
   const formattedData = useMemo(() => {
     return data.map((row, index) => {
       const newRow = { ...row };
@@ -292,7 +292,7 @@ export default function ReportTemplate({ title, columns, data, exportType = "pdf
       statusChartData,
       monthlyChartData,
     };
-  }, [formattedData, reportType]);
+  }, [formattedData, reportType, monthFilter]);
 
   const systemCharts = useMemo(() => {
     if (reportType !== "system" || formattedData.length === 0) return null;
@@ -570,6 +570,11 @@ export default function ReportTemplate({ title, columns, data, exportType = "pdf
           </Button>
         </Dropdown>
       </div>
+      {filter && (
+        <div style={{ marginBottom: 24 }}>
+          {filter}
+        </div>
+      )}
 
       {formattedData.length === 0 ? (
         <Empty description="No data available" />
