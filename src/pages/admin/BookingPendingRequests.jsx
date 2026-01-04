@@ -1299,6 +1299,45 @@ export default function BookingPendingRequests() {
     ];
   };
 
+  const checkPriestConflict = async (priestId, bookingDate, bookingTime, transactionId = null) => {
+    try {
+      if (!priestId || !bookingDate || !bookingTime) {
+        return { hasConflict: false };
+      }
+
+      const dateStr = bookingDate instanceof Date ? bookingDate.toISOString() : bookingDate;
+      let timeStr = bookingTime;
+      
+      if (typeof bookingTime === 'string' && !bookingTime.includes('T')) {
+        const timeParts = bookingTime.split(':');
+        if (timeParts.length >= 2) {
+          const tempDate = new Date();
+          tempDate.setHours(parseInt(timeParts[0], 10));
+          tempDate.setMinutes(parseInt(timeParts[1], 10));
+          tempDate.setSeconds(0);
+          tempDate.setMilliseconds(0);
+          timeStr = tempDate.toISOString();
+        }
+
+      } else if (bookingTime instanceof Date) {
+        timeStr = bookingTime.toISOString();
+      }
+
+      const response = await axios.post(`${API_URL}/checkPriestConflict`, {
+        priest_id: priestId,
+        date: dateStr,
+        time: timeStr,
+        transaction_id: transactionId
+      });
+
+      return response.data;
+
+    } catch (error) {
+      console.error("Error checking priest conflict:", error);
+      return { hasConflict: false, error: error.message };
+    }
+  };
+
   const handleStatusUpdate = async (bookingId, bookingType, newStatus, comment = null) => {
     try {
       if (newStatus === "confirmed") {
@@ -1315,6 +1354,21 @@ export default function BookingPendingRequests() {
         if (!comment && !selectedPriestId) {
           message.warning("Please select a priest before confirming the booking.");
           return;
+        }
+
+        // Check for priest conflict before assigning
+        if (selectedPriestId && bookingToUpdate) {
+          const conflictCheck = await checkPriestConflict(
+            selectedPriestId,
+            bookingToUpdate.date,
+            bookingToUpdate.time,
+            bookingId
+          );
+
+          if (conflictCheck.hasConflict) {
+            message.error(conflictCheck.message || "This priest already has a booking at this time. Please select a different priest or time.");
+            return;
+          }
         }
       }
 
