@@ -63,7 +63,7 @@ export default function LandingPage() {
           <img src={parishImg} alt="Parish View" className="hero-bg-img" />
         </section>
 
-        {/* 2. ABOUT OUR PARISH - Split Grid */}
+        {/* 2. ABOUT OUR PARISH */}
         <section ref={aboutRef} className="about-section">
           <div className="about-grid">
             <div className="about-image-stack">
@@ -93,7 +93,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* 3. FEATURED CONTENT - Service Grid */}
+        {/* 3. FEATURED CONTENT */}
         <section className="featured-section">
           <div className="section-header">
             <span className="accent-text">Community Engagement</span>
@@ -108,7 +108,7 @@ export default function LandingPage() {
           </div>
 
           <div className="feature-grid">
-            {/* Daily Mass - Now triggers the Schedule Modal */}
+            {/* Daily Mass */}
             <div className="feature-item" onClick={() => setIsModalOpen(true)} style={{ cursor: 'pointer' }}>
               <BankOutlined className="feature-icon-ant" />
               <h3>Daily Mass</h3>
@@ -116,7 +116,7 @@ export default function LandingPage() {
               <span className="feature-link">View Hours <ArrowRightOutlined /></span>
             </div>
 
-            {/* Join a Ministry - Now navigates to Be a Volunteer page */}
+            {/* Join a Ministry */}
             <div className="feature-item" onClick={() => navigate("/be-volunteer")} style={{ cursor: 'pointer' }}>
               <TeamOutlined className="feature-icon-ant" />
               <h3>Join a Ministry</h3>
@@ -124,7 +124,7 @@ export default function LandingPage() {
               <span className="feature-link">Volunteer <ArrowRightOutlined /></span>
             </div>
 
-            {/* Online Booking - Now navigates to Book a Service page */}
+            {/* Online Booking */}
             <div className="feature-item" onClick={() => navigate("/book-service")} style={{ cursor: 'pointer' }}>
               <FormOutlined className="feature-icon-ant" />
               <h3>Online Booking</h3>
@@ -134,7 +134,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* 4. VIRTUAL TOUR - Creative Dark Section */}
+        {/* 4. VIRTUAL TOUR */}
         <section className="virtual-tour-container">
           <div className="tour-content">
             <div className="tour-text">
@@ -167,14 +167,14 @@ export default function LandingPage() {
         <div className="schedule-modal-content">
           <div className="schedule-block">
             <h4>Weekday Schedule</h4>
-            <p><strong>Mon - Fri:</strong> 6:00 AM | 6:00 PM</p>
+            <p><strong>Wed - Fri:</strong> 5:30 PM <span className="tag-high-mass">Live</span> | 6:00 PM</p>
             <p className="novena-info"><strong>Wednesday:</strong> Perpetual Help Novena (Before Mass)</p>
           </div>
 
           <div className="schedule-block">
             <h4>Sunday Masses</h4>
-            <p><strong>Morning:</strong> 6:00 AM | 8:00 AM | 10:00 AM <span className="tag-high-mass">High Mass</span></p>
-            <p><strong>Afternoon:</strong> 4:00 PM | 6:00 PM</p>
+            <p><strong>Morning:</strong> 6:00 AM | 7:30 AM | 9:00 AM <span className="tag-high-mass">High Mass</span> </p>
+            <p><strong>Afternoon:</strong> 6:00 PM <span className="tag-high-mass">Live</span></p>
           </div>
 
           <div className="schedule-block">
