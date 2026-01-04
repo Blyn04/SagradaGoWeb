@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { useContext, useEffect } from "react";
-import { FaSignOutAlt } from "react-icons/fa";
+import { useContext, useEffect, useState } from "react";
+import { FaSignOutAlt, FaUser } from "react-icons/fa";
 import NavButton from "./NavButton";
 import { NavbarContext } from "../context/AllContext";
 import "../styles/header.css";
@@ -14,6 +14,7 @@ export default function Header() {
   const navigate = useNavigate();
   const email = Cookies.get("email");
   const location = useLocation();
+  const [showProfileDropdown, setShowProfileDropdown] = useState(false);
 
   const navbar = [
     { id: "home", text: "Home", path: "/" },
@@ -33,6 +34,16 @@ export default function Header() {
       setSelectedNavbar(currentNavItem.id);
     }
   }, [location.pathname, setSelectedNavbar, navbar]);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (!event.target.closest('.profile-dropdown-container')) {
+        setShowProfileDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   function handleMouseEnter(id) {
     if (id === "book") setActiveDropdown(true);
@@ -71,18 +82,38 @@ export default function Header() {
 
       <div className="signin-container">
         {email ? (
-          <button
-            className="border-btn"
-            style={{ padding: "8px 15px" }}
-            title="Logout"
-            onClick={() => {
-              Cookies.remove("email");
-              navigate("/");
-              window.location.reload();
-            }}
-          >
-            <FaSignOutAlt size={18} color="#b87d3e" />
-          </button>
+          <div className="profile-dropdown-container">
+            <div
+              className="profile-pic"
+              onClick={() => setShowProfileDropdown(!showProfileDropdown)}
+            >
+              <FaUser size={18} />
+            </div>
+            {showProfileDropdown && (
+              <div className="profile-dropdown">
+                <button
+                  className="dropdown-item"
+                  onClick={() => {
+                    navigate("/profile");
+                    setShowProfileDropdown(false);
+                  }}
+                >
+                  Settings
+                </button>
+                <button
+                  className="dropdown-item"
+                  onClick={() => {
+                    Cookies.remove("email");
+                    localStorage.removeItem("currentUser");
+                    navigate("/");
+                    window.location.reload();
+                  }}
+                >
+                  Logout
+                </button>
+              </div>
+            )}
+          </div>
         ) : (
           <button
             className="border-btn"

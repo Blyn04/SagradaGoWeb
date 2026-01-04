@@ -64,6 +64,7 @@ function AppContent() {
         <Route path="/events" element={<Events />} />
         <Route path="/be-volunteer" element={<BeVolunteer />} />
         <Route path="/donate" element={<Donate />} />
+        <Route path="/profile" element={<ProfilePage />} />
       </Routes>
     </>
   );
