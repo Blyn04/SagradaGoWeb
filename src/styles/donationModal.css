@@ -307,3 +307,56 @@
     transform: translateY(2px);
     box-shadow: 0 2px 0 #e6b845;
 }
+
+.history-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.filter-dropdown {
+    width: 150px !important;
+}
+
+.filter-dropdown .ant-select-selector {
+    border-radius: 8px !important;
+    background-color: #f5f5f5 !important;
+    border: none !important;
+}
+
+.scrollable-history {
+    max-height: 320px;
+    overflow-y: auto;
+    padding-right: 8px;
+    margin-bottom: 20px;
+}
+
+.scrollable-history::-webkit-scrollbar {
+    width: 6px;
+}
+
+.scrollable-history::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.scrollable-history::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 10px;
+}
+
+.scrollable-history::-webkit-scrollbar-thumb:hover {
+    background: #bbb;
+}
+
+.empty-history {
+    text-align: center;
+    color: #999;
+    padding: 20px;
+    font-style: italic;
+}
+
+.history-card {
+    margin-bottom: 10px;
+}

@@ -21,10 +21,18 @@ const FloatingButton = () => {
     const [isDonateFormOpen, setIsDonateFormOpen] = useState(false);
     const [selectedType, setSelectedType] = useState('GCash');
 
+    const [filter, setFilter] = useState('All');
+
     const donationHistory = [
         { id: 1, amount: "1.00", type: "In Kind", date: "Nov 29, 2025", status: "PENDING", color: "orange" },
         { id: 2, amount: "1200.00", type: "Cash", date: "Nov 22, 2025", status: "CONFIRMED", color: "green" },
+        { id: 3, amount: "500.00", type: "GCash", date: "Nov 15, 2025", status: "CONFIRMED", color: "green" },
+        { id: 4, amount: "100.00", type: "Cash", date: "Nov 10, 2025", status: "PENDING", color: "orange" },
     ];
+
+    const filteredHistory = donationHistory.filter(item =>
+        filter === 'All' ? true : item.status === filter.toUpperCase()
+    );
 
     const handleCopyPhoneNumber = () => {
         navigator.clipboard.writeText("09123456789");
@@ -68,26 +76,49 @@ const FloatingButton = () => {
                 <div className="donation-container">
                     <h2 className="main-title">Donations</h2>
                     <p className="sub-title">View your contribution history.</p>
+
                     <div className="summary-card">
                         <div className="progress-line"></div>
                         <p>You have donated a total of:</p>
                         <h1>PHP 1,201.00</h1>
                     </div>
-                    <h3 className="history-title">Your Donation History</h3>
-                    <div className="history-list">
-                        {donationHistory.map((item) => (
-                            <div key={item.id} className={`history-card ${item.color}-border`}>
-                                <div className="card-header">
-                                    <span className="amount">PHP {item.amount}</span>
-                                    <Tag color={item.color === 'green' ? 'success' : 'warning'}>{item.status}</Tag>
-                                </div>
-                                <div className="card-body">
-                                    <p className="type">{item.type}</p>
-                                    <p className="date"><CalendarOutlined /> {item.date}</p>
-                                </div>
-                            </div>
-                        ))}
+
+                    <div className="history-header">
+                        <h3 className="history-title">Your Donation History</h3>
+                        <Select
+                            defaultValue="All"
+                            className="filter-dropdown"
+                            onChange={(value) => setFilter(value)}
+                            options={[
+                                { value: 'All', label: 'All Donations' },
+                                { value: 'Confirmed', label: 'Confirmed' },
+                                { value: 'Pending', label: 'Pending' },
+                            ]}
+                        />
                     </div>
+
+                    {/* Scrollable List Container */}
+                    <div className="history-list scrollable-history">
+                        {filteredHistory.length > 0 ? (
+                            filteredHistory.map((item) => (
+                                <div key={item.id} className={`history-card ${item.color}-border`}>
+                                    <div className="card-header">
+                                        <span className="amount">PHP {item.amount}</span>
+                                        <Tag color={item.color === 'green' ? 'success' : 'warning'}>
+                                            {item.status}
+                                        </Tag>
+                                    </div>
+                                    <div className="card-body">
+                                        <p className="type">{item.type}</p>
+                                        <p className="date"><CalendarOutlined /> {item.date}</p>
+                                    </div>
+                                </div>
+                            ))
+                        ) : (
+                            <div className="empty-history">No records found.</div>
+                        )}
+                    </div>
+
                     <button className="make-donation-btn" onClick={handleOpenDonateForm}>
                         Make a Donation
                     </button>
