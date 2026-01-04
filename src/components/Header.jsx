@@ -10,9 +10,6 @@ import Logo from "../assets/sagrada.png";
 import { Modal } from "antd";
 import { ExclamationCircleOutlined } from "@ant-design/icons";
 
-import { Modal } from "antd";
-import { ExclamationCircleOutlined } from "@ant-design/icons";
-
 export default function Header() {
   const { setSelectedNavbar, setShowSignin, setShowSignup, currentUser, setActiveDropdown, setBookingSelected } =
     useContext(NavbarContext);
