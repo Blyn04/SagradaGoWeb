@@ -7,6 +7,8 @@ import "../styles/header.css";
 import Cookies from "js-cookie";
 import { useLocation, useNavigate } from "react-router-dom";
 import Logo from "../assets/sagrada.png";
+import { Modal } from "antd";
+import { ExclamationCircleOutlined } from "@ant-design/icons";
 
 import { Modal } from "antd";
 import { ExclamationCircleOutlined } from "@ant-design/icons";

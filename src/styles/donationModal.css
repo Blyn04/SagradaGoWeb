@@ -10,7 +10,7 @@
 
 .main-title {
     font-size: 24px;
-    font-weight: 800;
+    font-weight: 700;
     margin-bottom: 4px;
     color: #333;
 }
@@ -48,7 +48,7 @@
 
 .summary-card h1 {
     font-size: 28px;
-    font-weight: 800;
+    font-weight: 700;
     margin: 0;
     color: #000;
 }
@@ -133,4 +133,177 @@
 
 .make-donation-btn:hover {
     background: #000;
+}
+
+.payment-details-section {
+    background: #ffffff;
+    border: 1px solid #f0f0f0;
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 20px;
+}
+
+.section-subtitle {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 12px;
+}
+
+.phone-display {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f9f9f9;
+    padding: 10px 15px;
+    border-radius: 10px;
+    border: 1px solid #eee;
+    margin-bottom: 12px;
+}
+
+.copy-btn {
+    border: none;
+    background: #eee;
+    padding: 4px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.scan-text {
+    text-align: center;
+    font-weight: 600;
+    color: #444;
+    margin: 10px 0;
+}
+
+.qr-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 15px;
+}
+
+.qr-image {
+    width: 180px;
+    height: auto;
+    border: 1px solid #eee;
+    padding: 8px;
+    border-radius: 12px;
+}
+
+.upload-label {
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #333;
+}
+
+.form-upload .ant-upload {
+    width: 100% !important;
+}
+
+.upload-box {
+    width: 100%;
+    padding: 12px;
+    border: 2px dashed #e0e0e0;
+    border-radius: 12px;
+    background: #fdfdfd;
+    text-align: center;
+    color: #666;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s;
+}
+
+.upload-box:hover {
+    border-color: #ffcc4d;
+    background: #fffef9;
+}
+
+.type-btn.active {
+    background: #ffcc4d !important;
+    border-color: #ffcc4d !important;
+    color: #000 !important;
+}
+
+.make-donation-form-modal .ant-modal-content {
+    border-radius: 24px;
+    padding: 24px !important;
+}
+
+.form-title {
+    text-align: center;
+    font-weight: 700;
+    font-size: 22px;
+    margin-bottom: 20px;
+}
+
+.type-selector {
+    display: flex;
+    background: #f0f0f0;
+    padding: 4px;
+    border-radius: 14px;
+    gap: 4px;
+    margin-bottom: 20px;
+}
+
+.type-btn {
+    flex: 1;
+    border: none;
+    background: transparent;
+    padding: 10px 0;
+    border-radius: 10px;
+    font-weight: 600;
+    color: #666;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.type-btn.active {
+    background: #424242 !important;
+    color: #fff !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.form-input,
+.form-textarea {
+    border-radius: 12px !important;
+    border: 1px solid #e8e8e8 !important;
+    background: #f9f9f9 !important;
+    margin-bottom: 16px;
+    padding: 12px !important;
+}
+
+.form-footer {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+.cancel-btn {
+    flex: 1;
+    background: #f0f0f0;
+    border: none;
+    padding: 10px;
+    border-radius: 14px;
+    font-weight: 700;
+    color: #333;
+    cursor: pointer;
+}
+
+.confirm-btn {
+    flex: 1;
+    background: #ffcc4d;
+    border: none;
+    padding: 10px;
+    border-radius: 14px;
+    font-weight: 700;
+    color: #000;
+    cursor: pointer;
+    transition: transform 0.1s;
+}
+
+.confirm-btn:active {
+    transform: translateY(2px);
+    box-shadow: 0 2px 0 #e6b845;
 }
