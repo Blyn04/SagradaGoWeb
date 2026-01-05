@@ -40,6 +40,7 @@ import {
   EditOutlined,
   StopOutlined,
   CheckCircleOutlined,
+  CalendarOutlined,
 } from "@ant-design/icons";
 
 const { Title, Text } = Typography;
@@ -62,6 +63,12 @@ export default function AccountManagement() {
   const [viewingUser, setViewingUser] = useState(null);
   const [userDonations, setUserDonations] = useState([]);
   const [loadingDonations, setLoadingDonations] = useState(false);
+  const [userVolunteers, setUserVolunteers] = useState([]);
+  const [loadingVolunteers, setLoadingVolunteers] = useState(false);
+  const [showEventsModal, setShowEventsModal] = useState(false);
+  const [eventsSearchTerm, setEventsSearchTerm] = useState("");
+  const [eventsFilterType, setEventsFilterType] = useState("all"); 
+  const [eventsStatusFilter, setEventsStatusFilter] = useState("all"); 
 
   const [formData, setFormData] = useState({
     first_name: "",
@@ -102,6 +109,33 @@ export default function AccountManagement() {
   useEffect(() => {
     filterUsers();
   }, [users, searchTerm, filterType, statusFilter]);
+
+  const filteredEvents = userVolunteers.filter((volunteer) => {
+    if (eventsSearchTerm) {
+      const searchLower = eventsSearchTerm.toLowerCase();
+      const eventTitle = (volunteer.eventTitle || "General Volunteer").toLowerCase();
+      if (!eventTitle.includes(searchLower)) {
+        return false;
+      }
+    }
+
+    if (eventsFilterType !== "all") {
+      if (volunteer.registration_type !== eventsFilterType) {
+        return false;
+      }
+    }
+
+    if (eventsStatusFilter !== "all") {
+      if (volunteer.status !== eventsStatusFilter) {
+        return false;
+      }
+    }
+
+    return true;
+  });
+
+  const volunteerCount = userVolunteers.filter(v => v.registration_type === "volunteer").length;
+  const participantCount = userVolunteers.filter(v => v.registration_type === "participant").length;
 
   useEffect(() => {
     if (activeTab === "users") {
@@ -560,6 +594,7 @@ export default function AccountManagement() {
     setViewingUser(user);
     setShowDetailsModal(true);
     setUserDonations([]);
+    setUserVolunteers([]);
 
     if (!user.is_priest && user.uid) {
       try {
@@ -574,6 +609,22 @@ export default function AccountManagement() {
 
       } finally {
         setLoadingDonations(false);
+      }
+
+      try {
+        setLoadingVolunteers(true);
+        const volunteerResponse = await axios.post(`${API_URL}/getUserVolunteers`, {
+          user_id: user.uid
+        });
+        if (volunteerResponse.data && volunteerResponse.data.volunteers) {
+          setUserVolunteers(volunteerResponse.data.volunteers);
+        }
+
+      } catch (error) {
+        console.error("Error fetching user volunteers:", error);
+        
+      } finally {
+        setLoadingVolunteers(false);
       }
     }
   };
@@ -1156,6 +1207,35 @@ export default function AccountManagement() {
                               ? `${userDonations.length} donation(s)`
                               : "No donations"}
                           </Text>
+                        )}
+                      </div>
+                    </Col>
+                    <Col xs={24} sm={12}>
+                      <div style={{ marginBottom: 16 }}>
+                        <Text strong style={{ display: "block", marginBottom: 4, color: "#666" }}>
+                          Events Volunteered/Participated
+                        </Text>
+                        {loadingVolunteers ? (
+                          <Spin size="small" />
+                        ) : (
+                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                            <Text>
+                              {userVolunteers.length > 0
+                                ? `${userVolunteers.length} event(s)`
+                                : "No events"}
+                            </Text>
+                            {userVolunteers.length > 0 && (
+                              <Button
+                                type="primary"
+                                icon={<CalendarOutlined />}
+                                size="small"
+                                onClick={() => setShowEventsModal(true)}
+                                style={{ backgroundColor: "#b87d3e", borderColor: "#b87d3e" }}
+                              >
+                                View Events
+                              </Button>
+                            )}
+                          </div>
                         )}
                       </div>
                     </Col>
@@ -1977,6 +2057,187 @@ export default function AccountManagement() {
               </Button>
             </div>
           </Form>
+        </Modal>
+
+        {/* Events Modal */}
+        <Modal
+          title={
+            <div>
+              <Text strong style={{ fontSize: 18, fontFamily: 'Poppins' }}>
+                Events - {viewingUser ? `${viewingUser.first_name} ${viewingUser.last_name}` : 'User'}
+              </Text>
+            </div>
+          }
+          open={showEventsModal}
+          onCancel={() => {
+            setShowEventsModal(false);
+            setEventsSearchTerm("");
+            setEventsFilterType("all");
+            setEventsStatusFilter("all");
+          }}
+          footer={null}
+          width={900}
+          maskClosable={true}
+        >
+          {/* Counts and Stats */}
+          <div style={{ marginBottom: 24, padding: 16, background: "#f5f5f5", borderRadius: 8 }}>
+            <Row gutter={16}>
+              <Col xs={24} sm={8}>
+                <div style={{ textAlign: "center" }}>
+                  <Text type="secondary" style={{ display: "block", fontSize: 12, marginBottom: 4 }}>
+                    Total Events
+                  </Text>
+                  <Text strong style={{ fontSize: 24, color: "#262626" }}>
+                    {userVolunteers.length}
+                  </Text>
+                </div>
+              </Col>
+              <Col xs={24} sm={8}>
+                <div style={{ textAlign: "center" }}>
+                  <Text type="secondary" style={{ display: "block", fontSize: 12, marginBottom: 4 }}>
+                    Volunteered
+                  </Text>
+                  <Text strong style={{ fontSize: 24, color: "#1890ff" }}>
+                    {volunteerCount}
+                  </Text>
+                </div>
+              </Col>
+              <Col xs={24} sm={8}>
+                <div style={{ textAlign: "center" }}>
+                  <Text type="secondary" style={{ display: "block", fontSize: 12, marginBottom: 4 }}>
+                    Participated
+                  </Text>
+                  <Text strong style={{ fontSize: 24, color: "#52c41a" }}>
+                    {participantCount}
+                  </Text>
+                </div>
+              </Col>
+            </Row>
+          </div>
+
+          {/* Search and Filters */}
+          <Card style={{ marginBottom: 16, padding: 0 }}>
+            <div style={{ padding: "16px" }}>
+              <Row gutter={16}>
+                <Col xs={24} sm={12}>
+                  <Text strong style={{ fontFamily: 'Poppins', fontSize: 14, display: 'block', marginBottom: 8 }}>
+                    Search Event:
+                  </Text>
+                  <Input
+                    placeholder="Search by event name..."
+                    prefix={<SearchOutlined style={{ marginRight: 8 }} />}
+                    value={eventsSearchTerm}
+                    onChange={(e) => setEventsSearchTerm(e.target.value)}
+                    allowClear
+                    style={{
+                      fontFamily: 'Poppins, sans-serif',
+                      fontWeight: 500,
+                      padding: '10px 12px',
+                      height: '42px',
+                    }}
+                  />
+                </Col>
+                <Col xs={24} sm={6}>
+                  <Text strong style={{ fontFamily: 'Poppins', fontSize: 14, display: 'block', marginBottom: 8 }}>
+                    Type:
+                  </Text>
+                  <Select
+                    value={eventsFilterType}
+                    onChange={setEventsFilterType}
+                    style={{
+                      width: '100%',
+                      fontFamily: 'Poppins, sans-serif',
+                      fontWeight: 500,
+                      height: '42px',
+                    }}
+                  >
+                    <Option value="all">All Types</Option>
+                    <Option value="volunteer">Volunteer</Option>
+                    <Option value="participant">Participant</Option>
+                  </Select>
+                </Col>
+                <Col xs={24} sm={6}>
+                  <Text strong style={{ fontFamily: 'Poppins', fontSize: 14, display: 'block', marginBottom: 8 }}>
+                    Status:
+                  </Text>
+                  <Select
+                    value={eventsStatusFilter}
+                    onChange={setEventsStatusFilter}
+                    style={{
+                      width: '100%',
+                      fontFamily: 'Poppins, sans-serif',
+                      fontWeight: 500,
+                      height: '42px',
+                    }}
+                  >
+                    <Option value="all">All Status</Option>
+                    <Option value="pending">Pending</Option>
+                    <Option value="confirmed">Confirmed</Option>
+                    <Option value="cancelled">Cancelled</Option>
+                  </Select>
+                </Col>
+              </Row>
+            </div>
+          </Card>
+
+          {/* Events List */}
+          <div style={{ maxHeight: "400px", overflowY: "auto" }}>
+            {loadingVolunteers ? (
+              <div style={{ textAlign: "center", padding: "40px" }}>
+                <Spin tip="Loading events..." size="large" />
+              </div>
+            ) : filteredEvents.length === 0 ? (
+              <Empty
+                description={
+                  eventsSearchTerm || eventsFilterType !== "all" || eventsStatusFilter !== "all"
+                    ? "No events match your filters"
+                    : "No events found"
+                }
+                style={{ padding: "40px" }}
+              />
+            ) : (
+              <div>
+                {filteredEvents.map((volunteer, index) => (
+                  <Card
+                    key={volunteer._id || index}
+                    style={{
+                      marginBottom: 12,
+                      border: "1px solid #f0f0f0",
+                      borderRadius: 8,
+                    }}
+                    bodyStyle={{ padding: 16 }}
+                  >
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
+                          <Text strong style={{ fontSize: 16, fontFamily: 'Poppins' }}>
+                            {volunteer.eventTitle || "General Volunteer"}
+                          </Text>
+                          <Tag color={volunteer.registration_type === "volunteer" ? "blue" : "green"}>
+                            {volunteer.registration_type === "volunteer" ? "Volunteer" : "Participant"}
+                          </Tag>
+                        </div>
+                        <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 8 }}>
+                          <Tag color={volunteer.status === "confirmed" ? "green" : volunteer.status === "pending" ? "orange" : "red"}>
+                            {volunteer.status || "pending"}
+                          </Tag>
+                          <Text type="secondary" style={{ fontSize: 12 }}>
+                            Registered: {volunteer.createdAt ? formatDate(volunteer.createdAt) : "N/A"}
+                          </Text>
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div style={{ marginTop: 16, textAlign: "right" }}>
+            <Text type="secondary" style={{ fontSize: 12 }}>
+              Showing {filteredEvents.length} of {userVolunteers.length} event(s)
+            </Text>
+          </div>
         </Modal>
 
       </div>
