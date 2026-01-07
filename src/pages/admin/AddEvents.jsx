@@ -804,7 +804,7 @@ export default function AddEvents() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   allowClear
-                  style={{ width: 400, marginBottom: 8 }}
+                  style={{ width: 250, marginBottom: 8 }}
                 />
 
                 <Text strong>Filter by Date:</Text>
