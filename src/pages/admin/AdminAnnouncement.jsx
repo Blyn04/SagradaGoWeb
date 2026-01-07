@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Card,
   Table,
@@ -37,7 +37,7 @@ export default function AdminAnnouncements() {
 
   const [form] = Form.useForm();
 
-  const fetchAnnouncements = async () => {
+  const fetchAnnouncements = useCallback(async () => {
     try {
       setLoading(true);
       const res = await axios.get(`${API_URL}/getAnnouncements`);
@@ -50,11 +50,19 @@ export default function AdminAnnouncements() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchAnnouncements();
-  }, []);
+  }, [fetchAnnouncements]);
+
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      fetchAnnouncements();
+    }, 5000); 
+
+    return () => clearInterval(intervalId);
+  }, [fetchAnnouncements]);
 
   const openCreate = () => {
     setEditingData(null);
