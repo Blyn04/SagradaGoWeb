@@ -1144,13 +1144,18 @@ export default function AccountManagement() {
                 </Select>
               </div>
               <div style={{ flex: '0 0 150px', display: 'flex', alignItems: 'flex-end' }}>
-                <Checkbox
-                  checked={showArchived}
-                  onChange={(e) => setShowArchived(e.target.checked)}
-                  style={{ fontFamily: 'Poppins, sans-serif', fontWeight: 500 }}
+                <Button
+                  type={showArchived ? "primary" : "default"}
+                  onClick={() => setShowArchived(!showArchived)}
+                  style={{ 
+                    fontFamily: 'Poppins, sans-serif', 
+                    fontWeight: 500,
+                    width: '100%',
+                    height: '42px'
+                  }}
                 >
-                  Show Archived
-                </Checkbox>
+                  {showArchived ? "Hide Archived" : "Show Archived"}
+                </Button>
               </div>
             </div>
           </div>
