@@ -10,7 +10,7 @@
 }
 
 .virtual-tour-modal .ant-modal-content {
-  background-color: #000;
+  background-color: #fff !important;
   border-radius: 12px;
   overflow: hidden;
 }
@@ -31,8 +31,8 @@
   overflow: hidden;
 }
 
-.virtual-tour-container {
-  background-color: #000;
+.virtual-tour-container1 {
+  background-color: #fff;
   color: #fff;
   display: flex;
   flex-direction: column;
@@ -43,8 +43,9 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 24px;
-  background-color: rgba(0, 0, 0, 0.8);
+  padding: 5px;
+  padding-bottom: 25px;
+  background-color: #fff;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
@@ -52,19 +53,19 @@
   margin: 0;
   font-size: 24px;
   font-weight: 700;
-  color: #fff;
+  color: #424242;
 }
 
 .virtual-tour-title p {
   margin: 4px 0 0 0;
   font-size: 14px;
-  color: #aaa;
+  color: #424242;
 }
 
 .fullscreen-toggle-btn {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(167, 167, 167, 0.252);
   border: none;
-  color: #fff;
+  color: #424242;
   width: 40px;
   height: 40px;
   border-radius: 8px;
@@ -91,6 +92,7 @@
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
+  border-radius: 20px 20px 0px 0px;
 }
 
 .virtual-tour-image-container:active {
@@ -164,15 +166,16 @@
 
 .virtual-tour-description {
   padding: 20px 24px;
-  background-color: rgba(0, 0, 0, 0.6);
+  background-color: #424242;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0px 0px 20px 20px;
 }
 
 .virtual-tour-description p {
   margin: 0;
   font-size: 15px;
   line-height: 1.6;
-  color: #ddd;
+  color: #fff;
   text-align: justify;
 }
 
@@ -180,24 +183,21 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 24px;
-  background-color: rgba(0, 0, 0, 0.8);
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 16px 20px;
+  border-top: 1px solid #f0f0f0;
 }
 
 .virtual-tour-nav-btn {
   background-color: #FFC942;
   border: none;
   color: #424242;
-  padding: 10px 20px;
-  border-radius: 8px;
+  padding: 8px 16px;
+  border-radius: 6px;
   cursor: pointer;
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 14px;
   font-weight: 600;
-  transition: background-color 0.2s ease, transform 0.1s ease;
 }
 
 .virtual-tour-nav-btn:hover {
@@ -237,7 +237,6 @@
   height: 12px;
 }
 
-/* Fullscreen styles */
 .virtual-tour-modal.fullscreen .virtual-tour-image-container {
   height: calc(100vh - 200px);
   flex: 1;
@@ -249,7 +248,6 @@
   flex-direction: column;
 }
 
-/* Responsive */
 @media (max-width: 768px) {
   .virtual-tour-image-container {
     height: 400px;
@@ -273,3 +271,38 @@
   }
 }
 
+.virtual-tour-title p {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: #8c8c8c;
+}
+
+.header-button-group {
+  display: flex;
+  gap: 8px;
+}
+
+.header-icon-btn {
+  background: #f5f5f5;
+  border: none;
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: #595959;
+  transition: all 0.2s;
+}
+
+.header-icon-btn:hover {
+  background: #e8e8e8;
+  color: #000;
+}
+
+.close-btn:hover {
+  background: #fff1f0;
+  color: #ff4d4f;
+}
