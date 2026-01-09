@@ -21,8 +21,8 @@ export default function Header() {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [showVirtualTour, setShowVirtualTour] = useState(false);
   console.log("email", email);
-  
-  
+
+
 
   const navbar = [
     { id: "home", text: "Home", path: "/" },
@@ -77,17 +77,17 @@ export default function Header() {
             key={elem.text}
             text={elem.text}
             onClick={() => {
-            if (!email && elem.id === "volunteer") {
-              alert("Please sign in to continue.");
-              return; 
-            }
+              if (!email && elem.id === "volunteer") {
+                setShowSignin(true);
+                return;
+              }
 
-            setSelectedNavbar(elem.id);
-            navigate(elem.path);
-            setShowSignin(false);
+              setSelectedNavbar(elem.id);
+              navigate(elem.path);
+              setShowSignin(false);
 
-            if (elem.id === "book") setBookingSelected(null);
-          }}
+              if (elem.id === "book") setBookingSelected(null);
+            }}
 
             onMouseEnter={() => handleMouseEnter(elem.id)}
             onMouseLeave={() => handleMouseLeave(elem.id)}
