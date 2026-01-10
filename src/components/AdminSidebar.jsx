@@ -80,7 +80,7 @@ export default function AdminSidebar() {
     {
       key: "/admin/account-management",
       icon: <UserOutlined />,
-      label: "Account Management",
+      label: "Accounts",
     },
     {
       key: "/admin/bookings",
