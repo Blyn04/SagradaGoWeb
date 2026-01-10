@@ -565,6 +565,39 @@ export default function AddEvents() {
                   label="Event/Activity Title"
                   rules={[
                     { required: true, message: "Please enter event/activity title" },
+                    { min: 3, message: "Title must be at least 3 characters long" },
+                    { max: 200, message: "Title must not exceed 200 characters" },
+                    {
+                      validator: (_, value) => {
+                        if (!value || value.trim().length === 0) {
+                          return Promise.reject(new Error("Title cannot be empty or only whitespace"));
+                        }
+                        return Promise.resolve();
+                      },
+                    },
+                    {
+                      validator: (_, value) => {
+                        if (!value) {
+                          return Promise.resolve();
+                        }
+                        
+                        const trimmedValue = value.trim().toLowerCase();
+                        const duplicateEvent = events.find((event) => {
+
+                          if (editingEvent && event._id === editingEvent._id) {
+                            return false;
+                          }
+
+                          return event.title && event.title.trim().toLowerCase() === trimmedValue;
+                        });
+                        
+                        if (duplicateEvent) {
+                          return Promise.reject(new Error("An event/activity with this title already exists"));
+                        }
+                        
+                        return Promise.resolve();
+                      },
+                    },
                   ]}
                 >
                   <Input
@@ -703,21 +736,12 @@ export default function AddEvents() {
                 <Form.Item
                   name="location"
                   label="Location"
-                  rules={[{ required: true, message: "Please select event location" }]}
+                  rules={[{ required: true, message: "Please enter event location" }]}
                 >
-                  <Select
+                  <Input
+                    placeholder="e.g., Church Main Hall"
                     size="large"
-                    placeholder="Select location"
-                    showSearch
-                    optionFilterProp="children"
-                    allowClear
-                  >
-                    {locations.map((loc) => (
-                      <Select.Option key={loc} value={loc}>
-                        {loc}
-                      </Select.Option>
-                    ))}
-                  </Select>
+                  />
                 </Form.Item>
 
                 <Form.Item name="description" label="Description">
