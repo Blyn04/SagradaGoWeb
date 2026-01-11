@@ -133,6 +133,10 @@ export default function Header() {
                       cancelText: 'Cancel',
                       onOk() {
                         Cookies.remove("email");
+                        Cookies.remove("uid");
+                        Cookies.remove("fullname");
+                        Cookies.remove("contact");
+
                         localStorage.removeItem("currentUser");
                         navigate("/");
                         window.location.reload();
