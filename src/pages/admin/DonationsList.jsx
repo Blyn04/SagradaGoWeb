@@ -65,9 +65,9 @@ export default function DonationsList() {
     filterDonations();
   }, [searchTerm, paymentMethodFilter, donations]);
 
-  const fetchDonations = useCallback(async (silent = false) => {
+  const fetchDonations = async (showLoading = true) => {
     try {
-      if (!silent) {
+      if (showLoading) {
         setLoading(true);
       }
       const params = {
@@ -93,28 +93,26 @@ export default function DonationsList() {
 
     } catch (error) {
       console.error("Error fetching donations:", error);
-      if (!silent) {
+      if (showLoading) {
         message.error("Failed to fetch donations. Please try again.");
       }
 
     } finally {
-      if (!silent) {
+      if (showLoading) {
         setLoading(false);
       }
     }
-  }, [statusFilter, pagination.page, pagination.limit]);
+  };
 
   useEffect(() => {
     fetchDonations(true);
-  }, [fetchDonations]);
 
-  useEffect(() => {
     const intervalId = setInterval(() => {
       fetchDonations(false);
-    }, 5000); 
+    }, 5000);
 
     return () => clearInterval(intervalId);
-  }, [fetchDonations]);
+  }, [statusFilter, pagination.page, pagination.limit]);
 
   const filterDonations = () => {
     let filtered = donations;
@@ -162,7 +160,7 @@ export default function DonationsList() {
       message.success(
         `Donation ${newStatus === "confirmed" ? "confirmed" : newStatus === "cancelled" ? "cancelled" : "updated"} successfully.`
       );
-      fetchDonations(true);
+      fetchDonations(false);
       setDetailModalVisible(false);
 
     } catch (error) {
