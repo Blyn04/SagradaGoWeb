@@ -56,6 +56,16 @@
   font-family: 'Poppins', sans-serif;
 }
 
+.modal-input[type="date"] {
+  color-scheme: light;
+}
+
+.modal-input::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  filter: none;
+  opacity: 1;
+}
+
 .modal-input.input-error {
   border-color: #dc3545;
   border-width: 2px;
@@ -103,4 +113,3 @@
   color: #555;
   cursor: pointer;
 }
-
