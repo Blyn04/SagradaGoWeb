@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
-import { Card, List, Badge, Typography, Button, Empty, Spin, Tag, Space } from "antd";
+import { Card, List, Badge, Typography, Button, Empty, Spin, Space, Tabs, Modal } from "antd";
 import {
   NotificationOutlined,
   CheckCircleOutlined,
-  ClockCircleOutlined,
   DollarOutlined,
   CalendarOutlined,
   BookOutlined,
   UserOutlined,
+  InfoCircleOutlined,
 } from "@ant-design/icons";
 import axios from "axios";
 import { API_URL } from "../Constants";
@@ -21,9 +21,13 @@ export default function Notifications() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [markingAsRead, setMarkingAsRead] = useState(false);
 
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedNotification, setSelectedNotification] = useState(null);
+
   const user = JSON.parse(localStorage.getItem("currentUser")) || null;
 
   useEffect(() => {
+    window.scrollTo(0, 0);
     fetchNotifications();
     const interval = setInterval(fetchNotifications, 30000);
     return () => clearInterval(interval);
@@ -48,14 +52,14 @@ export default function Notifications() {
       console.log("Notifications: Response received:", response.data);
 
       if (response.data) {
-        const transformedNotifications = (response.data.notifications || []).map((notification) => ({
-          id: notification._id,
-          type: notification.type,
-          title: notification.title,
-          message: notification.message,
-          time: dayjs(notification.createdAt),
-          read: notification.read || false,
-          action: notification.action || null,
+        const transformedNotifications = (response.data.notifications || []).map((n) => ({
+          id: n._id,
+          type: n.type,
+          title: n.title,
+          message: n.message,
+          time: dayjs(n.createdAt),
+          read: n.read || false,
+          action: n.action || null,
         }));
 
         console.log("Notifications: Transformed notifications:", transformedNotifications);
@@ -64,7 +68,6 @@ export default function Notifications() {
         setNotifications(transformedNotifications);
         setUnreadCount(response.data.unreadCount || 0);
       }
-
     } catch (error) {
       console.error("Error fetching notifications:", error);
       if (error.response) {
@@ -77,23 +80,24 @@ export default function Notifications() {
     }
   };
 
+  const handleNotificationClick = (notification) => {
+    setSelectedNotification(notification);
+    setIsModalOpen(true);
+    if (!notification.read) {
+      handleMarkAsRead(notification.id);
+    }
+  };
+
   const handleMarkAsRead = async (notificationId) => {
     try {
-      setMarkingAsRead(true);
-      await axios.post(`${API_URL}/markAsRead`, {
-        notification_id: notificationId,
-      });
-
-      setNotifications(
-        notifications.map((n) => (n.id === notificationId ? { ...n, read: true } : n))
+      await axios.post(`${API_URL}/markAsRead`, { notification_id: notificationId });
+      setNotifications(prev =>
+        prev.map((n) => (n.id === notificationId ? { ...n, read: true } : n))
       );
       setUnreadCount(Math.max(0, unreadCount - 1));
 
     } catch (error) {
-      console.error("Error marking notification as read:", error);
-
-    } finally {
-      setMarkingAsRead(false);
+      console.error("Error marking as read:", error);
     }
   };
 
@@ -106,7 +110,6 @@ export default function Notifications() {
         recipient_id: user.uid,
         recipient_type: "admin",
       });
-
       setNotifications(notifications.map((n) => ({ ...n, read: true })));
       setUnreadCount(0);
 
@@ -119,166 +122,158 @@ export default function Notifications() {
   };
 
   const getNotificationIcon = (type) => {
-    switch (type) {
-      case "booking":
-        return <BookOutlined style={{ fontSize: 20 }} />;
-
-      case "donation":
-      case "donation_status":
-        return <DollarOutlined style={{ fontSize: 20 }} />;
-
-      case "volunteer":
-        return <UserOutlined style={{ fontSize: 20 }} />;
-
-      case "event":
-        return <CalendarOutlined style={{ fontSize: 20 }} />;
-
-      case "user":
-        return <UserOutlined style={{ fontSize: 20 }} />;
-
-      default:
-        return <NotificationOutlined style={{ fontSize: 20 }} />;
-    }
+    const icons = {
+      booking: <BookOutlined />,
+      donation: <DollarOutlined />,
+      donation_status: <DollarOutlined />,
+      volunteer: <UserOutlined />,
+      event: <CalendarOutlined />,
+      user: <UserOutlined />,
+    };
+    return icons[type] || <NotificationOutlined />;
   };
 
   const getNotificationColor = (type) => {
-    switch (type) {
-      case "booking":
-        return "#1890ff";
-
-      case "donation":
-      case "donation_status":
-        return "#52c41a";
-
-      case "volunteer":
-        return "#fa8c16";
-
-      case "event":
-        return "#722ed1";
-
-      case "user":
-        return "#fa8c16";
-
-      default:
-        return "#b87d3e";
-    }
+    const colors = {
+      booking: "#1890ff",
+      donation: "#52c41a",
+      donation_status: "#52c41a",
+      volunteer: "#fa8c16",
+      event: "#722ed1",
+      user: "#fa8c16",
+    };
+    return colors[type] || "#b87d3e";
   };
 
+  const renderNotificationList = (data) => (
+    <List
+      itemLayout="horizontal"
+      dataSource={data}
+      renderItem={(n) => (
+        <List.Item
+          className="notification-item"
+          style={{
+            backgroundColor: n.read ? "#fff" : "#fffbf0",
+            borderLeft: n.read ? "4px solid transparent" : "4px solid #b87d3e",
+            padding: "16px",
+            marginBottom: "8px",
+            borderRadius: "8px",
+            cursor: "pointer",
+            transition: "all 0.3s"
+          }}
+          onClick={() => handleNotificationClick(n)}
+        >
+          <List.Item.Meta
+            avatar={
+              <div style={{
+                width: 45, height: 45, borderRadius: "50%",
+                backgroundColor: `${getNotificationColor(n.type)}15`,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                color: getNotificationColor(n.type), fontSize: 20
+              }}>
+                {getNotificationIcon(n.type)}
+              </div>
+            }
+            title={
+              <Space>
+                <Text strong={!n.read} style={{ fontSize: 16, fontFamily: 'Poppins' }}>{n.title}</Text>
+                {!n.read && <Badge status="processing" color="#b87d3e" />}
+              </Space>
+            }
+            description={
+              <div>
+                <Text type="secondary" ellipsis style={{ display: 'block', maxWidth: '800px', fontFamily: "'Poppins', sans-serif" }}>{n.message}</Text>
+                <Text type="secondary" style={{ fontSize: 12, fontFamily: "'Poppins', sans-serif" }}>{n.time.format("MMM DD, YYYY • h:mm A")}</Text>
+              </div>
+            }
+          />
+        </List.Item>
+      )}
+    />
+  );
+
+  const tabItems = [
+    {
+      key: '1',
+      label: `All Notifications`,
+      children: renderNotificationList(notifications),
+    },
+    {
+      key: '2',
+      label: `Unread (${unreadCount})`,
+      children: renderNotificationList(notifications.filter(n => !n.read)),
+    },
+    {
+      key: '3',
+      label: `Read`,
+      children: renderNotificationList(notifications.filter(n => n.read)),
+    },
+  ];
+
   return (
-    <div style={{ padding: "24px", background: "#f0f2f5", minHeight: "100vh" }}>
-      <div style={{ maxWidth: "1550px", margin: "20px auto" }}>
-        {/* Header */}
-        <div style={{ marginBottom: 24 }}>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <div>
-              <Title level={2} style={{ margin: 0, color: "#262626", fontFamily: "Poppins" }}>
-                Notifications
-              </Title>
-              <Text type="secondary" style={{ fontSize: 16, fontFamily: "Poppins" }}>
-                {unreadCount > 0
-                  ? `You have ${unreadCount} unread notification${unreadCount > 1 ? "s" : ""}`
-                  : "All caught up!"}
-              </Text>
-            </div>
-            {unreadCount > 0 && (
-              <Button
-                type="primary"
-                icon={<CheckCircleOutlined />}
-                onClick={handleMarkAllAsRead}
-                loading={markingAsRead}
-              >
-                Mark All as Read
-              </Button>
-            )}
+    <div style={{ padding: "24px", background: "#f0f2f5", minHeight: "100vh", fontFamily: "'Poppins', sans-serif" }}>
+      <div style={{ maxWidth: "1540px", margin: "0 auto", marginTop: 25 }}>
+
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 24 }}>
+          <div>
+            <Title level={2} style={{ margin: 0, fontFamily: "Poppins", fontWeight: 600 }}>Notifications</Title>
+            <Text type="secondary" style={{ fontFamily: "Poppins" }}>
+              {unreadCount > 0 ? `Manage your ${unreadCount} new alerts` : "You're all caught up!"}
+            </Text>
           </div>
+          {unreadCount > 0 && (
+            <Button
+              className="border-btn"
+              icon={<CheckCircleOutlined />}
+              onClick={handleMarkAllAsRead}
+              loading={markingAsRead}
+            >
+              Mark all as read
+            </Button>
+          )}
         </div>
 
-        {/* Notifications List */}
-        <Card>
+        <Card style={{ borderRadius: '12px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
           {loading ? (
-            <div style={{ textAlign: "center", padding: "50px 0" }}>
-              <Spin size="large" />
-            </div>
-          ) : notifications.length === 0 ? (
-            <Empty
-              description="No notifications yet"
-              image={Empty.PRESENTED_IMAGE_SIMPLE}
-              style={{ padding: "50px 0" }}
-            />
+            <div style={{ textAlign: "center", padding: "50px" }}><Spin size="large" /></div>
           ) : (
-            <List
-              itemLayout="horizontal"
-              dataSource={notifications}
-              renderItem={(notification) => (
-                <List.Item
-                  style={{
-                    backgroundColor: notification.read ? "#fff" : "#fffbf0",
-                    borderLeft: notification.read ? "none" : "3px solid #b87d3e",
-                    padding: "16px",
-                    marginBottom: "8px",
-                    borderRadius: "8px",
-                    cursor: "pointer",
-                  }}
-                  onClick={() => !notification.read && handleMarkAsRead(notification.id)}
-                >
-                  <List.Item.Meta
-                    avatar={
-                      <div
-                        style={{
-                          width: 48,
-                          height: 48,
-                          borderRadius: 24,
-                          backgroundColor: `${getNotificationColor(notification.type)}20`,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          color: getNotificationColor(notification.type),
-                        }}
-                      >
-                        {getNotificationIcon(notification.type)}
-                      </div>
-                    }
-                    title={
-                      <Space>
-                        <Text strong={!notification.read} style={{ fontSize: 16 }}>
-                          {notification.title}
-                        </Text>
-                        {!notification.read && (
-                          <Badge status="processing" color="#b87d3e" />
-                        )}
-                      </Space>
-                    }
-                    description={
-                      <div>
-                        <Text
-                          style={{
-                            color: "#666",
-                            display: "block",
-                            marginBottom: 4,
-                          }}
-                        >
-                          {notification.message}
-                        </Text>
-                        <Text
-                          type="secondary"
-                          style={{ fontSize: 12 }}
-                        >
-                          {notification.time.format("MMM DD, YYYY [at] h:mm A")}
-                        </Text>
-                      </div>
-                    }
-                  />
-                </List.Item>
-              )}
+            <Tabs
+              defaultActiveKey="1"
+              items={tabItems}
+              style={{ fontFamily: 'Poppins' }}
+              tabBarStyle={{ marginBottom: 20 }}
             />
           )}
         </Card>
+
+        <Modal
+          title={<Space><InfoCircleOutlined style={{ color: '#b87d3e' }} /> <span style={{ fontFamily: 'Poppins', fontWeight: 400 }}>Notification Details</span></Space>}
+          open={isModalOpen}
+          onCancel={() => setIsModalOpen(false)}
+          footer={null}
+          centered
+        >
+          {selectedNotification && (
+            <div style={{ padding: '10px 0', fontFamily: 'Poppins' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+                <div style={{
+                  padding: '10px', borderRadius: '8px',
+                  backgroundColor: `${getNotificationColor(selectedNotification.type)}15`,
+                  color: getNotificationColor(selectedNotification.type)
+                }}>
+                  {getNotificationIcon(selectedNotification.type)}
+                </div>
+                <Title level={4} style={{ margin: 0, fontFamily: 'Poppins' }}>{selectedNotification.title}</Title>
+              </div>
+              <Text style={{ fontSize: '16px', color: '#434343', display: 'block', marginBottom: '20px', fontFamily: "'Poppins', sans-serif" }}>
+                {selectedNotification.message}
+              </Text>
+              <Text type="secondary" style={{ fontSize: '13px', fontFamily: "'Poppins', sans-serif" }}>
+                Received on {selectedNotification.time.format("MMMM DD, YYYY [at] h:mm A")}
+              </Text>
+            </div>
+          )}
+        </Modal>
       </div>
     </div>
   );
