@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import "./App.css";
 import SessionTimeout from "./components/SessionTimeout";
 
+
 import LandingPage from "./pages/LandingPage";
 import SignUpPage from "./pages/SignUpPage";
 import SignInPage from "./pages/SignInPage";
@@ -28,6 +29,7 @@ import AdminChat from "./components/AdminChat";
 import Notifications from "./components/Notifications";
 import FloatingButton from "./components/FloatingButton";
 import ProfilePage from "./pages/ProfilePage";
+import ChatBot from "./components/ChatBot";
 
 function AppContent() {
   const location = useLocation();
@@ -67,6 +69,7 @@ function AppContent() {
         <Route path="/be-volunteer" element={<BeVolunteer />} />
         <Route path="/donate" element={<Donate />} />
         <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/chat" element={<ChatBot />} />
       </Routes>
     </>
   );
