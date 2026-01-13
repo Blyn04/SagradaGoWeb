@@ -17,6 +17,7 @@ import axios from "axios";
 
 import { API_URL } from "../Constants";
 import { NavbarContext } from "../context/AllContext";
+import SignInAlert from "./SignInAlert";
 
 const { TextArea } = Input;
 
@@ -40,9 +41,11 @@ const FloatingButton = () => {
   const [receiptFile, setReceiptFile] = useState(null);
   const { setShowSignin } = useContext(NavbarContext);
 
+  const [showSignInAlert, setShowSignInAlert] = useState(false);
+
   async function createDonation() {
     if (!uid) {
-      message.error("Please sign in to donate.");
+      setShowSignInAlert(true);
       return;
     }
 
@@ -172,7 +175,7 @@ const FloatingButton = () => {
       >
         <div style={{ textAlign: "center", padding: "20px" }}>
           <HeartOutlined style={{ fontSize: 40, color: "#ff4d4f" }} />
-          <h2 style={{ marginTop: 16 }}>Please log in first</h2>
+          <h2 style={{ marginTop: 16, fontWeight: 600, fontSize: 16 }}>Please log in first!</h2>
           <p>You need to be logged in to make or view donations.</p>
 
           <div
@@ -384,6 +387,12 @@ const FloatingButton = () => {
           </div>
         </div>
       </Modal>
+
+      <SignInAlert 
+        open={showSignInAlert} 
+        onClose={() => setShowSignInAlert(false)} 
+        message="Please sign in to donate." 
+      />
     </>
   );
 };
