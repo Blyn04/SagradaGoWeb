@@ -72,24 +72,27 @@ export default function BeVolunteer() {
   const [sortOrder, setSortOrder] = useState("asc");
 
   useEffect(() => {
-    let filtered = [...events];
+  let filtered = [...events];
 
-    if (searchText) {
-      filtered = filtered.filter(
-        (e) =>
-          e.title.toLowerCase().includes(searchText.toLowerCase()) ||
-          e.description.toLowerCase().includes(searchText.toLowerCase())
-      );
-    }
+  // ✅ FILTER BY TYPE = "activity"
+  filtered = filtered.filter((e) => e.type === "activity");
 
-    filtered.sort((a, b) => {
-      const dateA = new Date(a.date);
-      const dateB = new Date(b.date);
-      return sortOrder === "asc" ? dateA - dateB : dateB - dateA;
-    });
+  if (searchText) {
+    filtered = filtered.filter(
+      (e) =>
+        e.title.toLowerCase().includes(searchText.toLowerCase()) ||
+        e.description.toLowerCase().includes(searchText.toLowerCase())
+    );
+  }
 
-    setFilteredEvents(filtered);
-  }, [searchText, sortOrder, events]);
+  filtered.sort((a, b) => {
+    const dateA = new Date(a.date);
+    const dateB = new Date(b.date);
+    return sortOrder === "asc" ? dateA - dateB : dateB - dateA;
+  });
+
+  setFilteredEvents(filtered);
+}, [searchText, sortOrder, events]);
 
 
   const uid = Cookies.get("uid");

@@ -36,10 +36,9 @@ export default function Events() {
 
   const [showSignInAlert, setShowSignInAlert] = useState(false);
 
-
+  const [showChoicesModal, setShowChoicesModal] = useState(null);
 
   const banners = [banner1, banner2, banner3];
-
 
   async function fetchEvents() {
     setIsLoading(true);
@@ -72,35 +71,34 @@ export default function Events() {
   const [sortOrder, setSortOrder] = useState("asc");
 
   useEffect(() => {
-    let filtered = [...events];
+  let filtered = [...events];
 
-    if (searchText) {
-      filtered = filtered.filter(
-        (e) =>
-          e.title.toLowerCase().includes(searchText.toLowerCase()) ||
-          e.description.toLowerCase().includes(searchText.toLowerCase())
-      );
-    }
+  // ✅ FILTER BY TYPE = "activity"
+  filtered = filtered.filter((e) => e.type === "event");
 
-    filtered.sort((a, b) => {
-      const dateA = new Date(a.date);
-      const dateB = new Date(b.date);
-      return sortOrder === "asc" ? dateA - dateB : dateB - dateA;
-    });
+  if (searchText) {
+    filtered = filtered.filter(
+      (e) =>
+        e.title.toLowerCase().includes(searchText.toLowerCase()) ||
+        e.description.toLowerCase().includes(searchText.toLowerCase())
+    );
+  }
 
-    setFilteredEvents(filtered);
-  }, [searchText, sortOrder, events]);
+  filtered.sort((a, b) => {
+    const dateA = new Date(a.date);
+    const dateB = new Date(b.date);
+    return sortOrder === "asc" ? dateA - dateB : dateB - dateA;
+  });
 
+  setFilteredEvents(filtered);
+}, [searchText, sortOrder, events]);
 
   const uid = Cookies.get("uid");
   const fullName = Cookies.get("fullname");
   const contact = Cookies.get("contact");
 
-
-
-
-
   async function handleRegisterEvent(eventId, eventTitle) {
+    
     if (!uid || !fullName || !contact) {
       setShowSignInAlert(true);
       return;
@@ -113,7 +111,7 @@ export default function Events() {
         contact: contact.toString().trim(),
         eventId: eventId || null,
         eventTitle: eventTitle || "General Volunteer",
-        registration_type: "participant"
+        registration_type: "participant",
       };
 
       console.log("Register payload:", payload);
@@ -121,18 +119,46 @@ export default function Events() {
       await axios.post(`${API_URL}/addVolunteerWeb`, payload);
 
       alert("Successfully registered for the event!");
-
     } catch (err) {
       console.error("Registration error:", err);
 
       const message =
-        err.response?.data?.message ||
-        "Failed to register. Please try again.";
+        err.response?.data?.message || "Failed to register. Please try again.";
 
       alert(message);
     }
   }
 
+  async function handleVolunteerEvent(eventId, eventTitle) {
+    if (!uid || !fullName || !contact) {
+      setShowSignInAlert(true);
+      return;
+    }
+
+    try {
+      const payload = {
+        user_id: uid,
+        name: fullName.trim(),
+        contact: contact.toString().trim(),
+        eventId: eventId || null,
+        eventTitle: eventTitle || "General Volunteer",
+        registration_type: "volunteer",
+      };
+
+      console.log("Register payload:", payload);
+
+      await axios.post(`${API_URL}/addVolunteerWeb`, payload);
+
+      alert("Successfully volunteered for the event!");
+    } catch (err) {
+      console.error("Registration error:", err);
+
+      const message =
+        err.response?.data?.message || "Failed to register. Please try again.";
+
+      alert(message);
+    }
+  }
 
   return (
     <>
@@ -201,7 +227,10 @@ export default function Events() {
           <div className="events-grid">
             {filteredEvents.map((event, index) => (
               <div key={event._id} className="event-card">
-                <div className="event-card-clickable" onClick={() => setSelectedEvent(event)}>
+                <div
+                  className="event-card-clickable"
+                  onClick={() => setSelectedEvent(event)}
+                >
                   <div className="event-image">
                     <img
                       src={event.image ? event.image : noImage}
@@ -233,7 +262,14 @@ export default function Events() {
                 <div className="event-actions">
                   <button
                     className="register-btn"
-                    onClick={() => handleRegisterEvent(event._id, event.title)}
+                    // onClick={() => handleRegisterEvent(event._id, event.title)}
+                    onClick={() => {
+                      setShowChoicesModal({
+                        id: event._id,
+                        title: event.title
+                      })
+
+                    }}
                   >
                     Register Now
                   </button>
@@ -266,8 +302,11 @@ export default function Events() {
               <div className="event-header-row">
                 <h2>{selectedEvent.title}</h2>
                 <button
-                  className="register-btn-sm"
-                  onClick={() => handleRegisterEvent(selectedEvent._id, selectedEvent.title)}
+                  className="register-btn"
+                  onClick={() => {
+
+                    setShowChoicesModal(true);
+                  }}
                 >
                   Register Now
                 </button>
@@ -284,7 +323,7 @@ export default function Events() {
               <hr className="eventmodal-divider" />
               <p className="eventmodal-description-full">
                 {selectedEvent.description &&
-                  selectedEvent.description.trim() !== ""
+                selectedEvent.description.trim() !== ""
                   ? selectedEvent.description
                   : "No description displayed."}
               </p>
@@ -295,10 +334,44 @@ export default function Events() {
 
       {showSignin && <SignInPage />}
 
-      <SignInAlert 
-        open={showSignInAlert} 
-        onClose={() => setShowSignInAlert(false)} 
-        message="Please sign in to register for this event." 
+      {showChoicesModal && (
+        <>
+          <div
+            className="fixed inset-0 bg-black/30 z-[9999] flex items-center justify-center"
+            onClick={() => {
+              setShowChoicesModal(null);
+            }}
+          >
+            <div
+              className="bg-green-400 flex justify-evenly gap-10 px-5! py-9!"
+              onClick={(e) => e.stopPropagation()} 
+            >
+              <button
+                className="register-btn-sm"
+                onClick={() =>
+                  handleRegisterEvent(showChoicesModal.id, showChoicesModal.title)
+                }
+              >
+                Participate
+              </button>
+
+              <button
+                className="register-btn-sm"
+                onClick={() =>
+                  handleVolunteerEvent(showChoicesModal.id, showChoicesModal.title)
+                }
+              >
+                Volunteer
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+
+      <SignInAlert
+        open={showSignInAlert}
+        onClose={() => setShowSignInAlert(false)}
+        message="Please sign in to register for this event."
       />
 
       <Footer />
