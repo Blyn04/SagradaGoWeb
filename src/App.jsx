@@ -1,4 +1,4 @@
-import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
+import { BrowserRouter, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { NavbarContext } from "./context/AllContext";
 import { useState, useEffect } from "react";
 import "./App.css";
@@ -33,8 +33,37 @@ import ChatBot from "./components/ChatBot";
 
 function AppContent() {
   const location = useLocation();
+  const navigate = useNavigate();
 
   const isAdminRoute = location.pathname.startsWith("/admin");
+
+  // Redirect admin users from landing page to admin dashboard
+  useEffect(() => {
+    if (location.pathname === "/") {
+      const storedUser = localStorage.getItem("currentUser");
+      const sessionTimeout = localStorage.getItem("sessionTimeout");
+      
+      if (storedUser && sessionTimeout) {
+        const timeoutTime = parseInt(sessionTimeout);
+        if (!isNaN(timeoutTime) && Date.now() < timeoutTime) {
+          try {
+            const currentUser = JSON.parse(storedUser);
+            const isAdmin = currentUser.is_admin === true || 
+                          currentUser.position === 'admin' || 
+                          currentUser.position === 'sub-admin' ||
+                          currentUser.role === 'admin' || 
+                          currentUser.role === 'sub-admin';
+            
+            if (isAdmin) {
+              navigate("/admin/dashboard", { replace: true });
+            }
+          } catch (error) {
+            console.error("Error checking admin status:", error);
+          }
+        }
+      }
+    }
+  }, [location.pathname, navigate]);
 
   return (
     <>
