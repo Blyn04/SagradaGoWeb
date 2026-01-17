@@ -149,7 +149,10 @@ const FloatingButton = () => {
     <>
       <FloatButton.Group
         trigger="click"
-        style={{ right: 24, bottom: 24 }}
+        style={{ 
+          right: window.innerWidth <= 768 ? 16 : 24, 
+          bottom: window.innerWidth <= 768 ? 16 : 24 
+        }}
         icon={<PlusOutlined />}
       >
         <FloatButton

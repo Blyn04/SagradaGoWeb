@@ -360,3 +360,107 @@
 .history-card {
     margin-bottom: 10px;
 }
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+    .donation-modal .ant-modal-content {
+        padding: 16px !important;
+    }
+
+    .main-title {
+        font-size: 20px;
+    }
+
+    .summary-card {
+        padding: 16px;
+    }
+
+    .summary-card h1 {
+        font-size: 24px;
+    }
+
+    .history-list {
+        gap: 8px;
+    }
+
+    .history-card {
+        padding: 12px;
+    }
+
+    .payment-details-section {
+        padding: 12px;
+    }
+
+    .qr-image {
+        width: 150px;
+    }
+
+    .make-donation-form-modal .ant-modal-content {
+        padding: 16px !important;
+    }
+
+    .form-title {
+        font-size: 18px;
+    }
+
+    .type-selector {
+        margin-bottom: 16px;
+    }
+
+    .form-footer {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .scrollable-history {
+        max-height: 250px;
+    }
+}
+
+@media (max-width: 480px) {
+    .donation-modal .ant-modal-content {
+        padding: 12px !important;
+    }
+
+    .main-title {
+        font-size: 18px;
+    }
+
+    .summary-card {
+        padding: 12px;
+    }
+
+    .summary-card h1 {
+        font-size: 20px;
+    }
+
+    .history-card {
+        padding: 10px;
+    }
+
+    .payment-details-section {
+        padding: 10px;
+    }
+
+    .qr-image {
+        width: 120px;
+    }
+
+    .make-donation-form-modal .ant-modal-content {
+        padding: 12px !important;
+    }
+
+    .form-title {
+        font-size: 16px;
+    }
+
+    .type-btn {
+        padding: 8px 0;
+        font-size: 14px;
+    }
+
+    .form-input,
+    .form-textarea {
+        padding: 10px !important;
+    }
+}

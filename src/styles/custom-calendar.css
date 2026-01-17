@@ -36,3 +36,34 @@
 .ant-picker-cell-today .ant-picker-cell-inner::after {
   display: none !important;
 }
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+  .ant-picker-cell-inner {
+    padding: 2px;
+    min-height: 50px;
+  }
+
+  .events li {
+    font-size: 11px;
+  }
+
+  .ant-badge-status-text {
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 480px) {
+  .ant-picker-cell-inner {
+    padding: 1px;
+    min-height: 40px;
+  }
+
+  .events li {
+    font-size: 10px;
+  }
+
+  .ant-badge-status-text {
+    font-size: 10px;
+  }
+}
