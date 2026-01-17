@@ -123,7 +123,6 @@ export default function AdminSidebar() {
               count={notificationUnreadCount}
               style={{
                 backgroundColor: "#b87d3e",
-                marginRight: 5,
               }}
             />
           )}
@@ -141,7 +140,6 @@ export default function AdminSidebar() {
               count={chatUnreadCount}
               style={{
                 backgroundColor: "#b87d3e",
-                marginRight: 5
               }}
             />
           )}
@@ -161,6 +159,10 @@ export default function AdminSidebar() {
   const handleLogoutConfirm = () => {
     setShowLogoutModal(false);
     Cookies.remove("email");
+    localStorage.removeItem("currentUser");
+    localStorage.removeItem("sessionTimeout");
+    localStorage.removeItem("userEmail");
+    localStorage.removeItem("userPosition");
     setCurrentUser({});
     navigate("/");
     window.location.reload();
