@@ -158,7 +158,13 @@ const FloatingButton = () => {
         <FloatButton
           icon={<CommentOutlined />}
           tooltip={<div>Chat</div>}
-          onClick={() => setIsChatOpen(!isChatOpen)}
+          onClick={() => {
+            if (!uid) {
+              setIsLoginRequiredOpen(true);
+            } else {
+              setIsChatOpen(!isChatOpen)
+            }
+          }}
         />
         <FloatButton
           icon={<HeartOutlined />}

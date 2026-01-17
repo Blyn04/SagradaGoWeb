@@ -11,6 +11,8 @@ import dayjs from "dayjs";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import Cookies from "js-cookie";
+
 import Modal from "../../components/Modal";
 
 
@@ -26,11 +28,15 @@ export default function Wedding() {
   const [time, setTime] = useState("");
   const [contact, setContact] = useState("");
   const [attendees, setAttendees] = useState(0);
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(Cookies.get("email"));
   const [isLoading, setIsLoading] = useState(false);
 
   const [showModalMessage, setShowModalMessage] = useState(false)
   const [modalMessage, setModalMessage] = useState()
+
+
+
+  const uid = Cookies.get("uid");
 
   const inputText = [
     {
@@ -97,6 +103,7 @@ export default function Wedding() {
       type: "email",
       onChange: setEmail,
       value: email,
+      disabled: true
     },
 
     {
@@ -105,6 +112,7 @@ export default function Wedding() {
       type: "text",
       onChange: setContact,
       value: contact,
+      maxLength: 11
     },
     {
       key: "attendees",
@@ -276,6 +284,16 @@ export default function Wedding() {
   async function handleUpload() {
     setIsLoading(true);
     try {
+
+      const isValidPHNumber = /^09\d{9}$/.test(contact);
+
+      if (!isValidPHNumber) {
+        setShowModalMessage(true);
+        setModalMessage("Please enter a valid contact number (e.g. 09XXXXXXXXX)");
+        setIsLoading(false);
+        return;
+      }
+
       if (
         !date ||
         !time ||
@@ -291,6 +309,8 @@ export default function Wedding() {
         setIsLoading(false);
         return;
       }
+
+      
 
       // Upload files & store URLs locally
       const uploaded = {};
@@ -356,7 +376,7 @@ export default function Wedding() {
         );
 
       await axios.post(`${API_URL}/createWeddingBooking`, {
-        uid: "123123123",
+        uid: uid,
         email,
         transaction_id: generateTransactionID(),
         date,
@@ -477,6 +497,8 @@ export default function Wedding() {
                     className="input-text"
                     onChange={(e) => elem.onChange(e.target.value)}
                     value={elem.value}
+                    maxLength={elem.maxLength}
+                    disabled={elem.disabled}
                   />
                 )}
               </div>
