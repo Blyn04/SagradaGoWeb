@@ -128,6 +128,15 @@ export default function Header() {
                 <button
                   className="dropdown-item"
                   onClick={() => {
+                    navigate("/activity");
+                    setShowProfileDropdown(false);
+                  }}
+                >
+                  Activity
+                </button>
+                <button
+                  className="dropdown-item"
+                  onClick={() => {
                     setShowProfileDropdown(false);
                     Modal.confirm({
                       title: 'Confirm Logout',

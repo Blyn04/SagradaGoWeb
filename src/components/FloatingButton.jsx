@@ -355,7 +355,7 @@ const FloatingButton = () => {
               <Upload
                 maxCount={1}
                 accept="image/*"
-                beforeUpload={() => false} // ❗ prevents auto upload
+                beforeUpload={() => false}
                 onChange={(info) => {
                   if (info.fileList.length > 0) {
                     setReceiptFile(info.fileList[0].originFileObj);

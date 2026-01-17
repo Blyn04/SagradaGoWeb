@@ -29,6 +29,7 @@ import AdminChat from "./components/AdminChat";
 import Notifications from "./components/Notifications";
 import FloatingButton from "./components/FloatingButton";
 import ProfilePage from "./pages/ProfilePage";
+import ActivityPage from "./pages/ActivityPage";
 import ChatBot from "./components/ChatBot";
 
 function AppContent() {
@@ -69,6 +70,7 @@ function AppContent() {
         <Route path="/be-volunteer" element={<BeVolunteer />} />
         <Route path="/donate" element={<Donate />} />
         <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/activity" element={<ActivityPage />} />
         <Route path="/chat" element={<ChatBot />} />
       </Routes>
     </>
