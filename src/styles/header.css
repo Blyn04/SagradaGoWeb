@@ -123,3 +123,114 @@
 .dropdown-item:last-child {
   border-radius: 0 0 8px 8px;
 }
+
+.hamburger-icon {
+  display: none;
+  cursor: pointer;
+  color: #333;
+  z-index: 1002;
+}
+
+.mobile-auth-wrapper {
+  display: none;
+}
+
+.logout-red {
+  color: #ff4d4f !important;
+}
+
+@media (max-width: 768px) {
+
+  .navbar-container {
+    position: fixed;
+    top: 0;
+    right: -110%;
+    width: 280px;
+    height: 100vh;
+    background: #ffffff;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 80px 30px;
+    gap: 10px;
+    z-index: 1001;
+    box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
+
+    visibility: hidden;
+
+    transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.4s;
+  }
+
+  .navbar-container.mobile-active {
+    right: 0;
+    visibility: visible;
+  }
+
+}
+
+@media (max-width: 768px) {
+  .header-main-container {
+    padding: 0 20px;
+    height: 65px;
+  }
+
+  .hamburger-icon {
+    display: block;
+  }
+
+  .header-main-container>.signin-container {
+    display: none;
+  }
+
+  .mobile-auth-wrapper {
+    display: block;
+    margin-top: 20px;
+    width: 100%;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
+  }
+
+  .navbar-container {
+    position: fixed;
+    top: 0;
+    right: -100%;
+    width: 280px;
+    height: 100vh;
+    background: #ffffff;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 80px 30px;
+    gap: 10px;
+    transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1001;
+    box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
+  }
+
+  .navbar-container.mobile-active {
+    right: 0;
+  }
+
+  .nav-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 1000;
+    backdrop-filter: blur(4px);
+  }
+
+  .navbar-container .nav-button {
+    width: 100%;
+    text-align: left;
+    padding: 12px 0;
+  }
+
+  .navbar-container .profile-dropdown {
+    position: static;
+    box-shadow: none;
+    border: 1px solid #eee;
+    margin-top: 10px;
+    width: 100%;
+  }
+}

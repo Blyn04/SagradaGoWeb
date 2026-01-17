@@ -1,6 +1,6 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useContext, useEffect, useState } from "react";
-import { FaSignOutAlt, FaUser } from "react-icons/fa";
+import { FaUser, FaBars, FaTimes } from "react-icons/fa";
 import NavButton from "./NavButton";
 import { NavbarContext } from "../context/AllContext";
 import "../styles/header.css";
@@ -15,38 +15,21 @@ const navbar = [
   { id: "home", text: "Home", path: "/" },
   { id: "book", text: "Book A Service", path: "/book-service" },
   { id: "event", text: "Events", path: "/events" },
-  // { id: "volunteer", text: "Be a Volunteer", path: "/be-volunteer" },
-  // { id: "donate", text: "Donate", path: "/donate" },
 ];
 
 export default function Header() {
-  const { setSelectedNavbar, setShowSignin, setShowSignup, setActiveDropdown, setBookingSelected } =
-    useContext(NavbarContext);
+  const { setSelectedNavbar, setShowSignin, setShowSignup, setBookingSelected } = useContext(NavbarContext);
   const navigate = useNavigate();
   const email = Cookies.get("email");
   const location = useLocation();
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
-  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showVirtualTour, setShowVirtualTour] = useState(false);
-  console.log("email", email);
 
   useEffect(() => {
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    setIsMenuOpen(false);
   }, [location.pathname]);
-
-  useEffect(() => {
-    const currentNavItem = navbar.find(
-      (elem) =>
-        elem.path === location.pathname ||
-        (elem.id === "book" && location.pathname.startsWith("/book"))
-    );
-    if (currentNavItem) {
-      setSelectedNavbar(currentNavItem.id);
-    }
-  }, [location.pathname, setSelectedNavbar]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -58,159 +41,77 @@ export default function Header() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  function handleMouseEnter(id) {
-    if (id === "book") setActiveDropdown(true);
-  }
+  const handleLogout = () => {
+    setShowProfileDropdown(false);
+    setIsMenuOpen(false);
+    Modal.confirm({
+      title: 'Confirm Logout',
+      icon: <ExclamationCircleOutlined />,
+      content: 'Are you sure you want to log out?',
+      onOk() {
+        Cookies.remove("email");
+        Cookies.remove("uid");
+        localStorage.removeItem("currentUser");
+        navigate("/");
+        window.location.reload();
+      },
+    });
+  };
 
-  function handleMouseLeave(id) {
-    if (id === "book") setActiveDropdown(false);
-  }
+  const AuthSection = ({ isMobile = false }) => (
+    <div className={isMobile ? "mobile-auth-wrapper" : "signin-container"}>
+      {email ? (
+        <div className="profile-dropdown-container">
+          <div className="profile-pic" onClick={() => setShowProfileDropdown(!showProfileDropdown)}>
+            <FaUser size={18} />
+          </div>
+          {showProfileDropdown && (
+            <div className="profile-dropdown">
+              <button className="dropdown-item" onClick={() => { navigate("/profile"); setShowProfileDropdown(false); setIsMenuOpen(false); }}>Profile</button>
+              <button className="dropdown-item" onClick={() => { navigate("/activity"); setShowProfileDropdown(false); setIsMenuOpen(false); }}>Activity</button>
+              <button className="dropdown-item logout-red" onClick={handleLogout}>Logout</button>
+            </div>
+          )}
+        </div>
+      ) : (
+        <button className="border-btn" style={{ padding: '8px 12px' }} onClick={() => { setShowSignin(true); setShowSignup(false); setIsMenuOpen(false); }}>
+          Sign In
+        </button>
+      )}
+    </div>
+  );
 
   return (
     <div className="header-main-container">
-      <img
-        src={Logo}
-        alt="Logo"
-        className="header-logo"
-        onClick={() => navigate("/")}
-      />
+      <img src={Logo} alt="Logo" className="header-logo" onClick={() => navigate("/")} />
 
-      <div className="navbar-container">
+      <div className="hamburger-icon" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+        {isMenuOpen ? <FaTimes size={24} /> : <FaBars size={24} />}
+      </div>
+
+      {isMenuOpen && <div className="nav-overlay" onClick={() => setIsMenuOpen(false)}></div>}
+
+      <div className={`navbar-container ${isMenuOpen ? "mobile-active" : ""}`}>
         {navbar.map((elem) => (
           <NavButton
             id={elem.id}
-            key={elem.text}
+            key={elem.id}
             text={elem.text}
             onClick={() => {
-              if (!email && elem.id === "volunteer") {
-                setShowSignin(true);
-                return;
-              }
-
               setSelectedNavbar(elem.id);
               navigate(elem.path);
-              setShowSignin(false);
-
               if (elem.id === "book") setBookingSelected(null);
             }}
-
-            onMouseEnter={() => handleMouseEnter(elem.id)}
-            onMouseLeave={() => handleMouseLeave(elem.id)}
           />
         ))}
-        <NavButton
-          id="virtual-tour"
-          text="Virtual Tour"
-          onClick={() => setShowVirtualTour(true)}
-        />
+        <NavButton id="virtual-tour" text="Virtual Tour" onClick={() => setShowVirtualTour(true)} />
+
+        {/* Mobile Auth Section (Inside Drawer) */}
+        <AuthSection isMobile={true} />
       </div>
 
-      <div className="signin-container">
-        {email ? (
-          <div className="profile-dropdown-container">
-            <div
-              className="profile-pic"
-              onClick={() => setShowProfileDropdown(!showProfileDropdown)}
-            >
-              <FaUser size={18} />
-            </div>
-            {showProfileDropdown && (
-              <div className="profile-dropdown">
-                <button
-                  className="dropdown-item"
-                  onClick={() => {
-                    navigate("/profile");
-                    setShowProfileDropdown(false);
-                  }}
-                >
-                  Profile
-                </button>
-                <button
-                  className="dropdown-item"
-                  onClick={() => {
-                    navigate("/activity");
-                    setShowProfileDropdown(false);
-                  }}
-                >
-                  Activity
-                </button>
-                <button
-                  className="dropdown-item"
-                  onClick={() => {
-                    setShowProfileDropdown(false);
-                    Modal.confirm({
-                      title: 'Confirm Logout',
-                      icon: <ExclamationCircleOutlined />,
-                      content: 'Are you sure you want to log out?',
-                      okText: 'Logout',
-                      okType: 'danger',
-                      cancelText: 'Cancel',
-                      onOk() {
-                        Cookies.remove("email");
-                        Cookies.remove("uid");
-                        Cookies.remove("fullname");
-                        Cookies.remove("contact");
-
-                        localStorage.removeItem("currentUser");
-                        navigate("/");
-                        window.location.reload();
-                      },
-                    });
-                  }}
-                >
-                  Logout
-                </button>
-              </div>
-            )}
-          </div>
-        ) : (
-          <button
-            className="border-btn"
-            style={{ padding: "8px 15px", fontSize: "14px " }}
-            onClick={() => {
-              setShowSignin(true)
-              setShowSignup(false)
-            }}
-          >
-            Sign In
-          </button>
-        )}
-      </div>
-
-      <Modal
-        title="Confirm Logout"
-        open={showLogoutConfirm}
-        onCancel={() => setShowLogoutConfirm(false)}
-        footer={null}
-        centered
-      >
-        <div style={{ textAlign: 'center', padding: '20px 0' }}>
-          <ExclamationCircleOutlined style={{ fontSize: '42px', color: '#faad14', marginBottom: '16px' }} />
-          <p style={{ fontSize: '16px', color: '#555' }}>
-            Are you sure you want to log out of your account?
-          </p>
-
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', marginTop: '24px' }}>
-            <button
-              className="border-btn"
-              onClick={() => setShowLogoutConfirm(false)}
-            >
-              Cancel
-            </button>
-            <button
-              className="filled-btn"
-              onClick={() => {
-                Cookies.remove("email");
-                localStorage.removeItem("currentUser");
-                navigate("/");
-                window.location.reload();
-              }}
-            >
-              Logout
-            </button>
-          </div>
-        </div>
-      </Modal>
+      {/* Desktop Auth Section (Outside Drawer) */}
+      <AuthSection isMobile={false} />
 
       <VirtualTour isOpen={showVirtualTour} onClose={() => setShowVirtualTour(false)} />
     </div>
