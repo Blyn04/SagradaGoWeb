@@ -119,22 +119,46 @@ export default function ActivityPage() {
                                 <List
                                     className="history-list"
                                     dataSource={events}
-                                    renderItem={(item) => (
-                                        <List.Item>
-                                            <List.Item.Meta
-                                                title={item.eventTitle || item.title}
-                                                description={
-                                                    <>
-                                                        <Tag color="blue">{item.registration_type || "Participant"}</Tag>
-                                                        <br />
-                                                        <span>{item.location}</span>
-                                                        <br />
-                                                        <span>{new Date(item.date || item.createdAt).toLocaleDateString()}</span>
-                                                    </>
-                                                }
-                                            />
-                                        </List.Item>
-                                    )}
+                                    renderItem={(item) => {
+                                        const isVolunteer = item.registration_type?.toLowerCase() === "volunteer";
+                                        const tagColor = isVolunteer ? "green" : "blue";
+                                        const label = item.registration_type || "Participant";
+
+                                        return (
+                                            <List.Item>
+                                                <List.Item.Meta
+                                                    title={
+                                                        <div style={{
+                                                            display: "flex",
+                                                            justifyContent: "space-between",
+                                                            alignItems: "center",
+                                                            width: "100%"
+                                                        }}>
+                                                            <span style={{ fontWeight: 600 }}>
+                                                                {item.eventTitle || item.title}
+                                                            </span>
+                                                            <Tag color={tagColor} style={{ marginRight: 0 }}>
+                                                                {label.toUpperCase()}
+                                                            </Tag>
+                                                        </div>
+                                                    }
+                                                    description={
+                                                        <div style={{ marginTop: "4px" }}>
+                                                            <span style={{ color: "#8c8c8c" }}>{item.location}</span>
+                                                            <br />
+                                                            <span style={{ fontSize: "12px", color: "#bfbfbf" }}>
+                                                                {new Date(item.date || item.createdAt).toLocaleDateString(undefined, {
+                                                                    year: 'numeric',
+                                                                    month: 'long',
+                                                                    day: 'numeric'
+                                                                })}
+                                                            </span>
+                                                        </div>
+                                                    }
+                                                />
+                                            </List.Item>
+                                        );
+                                    }}
                                     locale={{ emptyText: <div className="history-empty">No event registrations found.</div> }}
                                 />
                             </div>
