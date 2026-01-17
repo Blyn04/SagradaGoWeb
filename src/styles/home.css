@@ -402,3 +402,143 @@
   color: #8c8c8c;
   margin: 0;
 }
+
+@media (max-width: 1024px) {
+  .hero-title {
+    font-size: 4rem;
+  }
+
+  .about-grid,
+  .tour-content {
+    gap: 40px;
+  }
+}
+
+@media (max-width: 768px) {
+  .hero-content {
+    grid-template-columns: 1fr;
+    text-align: center;
+    gap: 30px;
+  }
+
+  .hero-left-box {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .welcome-tag {
+    writing-mode: horizontal-tb;
+    margin-bottom: 5px;
+  }
+
+  .hero-title {
+    font-size: 3.5rem;
+    line-height: 1.1;
+  }
+
+  .hero-right-box {
+    align-items: center;
+  }
+
+  .hero-description {
+    max-width: 500px;
+    margin: 0 auto;
+  }
+
+  .about-section {
+    padding: 80px 5%;
+  }
+
+  .about-grid {
+    grid-template-columns: 1fr;
+    gap: 50px;
+  }
+
+  .about-image-stack {
+    max-width: 500px;
+    margin: 0 auto;
+  }
+
+  .about-info {
+    text-align: center;
+  }
+
+  .about-stats {
+    justify-content: center;
+    flex-direction: row;
+  }
+
+  .featured-section {
+    padding: 80px 5%;
+  }
+
+  .virtual-tour-container {
+    padding: 80px 5%;
+  }
+
+  .tour-content {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+
+  .tour-text {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-title {
+    font-size: 2.8rem;
+  }
+
+  .hero-btns {
+    flex-direction: column;
+    width: 100%;
+    max-width: 300px;
+  }
+
+  .btn-primary,
+  .btn-outline {
+    width: 100%;
+  }
+
+  .about-stats {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .tour-visual {
+    height: 300px;
+  }
+
+  .visual-glass-card p {
+    font-size: 0.9rem;
+  }
+
+  .profileContainer {
+    padding: 10px;
+  }
+
+  .profileBanner img {
+    height: 200px;
+  }
+
+  .pageTitle {
+    font-size: 16px;
+    margin-bottom: 12px;
+  }
+
+  .logoutBtn {
+    padding: 12px;
+  }
+
+  .history-scroll-container {
+    max-height: 250px;
+  }
+
+  .history-list .ant-list-item {
+    padding: 12px 6px;
+  }
+}
