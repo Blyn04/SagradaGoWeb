@@ -2903,7 +2903,7 @@ export default function BookingPendingRequests() {
               placeholder="Add a comment for the user (optional)"
               value={quickComment}
               onChange={(e) => setQuickComment(e.target.value)}
-              style={{ marginTop: 8 }}
+              style={{ marginTop: 8, marginBottom: 30 }}
               maxLength={500}
               showCount
             />
