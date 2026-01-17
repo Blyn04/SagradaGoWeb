@@ -271,6 +271,74 @@
   }
 }
 
+@media (max-width: 480px) {
+  .virtual-tour-container1 {
+    min-height: 500px;
+  }
+
+  .virtual-tour-image-container {
+    height: 300px;
+    border-radius: 15px 15px 0 0;
+  }
+
+  .virtual-tour-header {
+    padding: 12px;
+    padding-bottom: 20px;
+  }
+
+  .virtual-tour-title h2 {
+    font-size: 18px;
+  }
+
+  .virtual-tour-title p {
+    font-size: 13px;
+  }
+
+  .fullscreen-toggle-btn {
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
+  }
+
+  .virtual-tour-description {
+    padding: 16px 20px;
+    border-radius: 0 0 15px 15px;
+  }
+
+  .virtual-tour-description p {
+    font-size: 14px;
+  }
+
+  .virtual-tour-controls {
+    padding: 12px 16px;
+  }
+
+  .virtual-tour-nav-btn {
+    padding: 6px 12px;
+    font-size: 11px;
+  }
+
+  .virtual-tour-dots {
+    gap: 8px;
+  }
+
+  .virtual-tour-dot {
+    width: 8px;
+    height: 8px;
+  }
+
+  .virtual-tour-dot.active {
+    width: 10px;
+    height: 10px;
+  }
+
+  .header-icon-btn {
+    width: 34px;
+    height: 34px;
+    font-size: 16px;
+  }
+}
+
 .virtual-tour-title p {
   margin: 2px 0 0;
   font-size: 12px;
