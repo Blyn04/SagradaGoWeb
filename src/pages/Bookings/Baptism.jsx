@@ -1,37 +1,33 @@
 import { useContext, useEffect, useRef, useState } from "react";
-import { NavbarContext } from "../../context/AllContext";
+
 import "../../styles/booking/wedding.css";
-import default_profile from "../../assets/no-image.jpg";
+import { supabase } from "../../config/supabase";
+import axios from "axios";
+import { API_URL } from "../../Constants";
+
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import dayjs from "dayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { MobileTimePicker } from "@mui/x-date-pickers/MobileTimePicker";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import no_image from "../../assets/blank-image.jpg";
-import { supabase } from "../../config/supabase";
-import axios from "axios";
-import { API_URL } from "../../Constants";
+import Cookies from "js-cookie";
+
+import Modal from "../../components/Modal";
+import { NavbarContext } from "../../context/AllContext";
+import { useNavigate } from "react-router-dom";
 
 export default function Baptism() {
-  const { currentUser, bookingSelected, setBookingSelected } =
-    useContext(NavbarContext);
+  const { setBookingSelected } = useContext(NavbarContext);
 
-  // TO BE DELETE
-  const occupiedDates = [
-    new Date("2025-11-27"),
-    new Date("2025-11-28"),
-    new Date("2025-11-29"),
-    new Date("2025-11-30"),
-    new Date("2025-12-04"),
-  ];
+  const navigate = useNavigate();
 
   //-------------------
 
   const [isLoading, setIsLoading] = useState(false);
 
-  const [fullname, setFullname] = useState("");
-  const [email, setEmail] = useState("");
+  const [fullname, setFullname] = useState(Cookies.get("fullname") || "");
+  const [email, setEmail] = useState(Cookies.get("email") || "");
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
 
@@ -45,6 +41,15 @@ export default function Baptism() {
   const [attendees, setAttendees] = useState(0);
   const [address, setAddress] = useState("");
 
+  const [showModalMessage, setShowModalMessage] = useState(false);
+  const [modalMessage, setModalMessage] = useState();
+
+  const uid = Cookies.get("uid");
+  const fileInputRefs = useRef([]);
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
   const inputText = [
     {
       key: "fullname",
@@ -52,6 +57,7 @@ export default function Baptism() {
       type: "text",
       onChange: setFullname,
       value: fullname,
+      readOnly: true,
     },
     {
       key: "email",
@@ -59,6 +65,7 @@ export default function Baptism() {
       type: "email",
       onChange: setEmail,
       value: email,
+      disabled: true,
     },
     {
       key: "time",
@@ -73,6 +80,7 @@ export default function Baptism() {
       type: "date",
       onChange: setDate,
       value: date,
+      minDate: today,
     },
     {
       key: "candidate_fname",
@@ -102,6 +110,7 @@ export default function Baptism() {
       type: "date",
       onChange: setCandidateBday,
       value: candidateBday,
+      maxDate: today,
     },
     {
       key: "candidate_bplace",
@@ -325,8 +334,6 @@ export default function Baptism() {
     },
   ];
 
-
-
   async function uploadImage(file, namePrefix) {
     const ext = file.name.split(".").pop();
     const fileName = `${namePrefix}_${Date.now()}.${ext}`;
@@ -351,9 +358,76 @@ export default function Baptism() {
     return `BP-${timestamp}-${random}`;
   }
 
+  function resetAllFiles() {
+    // Clear all file inputs (DOM)
+    Object.values(fileInputRefs.current).forEach((input) => {
+      if (input) input.value = "";
+    });
+
+    // Clear file states
+    setBirthCertificateFile("");
+    setMarriageCertFile("");
+    setGodparentConfirmationFile("");
+    setBaptismalSeminarFile("");
+
+    // Clear previews
+    setBirthCertificatePreview("");
+    setMarriageCertPreview("");
+    setGodparentConfirmationPreview("");
+    setBaptismalSeminarPreview("");
+
+    setFullname("");
+    setEmail("");
+    setDate("");
+    setTime("");
+    setCandidateFname("");
+    setCandidateMname("");
+    setCandidateLname("");
+    setCandidateBday("");
+    setCandidateBplace("");
+    setContact("");
+    setAttendees(0);
+    setAddress("");
+
+    setMotherFname("");
+    setMotherMname("");
+    setMotherLname("");
+    setMotherBirthPlace("");
+    setFatherFname("");
+    setFatherMname("");
+    setFatherLname("");
+    setFatherBirthPlace("");
+    setMarriageType("");
+
+    setMainGodFatherFname("");
+    setMainGodFatherMname("");
+    setMainGodFatherLname("");
+    setMainGodMotherFname("");
+    setMainGodMotherMname("");
+    setMainGodMotherLname("");
+    setAdditionalGodParents([]);
+    birthCertRef.current.value = "";
+    parentMarriageCert.current.value = "";
+    godParentConf.current.value = "";
+    baptismalSeminar.current.value = "";
+  }
+
+
+
   async function handleUpload() {
-    setIsLoading(true)
+    setIsLoading(true);
     try {
+      const isValidPHNumber = /^09\d{9}$/.test(contact);
+
+      if (!isValidPHNumber) {
+        setShowModalMessage(true);
+        setModalMessage(
+          "Please enter a valid contact number (e.g. 09XXXXXXXXX)",
+        );
+        setIsLoading(false);
+        return;
+      }
+      console.log("fullname", fullname);
 
       if (
         fullname.trim() === "" ||
@@ -385,23 +459,22 @@ export default function Baptism() {
         mainGodMotherLname.trim() === "" ||
         additionalGodParents.length === 0
       ) {
-        alert("Please fill in all required fields.");
+        setShowModalMessage(true);
+        setModalMessage("Please fill in all required fields.");
         setIsLoading(false);
         return;
       }
-
-
 
       const uploaded = {};
 
       if (birthCertificateFile) {
         uploaded.birth_certificate = await uploadImage(
           birthCertificateFile,
-          "birth_certificate"
+          "birth_certificate",
         );
-      }
-      else {
-        alert("Please upload files.");
+      } else {
+        setShowModalMessage(true);
+        setModalMessage("Please upload files.");
         setIsLoading(false);
         return;
       }
@@ -409,11 +482,11 @@ export default function Baptism() {
       if (marriageCertFile) {
         uploaded.parents_marriage_certificate = await uploadImage(
           marriageCertFile,
-          "parents_marriage_certificate"
+          "parents_marriage_certificate",
         );
-      }
-      else {
-        alert("Please upload files.");
+      } else {
+        setShowModalMessage(true);
+        setModalMessage("Please upload files.");
         setIsLoading(false);
         return;
       }
@@ -421,11 +494,11 @@ export default function Baptism() {
       if (godparentConfirmationFile) {
         uploaded.godparent_confirmation = await uploadImage(
           godparentConfirmationFile,
-          "godparent_confirmation"
+          "godparent_confirmation",
         );
-      }
-      else {
-        alert("Please upload files.");
+      } else {
+        setShowModalMessage(true);
+        setModalMessage("Please upload files.");
         setIsLoading(false);
         return;
       }
@@ -433,17 +506,17 @@ export default function Baptism() {
       if (baptismalSeminarFile) {
         uploaded.baptismal_seminar = await uploadImage(
           baptismalSeminarFile,
-          "baptismal_seminar"
+          "baptismal_seminar",
         );
-      }
-      else {
-        alert("Please upload files.");
+      } else {
+        setShowModalMessage(true);
+        setModalMessage("Please upload files.");
         setIsLoading(false);
         return;
       }
 
       const payload = {
-        uid: "123123123",
+        uid: uid,
         transaction_id: generateTransactionID(),
 
         fullname,
@@ -485,61 +558,26 @@ export default function Baptism() {
         ...uploaded,
       };
 
-      console.log("payload", payload);
-
       const res = await axios.post(`${API_URL}/addBaptismalWeb`, payload);
 
       alert("Baptismal booking submitted successfully!");
       console.log("Saved:", res.data);
-      setIsLoading(false)
+      setIsLoading(false);
 
-
-      setFullname("")
-      setEmail("")
-      setDate("")
-      setTime("")
-      setCandidateFname("")
-      setCandidateMname("")
-      setCandidateLname("")
-      setCandidateBday("")
-      setCandidateBplace("")
-      setContact("")
-      setAttendees(0)
-      setAddress("")
-
-      setMotherFname("")
-      setMotherMname("")
-      setMotherLname("")
-      setMotherBirthPlace("")
-      setFatherFname("")
-      setFatherMname("")
-      setFatherLname("")
-      setFatherBirthPlace("")
-      setMarriageType("")
-
-      setMainGodFatherFname("")
-      setMainGodFatherMname("")
-      setMainGodFatherLname("")
-      setMainGodMotherFname("")
-      setMainGodMotherMname("")
-      setMainGodMotherLname("")
-      setAdditionalGodParents([])
-      birthCertRef.current.value = "";
-      parentMarriageCert.current.value = "";
-      godParentConf.current.value = "";
-      baptismalSeminar.current.value = "";
+      resetAllFiles();
+      navigate("/")
 
     } catch (err) {
       console.error("UPLOAD ERROR:", err);
-      alert("Failed to submit baptismal booking");
-      setIsLoading(false)
+      setShowModalMessage(true);
+      setModalMessage("Failed to submit baptismal booking");
+      setIsLoading(false);
     }
   }
 
   return (
     <div className="main-holder">
       <div className="form-wrapper">
-
         {/* SECTION 1: EVENT LOGISTICS */}
         <div className="form-section">
           <h2 className="section-title">1. Schedule Details</h2>
@@ -553,23 +591,26 @@ export default function Baptism() {
                     onChange={(v) => elem.onChange(v ? v.toISOString() : "")}
                     className="input-text"
                     dateFormat="yyyy-MM-dd"
-                    excludeDates={occupiedDates}
+                    minDate={elem.minDate}
+                    maxDate={elem.maxDate}
+                    openToDate={today}
                     showYearDropdown
                     dropdownMode="select"
-                    minDate={new Date(1900, 0, 1)}
                   />
                 ) : elem.type === "time" ? (
                   <div className="time-container">
                     <LocalizationProvider dateAdapter={AdapterDayjs}>
                       <MobileTimePicker
                         value={time ? dayjs(`2000-01-01 ${time}`) : null}
-                        onChange={(v) => setTime(v ? dayjs(v).format("HH:mm") : "")}
+                        onChange={(v) =>
+                          setTime(v ? dayjs(v).format("HH:mm") : "")
+                        }
                         slotProps={{
                           textField: {
                             variant: "standard",
                             fullWidth: true,
-                            InputProps: { disableUnderline: true }
-                          }
+                            InputProps: { disableUnderline: true },
+                          },
                         }}
                       />
                     </LocalizationProvider>
@@ -580,6 +621,7 @@ export default function Baptism() {
                     className="input-text"
                     onChange={(e) => elem.onChange(e.target.value)}
                     value={elem.value}
+                    readOnly={elem.readOnly}
                     maxLength={elem.maxLength}
                   />
                 )}
@@ -591,7 +633,7 @@ export default function Baptism() {
         {/* SECTION 2: PERSONAL & FAMILY DETAILS */}
         <div className="form-section">
           <h2 className="section-title">2. Family Information</h2>
-          <div className="grid-layout" style={{ marginBottom: '20px' }}>
+          <div className="grid-layout" style={{ marginBottom: "20px" }}>
             {inputText2.map((elem) => (
               <div className="input-group" key={elem.key}>
                 <h1>{elem.title}</h1>
@@ -599,6 +641,7 @@ export default function Baptism() {
                   type={elem.type}
                   className="input-text"
                   onChange={(e) => elem.onChange(e.target.value)}
+                  ref={(el) => (fileInputRefs.current[elem.key] = el)}
                   value={elem.value}
                 />
               </div>
@@ -611,7 +654,9 @@ export default function Baptism() {
                 onChange={(e) => setMarriageType(e.target.value)}
                 className="input-text"
               >
-                <option value="" disabled hidden>Select marriage type</option>
+                <option value="" disabled hidden>
+                  Select marriage type
+                </option>
                 <option value="Catholic">Catholic</option>
                 <option value="Civil">Civil</option>
                 <option value="Natural">Natural</option>
@@ -639,7 +684,7 @@ export default function Baptism() {
 
             <div className="input-group">
               <h1>Additional Godparent</h1>
-              <div style={{ display: 'flex', gap: '10px' }}>
+              <div style={{ display: "flex", gap: "10px" }}>
                 <input
                   type="text"
                   className="input-text"
@@ -647,7 +692,11 @@ export default function Baptism() {
                   onChange={(e) => setGodParentName(e.target.value)}
                   placeholder="Enter full name"
                 />
-                <button type="button" onClick={addGodParent} className="add-btn">
+                <button
+                  type="button"
+                  onClick={addGodParent}
+                  className="add-btn"
+                >
                   Add
                 </button>
               </div>
@@ -665,11 +714,20 @@ export default function Baptism() {
           <div className="upload-grid">
             {uploadFiles.map((elem) => (
               <div key={elem.key} className="per-grid-container">
-                <h1 style={{ fontSize: '0.85rem', marginBottom: '10px', color: '#424242' }}>{elem.title}</h1>
+                <h1
+                  style={{
+                    fontSize: "0.85rem",
+                    marginBottom: "10px",
+                    color: "#424242",
+                  }}
+                >
+                  {elem.title}
+                </h1>
                 <input
                   type="file"
                   accept="image/*,application/pdf"
                   className="inputFile-properties"
+                  ref={(el) => (fileInputRefs.current[elem.key] = el)}
                   onChange={(e) => {
                     const file = e.target.files[0];
                     if (!file) return;
@@ -678,7 +736,11 @@ export default function Baptism() {
                   }}
                 />
                 {elem.preview && (
-                  <img src={elem.preview} className="image-preview" alt="preview" />
+                  <img
+                    src={elem.preview}
+                    className="image-preview"
+                    alt="preview"
+                  />
                 )}
               </div>
             ))}
@@ -687,11 +749,18 @@ export default function Baptism() {
 
         {/* SUBMIT SECTION */}
         <div className="submit-btn-container">
-          <button className="submit-button" onClick={handleUpload} disabled={isLoading}>
+          <button
+            className="submit-button"
+            onClick={handleUpload}
+            disabled={isLoading}
+          >
             {isLoading ? "Submitting..." : "Submit Booking"}
           </button>
         </div>
       </div>
+      {showModalMessage && (
+        <Modal message={modalMessage} setShowModal={setShowModalMessage} />
+      )}
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import "../../styles/booking/wedding.css";
 import { API_URL } from "../../Constants";
 import { supabase } from "../../config/supabase";
@@ -15,8 +15,6 @@ import Cookies from "js-cookie";
 
 import Modal from "../../components/Modal";
 
-
-
 export default function Wedding() {
   const [groomFname, setGroomFname] = useState("");
   const [groomMname, setGroomMname] = useState("");
@@ -31,10 +29,10 @@ export default function Wedding() {
   const [email, setEmail] = useState(Cookies.get("email"));
   const [isLoading, setIsLoading] = useState(false);
 
-  const [showModalMessage, setShowModalMessage] = useState(false)
-  const [modalMessage, setModalMessage] = useState()
+  const [showModalMessage, setShowModalMessage] = useState(false);
+  const [modalMessage, setModalMessage] = useState();
 
-
+  const fileInputRefs = useRef([]);
 
   const uid = Cookies.get("uid");
 
@@ -103,7 +101,7 @@ export default function Wedding() {
       type: "email",
       onChange: setEmail,
       value: email,
-      disabled: true
+      disabled: true,
     },
 
     {
@@ -112,7 +110,7 @@ export default function Wedding() {
       type: "text",
       onChange: setContact,
       value: contact,
-      maxLength: 11
+      maxLength: 11,
     },
     {
       key: "attendees",
@@ -173,14 +171,14 @@ export default function Wedding() {
   const uploadBaptismal = [
     {
       key: "groom_baptismal",
-      title: "Groom Baptismal Certificate Photo",
+      title: "Groom Baptismal Certificate",
       fileSetter: setGroomBapFile,
       preview: groomBapPreview,
       previewSetter: setGroomBapPreview,
     },
     {
       key: "bride_baptismal",
-      title: "Bride Baptismal Certificate Photo",
+      title: "Bride Baptismal Certificate",
       fileSetter: setBrideBapFile,
       preview: brideBapPreview,
       previewSetter: setBrideBapPreview,
@@ -196,14 +194,14 @@ export default function Wedding() {
   const uploadConfirmation = [
     {
       key: "groom_confirmation",
-      title: "Groom Confirmation Certificate Photo",
+      title: "Groom Confirmation Certificate",
       fileSetter: setGroomConfFile,
       preview: groomConfPreview,
       previewSetter: setGroomConfPreview,
     },
     {
       key: "bride_confirmation",
-      title: "Bride Confirmation Certificate Photo",
+      title: "Bride Confirmation Certificate",
       fileSetter: setBrideConfFile,
       preview: brideConfPreview,
       previewSetter: setBrideConfPreview,
@@ -219,14 +217,14 @@ export default function Wedding() {
   const uploadCenomar = [
     {
       key: "groom_cenomar",
-      title: "Groom CENOMAR Photo",
+      title: "Groom CENOMAR",
       fileSetter: setGroomCenomarFile,
       preview: groomCenomarPreview,
       previewSetter: setGroomCenomarPreview,
     },
     {
       key: "bride_cenomar",
-      title: "Bride CENOMAR Photo",
+      title: "Bride CENOMAR",
       fileSetter: setBrideCenomarFile,
       preview: brideCenomarPreview,
       previewSetter: setBrideCenomarPreview,
@@ -242,14 +240,14 @@ export default function Wedding() {
   const uploadPermission = [
     {
       key: "groom_permission",
-      title: "Groom Permission Photo",
+      title: "Groom Permission",
       fileSetter: setGroomPermFile,
       preview: groomPermPreview,
       previewSetter: setGroomPermPreview,
     },
     {
       key: "bride_permission",
-      title: "Bride Permission Photo",
+      title: "Bride Permission",
       fileSetter: setBridePermFile,
       preview: bridePermPreview,
       previewSetter: setBridePermPreview,
@@ -281,15 +279,66 @@ export default function Wedding() {
     return `WD-${timestamp}-${random}`;
   }
 
+
+  function resetAllFiles() {
+
+    Object.values(fileInputRefs.current).forEach((input) => {
+      if (input) input.value = "";
+    });
+
+
+    setGroomFile(null);
+    setBrideFile(null);
+    setGroomBapFile(null);
+    setBrideBapFile(null);
+    setGroomConfFile(null);
+    setBrideConfFile(null);
+    setGroomCenomarFile(null);
+    setBrideCenomarFile(null);
+    setGroomPermFile(null);
+    setBridePermFile(null);
+    setMarriageDocuFile(null);
+
+
+    setGroomPreview("");
+    setBridePreview("");
+    setGroomBapPreview("");
+    setBrideBapPreview("");
+    setGroomConfPreview("");
+    setBrideConfPreview("");
+    setGroomCenomarPreview("");
+    setBrideCenomarPreview("");
+    setGroomPermPreview("");
+    setBridePermPreview("");
+    setMarriagePreview("");
+
+
+    setIsCivil("");
+    
+    setEmail("");
+    setDate("");
+    setTime("");
+    setAttendees(0);
+    setContact("");
+    setGroomFname("");
+    setGroomMname("");
+    setGroomLname("");
+    setBrideFname("");
+    setBrideMname("");
+    setBrideLname("");
+  }
+
+
   async function handleUpload() {
     setIsLoading(true);
     try {
-
       const isValidPHNumber = /^09\d{9}$/.test(contact);
 
       if (!isValidPHNumber) {
         setShowModalMessage(true);
-        setModalMessage("Please enter a valid contact number (e.g. 09XXXXXXXXX)");
+        setModalMessage(
+          "Please enter a valid contact number (e.g. 09XXXXXXXXX)",
+        );
         setIsLoading(false);
         return;
       }
@@ -304,15 +353,13 @@ export default function Wedding() {
         !brideFname.trim() ||
         !brideLname.trim()
       ) {
-        setShowModalMessage(true)
-        setModalMessage("Please fill all input fields.")
+        setShowModalMessage(true);
+        setModalMessage("Please fill all input fields.");
         setIsLoading(false);
         return;
       }
 
-      
 
-      // Upload files & store URLs locally
       const uploaded = {};
 
       if (groomFile)
@@ -324,55 +371,55 @@ export default function Wedding() {
       if (groomBapFile)
         uploaded.groomBaptismal = await uploadImage(
           groomBapFile,
-          "groom_baptismal"
+          "groom_baptismal",
         );
 
       if (brideBapFile)
         uploaded.brideBaptismal = await uploadImage(
           brideBapFile,
-          "bride_baptismal"
+          "bride_baptismal",
         );
 
       if (groomConfFile)
         uploaded.groomConfirmation = await uploadImage(
           groomConfFile,
-          "groom_confirmation"
+          "groom_confirmation",
         );
 
       if (brideConfFile)
         uploaded.brideConfirmation = await uploadImage(
           brideConfFile,
-          "bride_confirmation"
+          "bride_confirmation",
         );
 
       if (groomCenomarFile)
         uploaded.groomCenomar = await uploadImage(
           groomCenomarFile,
-          "groom_cenomar"
+          "groom_cenomar",
         );
 
       if (brideCenomarFile)
         uploaded.brideCenomar = await uploadImage(
           brideCenomarFile,
-          "bride_cenomar"
+          "bride_cenomar",
         );
 
       if (groomPermFile)
         uploaded.groomPermission = await uploadImage(
           groomPermFile,
-          "groom_permission"
+          "groom_permission",
         );
 
       if (bridePermFile)
         uploaded.bridePermission = await uploadImage(
           bridePermFile,
-          "bride_permission"
+          "bride_permission",
         );
 
       if (marriageDocuFile)
         uploaded.marriageDocu = await uploadImage(
           marriageDocuFile,
-          "marriage_docu"
+          "marriage_docu",
         );
 
       await axios.post(`${API_URL}/createWeddingBooking`, {
@@ -405,32 +452,24 @@ export default function Wedding() {
         bride_permission: uploaded.bridePermission,
       });
 
+      
 
-      setShowModalMessage(true)
-      setModalMessage("Booking submitted successfully!")
+      setShowModalMessage(true);
+      setModalMessage("Booking submitted successfully!");
 
-      setEmail("");
-      setDate("");
-      setTime("");
-      setAttendees(0);
-      setContact("");
-      setGroomFname("");
-      setGroomMname("");
-      setGroomLname("");
-      setBrideFname("");
-      setBrideMname("");
-      setBrideLname("");
+      resetAllFiles(); 
+
     } catch (err) {
       console.error(err);
-      setShowModalMessage(true)
-      setModalMessage("Something went wrong during upload.")
+      setShowModalMessage(true);
+      setModalMessage("Something went wrong during upload.");
     }
   }
 
   const groomNames = inputText.filter((i) => i.key.includes("groom"));
   const brideNames = inputText.filter((i) => i.key.includes("bride"));
   const scheduleInputs = inputText.filter((i) =>
-    ["date", "time", "email", "contact_number", "attendees"].includes(i.key)
+    ["date", "time", "email", "contact_number", "attendees"].includes(i.key),
   );
 
   const today = new Date();
@@ -454,7 +493,7 @@ export default function Wedding() {
   return (
     <div className="main-holder">
       <div className="form-wrapper">
-        {/* SECTION 1: SCHEDULE */}
+
         <div className="form-section">
           <h2 className="section-title">1. Schedule & Logistics</h2>
           <div className="grid-layout">
@@ -469,7 +508,7 @@ export default function Wedding() {
                     dateFormat="yyyy-MM-dd"
                     excludeDates={disabledDates}
                     minDate={today}
-                    openToDate={firstAvailableDate}  
+                    openToDate={firstAvailableDate}
                     showYearDropdown
                     dropdownMode="select"
                   />
@@ -506,7 +545,7 @@ export default function Wedding() {
           </div>
         </div>
 
-        {/* SECTION 2: GROOM */}
+
         <div className="form-section">
           <h2 className="section-title">2. Groom's Information</h2>
           <div className="grid-layout" style={{ marginBottom: "25px" }}>
@@ -535,6 +574,7 @@ export default function Wedding() {
                 <input
                   type="file"
                   accept="image/*,application/pdf"
+                  ref={(el) => (fileInputRefs.current[elem.key] = el)}
                   className="inputFile-properties"
                   onChange={(e) => {
                     const file = e.target.files[0];
@@ -554,7 +594,7 @@ export default function Wedding() {
           </div>
         </div>
 
-        {/* SECTION 3: BRIDE */}
+
         <div className="form-section">
           <h2 className="section-title">3. Bride's Information</h2>
           <div className="grid-layout" style={{ marginBottom: "25px" }}>
@@ -584,6 +624,7 @@ export default function Wedding() {
                   type="file"
                   accept="image/*,application/pdf"
                   className="inputFile-properties"
+                  ref={(el) => (fileInputRefs.current[elem.key] = el)}
                   onChange={(e) => {
                     const file = e.target.files[0];
                     elem.fileSetter(file);
@@ -602,7 +643,7 @@ export default function Wedding() {
           </div>
         </div>
 
-        {/* SECTION 4: MARRIAGE STATUS */}
+
         <div className="form-section">
           <h2 className="section-title">4. Legal Status</h2>
           <div className="choice-box">
@@ -630,17 +671,20 @@ export default function Wedding() {
                 Upload{" "}
                 {isCivil === "Yes" ? "Marriage Contract" : "Marriage License"}
               </h1>
+
               <input
                 type="file"
                 accept="image/*,application/pdf"
                 className="inputFile-properties"
+                ref={(el) => (fileInputRefs.current["marriage_docu"] = el)}
                 onChange={(e) => {
                   const file = e.target.files[0];
                   uploadMarriageDocu[0].fileSetter(file);
-                  if (file)
+                  if (file) {
                     uploadMarriageDocu[0].previewSetter(
-                      URL.createObjectURL(file)
+                      URL.createObjectURL(file),
                     );
+                  }
                 }}
               />
             </div>
@@ -658,16 +702,9 @@ export default function Wedding() {
         </div>
       </div>
 
-      {
-        showModalMessage && 
-        <Modal 
-          message={modalMessage}
-          setShowModal={setShowModalMessage}
-        />
-      }
-      
+      {showModalMessage && (
+        <Modal message={modalMessage} setShowModal={setShowModalMessage} />
+      )}
     </div>
-
-    
   );
 }
