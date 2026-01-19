@@ -9,11 +9,14 @@ import {
 import "../styles/signup.css";
 import axios from "axios";
 import { API_URL } from "../Constants";
-import { EyeInvisibleOutlined, EyeTwoTone } from '@ant-design/icons';
+import { EyeInvisibleOutlined, EyeTwoTone } from "@ant-design/icons";
+import Modal from "../components/Modal";
 
 export default function SignUpPage() {
   const { setShowSignup, setShowSignin } = useContext(NavbarContext);
 
+  const [showModalMessage, setShowModalMessage] = useState(false);
+  const [modalMessage, setModalMessage] = useState();
 
   const [inputFname, setInputFname] = useState("");
   const [inputMname, setInputMname] = useState("");
@@ -34,7 +37,7 @@ export default function SignUpPage() {
     lname: "",
     contactNumber: "",
     password: "",
-    repass: ""
+    repass: "",
   });
 
   const [loading, setLoading] = useState(false);
@@ -77,42 +80,51 @@ export default function SignUpPage() {
     const value = e.target.value;
     const lettersOnly = value.replace(/\d/g, "");
     setInputFname(lettersOnly);
-    setErrors(prev => ({ ...prev, fname: validateName(lettersOnly) }));
+    setErrors((prev) => ({ ...prev, fname: validateName(lettersOnly) }));
   };
 
   const handleMnameChange = (e) => {
     const value = e.target.value;
     const lettersOnly = value.replace(/\d/g, "");
     setInputMname(lettersOnly);
-    setErrors(prev => ({ ...prev, mname: validateName(lettersOnly) }));
+    setErrors((prev) => ({ ...prev, mname: validateName(lettersOnly) }));
   };
 
   const handleLnameChange = (e) => {
     const value = e.target.value;
     const lettersOnly = value.replace(/\d/g, "");
     setInputLname(lettersOnly);
-    setErrors(prev => ({ ...prev, lname: validateName(lettersOnly) }));
+    setErrors((prev) => ({ ...prev, lname: validateName(lettersOnly) }));
   };
 
   const handleContactNumberChange = (e) => {
     const value = e.target.value;
     const digitsOnly = value.replace(/\D/g, "");
     setInputContactNumber(digitsOnly);
-    setErrors(prev => ({ ...prev, contactNumber: validateContactNumber(digitsOnly) }));
+    setErrors((prev) => ({
+      ...prev,
+      contactNumber: validateContactNumber(digitsOnly),
+    }));
   };
 
   const handlePasswordChange = (e) => {
     const value = e.target.value;
     setInputPassword(value);
     if (inputRepass) {
-      setErrors(prev => ({ ...prev, repass: validatePasswordMatch(value, inputRepass) }));
+      setErrors((prev) => ({
+        ...prev,
+        repass: validatePasswordMatch(value, inputRepass),
+      }));
     }
   };
 
   const handleRepassChange = (e) => {
     const value = e.target.value;
     setInputRepass(value);
-    setErrors(prev => ({ ...prev, repass: validatePasswordMatch(inputPassword, value) }));
+    setErrors((prev) => ({
+      ...prev,
+      repass: validatePasswordMatch(inputPassword, value),
+    }));
   };
 
   async function handleSignup() {
@@ -122,42 +134,45 @@ export default function SignUpPage() {
         mname: validateName(inputMname),
         lname: validateName(inputLname),
         contactNumber: validateContactNumber(inputContactNumber),
-        repass: validatePasswordMatch(inputPassword, inputRepass)
+        repass: validatePasswordMatch(inputPassword, inputRepass),
       };
 
       setErrors(validationErrors);
 
-      const hasErrors = Object.values(validationErrors).some(error => error !== "");
+      const hasErrors = Object.values(validationErrors).some(
+        (error) => error !== "",
+      );
       if (hasErrors) {
-        alert("Please fix the validation errors before submitting.");
+        setShowModalMessage(true);
+        setModalMessage("Please fix the validation errors before submitting.");
         return;
       }
 
       if (!inputEmail || !inputPassword || !inputFname || !inputLname) {
-        alert("Please fill out all required fields.");
+        setShowModalMessage(true);
+        setModalMessage("Please fill out all required fields.");
         return;
       }
       if (inputPassword !== inputRepass) {
-        alert("Passwords do not match!");
+        setShowModalMessage(true);
+        setModalMessage("Passwords do not match!");
         return;
       }
 
       setLoading(true);
 
-
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         inputEmail,
-        inputPassword
+        inputPassword,
       );
       const user = userCredential.user;
       const uid = user.uid;
 
-
-
-      // await sendEmailVerification(user);
-      // alert("Account created successfully! Please verify your email.");
-
+      await sendEmailVerification(user);
+        setShowModalMessage(true);
+      setModalMessage("Account created successfully! Please verify your email.");
+      
       await axios.post(`${API_URL}/createUser`, {
         first_name: inputFname,
         middle_name: inputMname,
@@ -168,23 +183,23 @@ export default function SignUpPage() {
         birthday: inputBirthday,
         email: inputEmail,
         password: inputPassword,
-        uid: uid
+        uid: uid,
       });
 
-
-      setInputFname("")
-      setInputMname("")
-      setInputLname("")
+      setInputFname("");
+      setInputMname("");
+      setInputLname("");
       // setInputGender("")
-      setInputContactNumber("")
+      setInputContactNumber("");
       // setInputCivilStatus("")
-      setInputBirthday("")
+      setInputBirthday("");
       setInputEmail("");
       setInputPassword("");
       setInputRepass("");
       setShowSignup(false);
     } catch (err) {
-      console.error("Signup Error:", err.message);
+      setShowModalMessage(true);
+      setModalMessage("Signup Error:", err.message);
       alert(err.message);
     } finally {
       setLoading(false);
@@ -215,9 +230,11 @@ export default function SignUpPage() {
               type="text"
               value={inputFname}
               onChange={handleFnameChange}
-              className={`modal-input ${errors.fname ? 'input-error' : ''}`}
+              className={`modal-input ${errors.fname ? "input-error" : ""}`}
             />
-            {errors.fname && <span className="error-message">{errors.fname}</span>}
+            {errors.fname && (
+              <span className="error-message">{errors.fname}</span>
+            )}
           </div>
           <div>
             <label>Middle Name</label>
@@ -225,9 +242,11 @@ export default function SignUpPage() {
               type="text"
               value={inputMname}
               onChange={handleMnameChange}
-              className={`modal-input ${errors.mname ? 'input-error' : ''}`}
+              className={`modal-input ${errors.mname ? "input-error" : ""}`}
             />
-            {errors.mname && <span className="error-message">{errors.mname}</span>}
+            {errors.mname && (
+              <span className="error-message">{errors.mname}</span>
+            )}
           </div>
           <div>
             <label>Last Name</label>
@@ -235,11 +254,13 @@ export default function SignUpPage() {
               type="text"
               value={inputLname}
               onChange={handleLnameChange}
-              className={`modal-input ${errors.lname ? 'input-error' : ''}`}
+              className={`modal-input ${errors.lname ? "input-error" : ""}`}
             />
-            {errors.lname && <span className="error-message">{errors.lname}</span>}
+            {errors.lname && (
+              <span className="error-message">{errors.lname}</span>
+            )}
           </div>
-          <div style={{ display: 'flex', gap: '16px' }}>
+          <div style={{ display: "flex", gap: "16px" }}>
             <div style={{ flex: 1 }}>
               <label>Contact Number</label>
               <input
@@ -247,9 +268,11 @@ export default function SignUpPage() {
                 value={inputContactNumber}
                 onChange={handleContactNumberChange}
                 maxLength={11}
-                className={`modal-input ${errors.contactNumber ? 'input-error' : ''}`}
+                className={`modal-input ${errors.contactNumber ? "input-error" : ""}`}
               />
-              {errors.contactNumber && <span className="error-message">{errors.contactNumber}</span>}
+              {errors.contactNumber && (
+                <span className="error-message">{errors.contactNumber}</span>
+              )}
             </div>
             <div style={{ flex: 1 }}>
               <label>Birthday</label>
@@ -278,17 +301,23 @@ export default function SignUpPage() {
                 type={showPass ? "text" : "password"}
                 value={inputPassword}
                 onChange={handlePasswordChange}
-                className={`modal-input ${errors.password ? 'input-error' : ''}`}
+                className={`modal-input ${errors.password ? "input-error" : ""}`}
               />
               <button
                 type="button"
                 onClick={() => setShowPass(!showPass)}
                 className="password-toggle"
               >
-                {showPass ? <EyeTwoTone twoToneColor="#555" /> : <EyeInvisibleOutlined />}
+                {showPass ? (
+                  <EyeTwoTone twoToneColor="#555" />
+                ) : (
+                  <EyeInvisibleOutlined />
+                )}
               </button>
             </div>
-            {errors.password && <span className="error-message">{errors.password}</span>}
+            {errors.password && (
+              <span className="error-message">{errors.password}</span>
+            )}
           </div>
 
           <div>
@@ -298,23 +327,29 @@ export default function SignUpPage() {
                 type={showRepass ? "text" : "password"}
                 value={inputRepass}
                 onChange={handleRepassChange}
-                className={`modal-input ${errors.repass ? 'input-error' : ''}`}
+                className={`modal-input ${errors.repass ? "input-error" : ""}`}
               />
               <button
                 type="button"
                 onClick={() => setShowRepass(!showRepass)}
                 className="password-toggle"
               >
-                {showRepass ? <EyeTwoTone twoToneColor="#555" /> : <EyeInvisibleOutlined />}
+                {showRepass ? (
+                  <EyeTwoTone twoToneColor="#555" />
+                ) : (
+                  <EyeInvisibleOutlined />
+                )}
               </button>
             </div>
-            {errors.repass && <span className="error-message">{errors.repass}</span>}
+            {errors.repass && (
+              <span className="error-message">{errors.repass}</span>
+            )}
           </div>
         </div>
 
         <button
           className="filled-btn"
-          style={{ padding: '8px', fontSize: '14px' }}
+          style={{ padding: "8px", fontSize: "14px" }}
           onClick={handleSignup}
           disabled={loading}
         >
@@ -331,7 +366,10 @@ export default function SignUpPage() {
           Already have an account? Sign In
         </button>
       </div>
-    </div>
 
+      {showModalMessage && (
+        <Modal message={modalMessage} setShowModal={setShowModalMessage} />
+      )}
+    </div>
   );
 }

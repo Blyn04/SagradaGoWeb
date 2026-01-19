@@ -24,7 +24,7 @@ import {
 import parishHero from "../assets/360pews.jpg";
 
 export default function BookService() {
-  const { showSignin, bookingSelected, setBookingSelected } =
+  const { bookingSelected, setBookingSelected } =
     useContext(NavbarContext);
   const email = Cookies.get("email");
 

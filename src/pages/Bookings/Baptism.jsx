@@ -1,4 +1,4 @@
-import { useContext, useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 
 import "../../styles/booking/wedding.css";
 import { supabase } from "../../config/supabase";
@@ -14,11 +14,10 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import Cookies from "js-cookie";
 
 import Modal from "../../components/Modal";
-import { NavbarContext } from "../../context/AllContext";
 import { useNavigate } from "react-router-dom";
 
 export default function Baptism() {
-  const { setBookingSelected } = useContext(NavbarContext);
+
 
   const navigate = useNavigate();
 
@@ -427,7 +426,7 @@ export default function Baptism() {
         setIsLoading(false);
         return;
       }
-      console.log("fullname", fullname);
+
 
       if (
         fullname.trim() === "" ||

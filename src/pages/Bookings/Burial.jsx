@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from "react";
+import { useState } from "react";
 import { NavbarContext } from "../../context/AllContext";
 import "../../styles/booking/wedding.css";
 import DatePicker from "react-datepicker";
@@ -10,16 +10,17 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { supabase } from "../../config/supabase";
 import axios from "axios";
 import { API_URL } from "../../Constants";
+import Cookies from "js-cookie";
 
 export default function Burial() {
-  // TO BE DELETE
-  const occupiedDates = [
-    new Date("2025-11-27"),
-    new Date("2025-11-28"),
-    new Date("2025-11-29"),
-    new Date("2025-11-30"),
-    new Date("2025-12-04"),
-  ];
+  const [showModalMessage, setShowModalMessage] = useState(false);
+  const [modalMessage, setModalMessage] = useState();
+
+  const [isLoading, setIsLoading] = useState(false);
+
+  const uid = Cookies.get("uid");
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
   const [fname, setFname] = useState("");
   const [mname, setMname] = useState("");
@@ -27,7 +28,7 @@ export default function Burial() {
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [attendees, setAttendees] = useState(0);
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(Cookies.get("email"));
   const [contactNumber, setContactNumber] = useState("");
   const [deceasedFname, setDeceasedFname] = useState("");
   const [deceasedMname, setDeceasedMname] = useState("");
@@ -38,7 +39,6 @@ export default function Burial() {
   const [address, setAddress] = useState("");
   const [placeOfMass, setPlaceOfMass] = useState("");
   const [massAddress, setMassAddress] = useState("");
-
 
   const inputText = [
     {
@@ -97,9 +97,8 @@ export default function Burial() {
       title: "Address",
       type: "text",
       onChange: setAddress,
-      value: address
+      value: address,
     },
-
 
     {
       key: "deceased_fname",
@@ -150,6 +149,7 @@ export default function Burial() {
       type: "text",
       onChange: setContactNumber,
       value: contactNumber,
+      maxLength: 11,
     },
 
     {
@@ -166,7 +166,6 @@ export default function Burial() {
       onChange: setMassAddress,
       value: massAddress,
     },
-
   ];
 
   const [deathAnniv, setDeathAnniv] = useState(false);
@@ -202,20 +201,15 @@ export default function Burial() {
       type: "checkbox",
       onChange: setTombBlessing,
       value: tombBlessing,
-    }
-  ]
+    },
+  ];
 
-  const [deathCertificateFile, setDeathCertificateFile] =
-    useState(null);
-  const [deathCertificatePreview, setDeathCertificatePreview] =
-    useState(null);
+  const [deathCertificateFile, setDeathCertificateFile] = useState(null);
+  const [deathCertificatePreview, setDeathCertificatePreview] = useState(null);
 
-  const [deceasedBaptismalFile, setDeceasedBaptismalFile] =
-    useState(null);
+  const [deceasedBaptismalFile, setDeceasedBaptismalFile] = useState(null);
   const [deceasedBaptismalPreview, setDeceasedBaptismalPreview] =
     useState(null);
-
-
 
   const uploadFiles = [
     {
@@ -257,25 +251,35 @@ export default function Burial() {
   }
 
   async function handleSubmit() {
+    setIsLoading(true);
     try {
+      const isValidPHNumber = /^09\d{9}$/.test(contactNumber);
+
+      if (!isValidPHNumber) {
+        setShowModalMessage(true);
+        setModalMessage(
+          "Please enter a valid contact number (e.g. 09XXXXXXXXX)",
+        );
+        setIsLoading(false);
+        return;
+      }
       const uploaded = {};
 
       if (deathCertificateFile) {
         uploaded.deathCert = await uploadImage(
           deathCertificateFile,
-          "death_cert"
+          "death_cert",
         );
       }
       if (deceasedBaptismalFile) {
         uploaded.deceasedBaptismal = await uploadImage(
           deceasedBaptismalFile,
-          "deceased_baptismal"
+          "deceased_baptismal",
         );
       }
 
-
       const payload = {
-        uid: "123123123",
+        uid: uid,
         transaction_id: generateTransactionID(),
         full_name: `${fname} ${mname} ${lname}`,
         email: email,
@@ -297,29 +301,46 @@ export default function Burial() {
         tomb_blessing: tombBlessing,
         death_certificate: uploaded.deathCert || "",
         deceased_baptismal: uploaded.deceasedBaptismal || "",
-
       };
 
       const res = await axios.post(`${API_URL}/createBurialWeb`, payload);
-      alert("Burial booking submitted successfully!");
+
+      setShowModalMessage(true);
+      setModalMessage("Burial booking submitted successfully!");
+      setIsLoading(false);
       console.log("Saved:", res.data);
-
-
     } catch (err) {
       console.error("UPLOAD ERROR:", err);
-      alert("Failed to submit confession booking");
+      setIsLoading(false);
+
+      setShowModalMessage(true);
+      setModalMessage("Failed to submit confession booking");
     }
   }
 
-  const requesterInputs = inputText.filter(i => ["first_name", "middle_name", "last_name", "email", "contact_number", "address"].includes(i.key));
-  const scheduleInputs = inputText.filter(i => ["date", "time", "attendees"].includes(i.key));
-  const deceasedInputs = inputText.filter(i => i.key.includes("deceased") || i.key === "relationship_to_deceased");
-  const massInputs = inputText.filter(i => i.key.includes("mass") || i.key.includes("place"));
+  const requesterInputs = inputText.filter((i) =>
+    [
+      "first_name",
+      "middle_name",
+      "last_name",
+      "email",
+      "contact_number",
+      "address",
+    ].includes(i.key),
+  );
+  const scheduleInputs = inputText.filter((i) =>
+    ["date", "time", "attendees"].includes(i.key),
+  );
+  const deceasedInputs = inputText.filter(
+    (i) => i.key.includes("deceased") || i.key === "relationship_to_deceased",
+  );
+  const massInputs = inputText.filter(
+    (i) => i.key.includes("mass") || i.key.includes("place"),
+  );
 
   return (
     <div className="main-holder">
       <div className="form-wrapper">
-
         {/* SECTION 1: REQUESTER INFORMATION */}
         <div className="form-section">
           <h2 className="section-title">1. Requester Information</h2>
@@ -359,7 +380,7 @@ export default function Burial() {
         {/* SECTION 3: SCHEDULE & SERVICES */}
         <div className="form-section">
           <h2 className="section-title">3. Schedule & Service Type</h2>
-          <div className="grid-layout" style={{ marginBottom: '20px' }}>
+          <div className="grid-layout" style={{ marginBottom: "20px" }}>
             {scheduleInputs.map((elem) => (
               <div className="input-group" key={elem.key}>
                 <h1>{elem.title}</h1>
@@ -369,21 +390,34 @@ export default function Burial() {
                     onChange={(v) => elem.onChange(v ? v.toISOString() : "")}
                     className="input-text"
                     dateFormat="yyyy-MM-dd"
-                    excludeDates={occupiedDates}
                     showYearDropdown
                     dropdownMode="select"
+                    minDate={today}
                   />
                 ) : elem.type === "time" ? (
-                  <div className="time-container" style={{ border: '1.5px solid #e0e0e0', borderRadius: '6px', height: '45px', overflow: 'hidden' }}>
+                  <div
+                    className="time-container"
+                    style={{
+                      border: "1.5px solid #e0e0e0",
+                      borderRadius: "6px",
+                      height: "45px",
+                      overflow: "hidden",
+                    }}
+                  >
                     <LocalizationProvider dateAdapter={AdapterDayjs}>
                       <MobileTimePicker
                         value={time ? dayjs(`2000-01-01 ${time}`) : null}
-                        onChange={(v) => setTime(v ? dayjs(v).format("HH:mm") : "")}
+                        onChange={(v) =>
+                          setTime(v ? dayjs(v).format("HH:mm") : "")
+                        }
                         slotProps={{
                           textField: {
                             variant: "standard",
                             fullWidth: true,
-                            InputProps: { disableUnderline: true, sx: { px: 2, height: '45px' } }
+                            InputProps: {
+                              disableUnderline: true,
+                              sx: { px: 2, height: "45px" },
+                            },
                           },
                         }}
                       />
@@ -395,20 +429,47 @@ export default function Burial() {
                     className="input-text"
                     onChange={(e) => elem.onChange(e.target.value)}
                     value={elem.value}
+                    maxLength={elem.maxLength}
                   />
                 )}
               </div>
             ))}
           </div>
 
-          <div className="checkbox-container" style={{ background: '#f9f9f9', padding: '15px', borderRadius: '8px' }}>
-            <h1 style={{ fontSize: '0.85rem', fontWeight: 700, marginBottom: '10px', color: '#424242' }}>Type of Service Requested:</h1>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+          <div
+            className="checkbox-container"
+            style={{
+              background: "#f9f9f9",
+              padding: "15px",
+              borderRadius: "8px",
+            }}
+          >
+            <h1
+              style={{
+                fontSize: "0.85rem",
+                fontWeight: 700,
+                marginBottom: "10px",
+                color: "#424242",
+              }}
+            >
+              Type of Service Requested:
+            </h1>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr",
+                gap: "10px",
+              }}
+            >
               {checkboxes.map((elem) => (
-                <label key={elem.key} className="flex items-center gap-2 cursor-pointer" style={{ fontSize: '0.9rem' }}>
+                <label
+                  key={elem.key}
+                  className="flex items-center gap-2 cursor-pointer"
+                  style={{ fontSize: "0.9rem" }}
+                >
                   <input
                     type="checkbox"
-                    style={{ accentColor: '#FFC942' }}
+                    style={{ accentColor: "#FFC942" }}
                     checked={elem.value}
                     onChange={(e) => elem.onChange(e.target.checked)}
                   />
@@ -443,7 +504,15 @@ export default function Burial() {
           <div className="upload-grid">
             {uploadFiles.map((elem) => (
               <div key={elem.key} className="per-grid-container">
-                <h1 style={{ fontSize: '0.85rem', marginBottom: '10px', color: '#424242' }}>{elem.title}</h1>
+                <h1
+                  style={{
+                    fontSize: "0.85rem",
+                    marginBottom: "10px",
+                    color: "#424242",
+                  }}
+                >
+                  {elem.title}
+                </h1>
                 <input
                   type="file"
                   accept="image/*,application/pdf"
@@ -456,7 +525,11 @@ export default function Burial() {
                   }}
                 />
                 {elem.preview && (
-                  <img src={elem.preview} className="image-preview" alt="preview" />
+                  <img
+                    src={elem.preview}
+                    className="image-preview"
+                    alt="preview"
+                  />
                 )}
               </div>
             ))}
@@ -465,11 +538,13 @@ export default function Burial() {
 
         <div className="submit-btn-container">
           <button className="submit-button" onClick={handleSubmit}>
-            Confirm & Book Burial Service
+            {isLoading ? "Submitting" : "Confirm & Book Burial Service"}
           </button>
         </div>
-
       </div>
+      {showModalMessage && (
+        <Modal message={modalMessage} setShowModal={setShowModalMessage} />
+      )}
     </div>
   );
 }

@@ -69,6 +69,7 @@ export default function SignInPage() {
 
 
       } catch (err) {
+        
         console.error("Admin check failed:", err);
       }
 
