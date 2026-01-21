@@ -511,6 +511,7 @@ export default function Wedding() {
                     openToDate={firstAvailableDate}
                     showYearDropdown
                     dropdownMode="select"
+                    onKeyDown={(e) => e.preventDefault()}
                   />
                 ) : elem.type === "time" ? (
                   <div className="time-container">

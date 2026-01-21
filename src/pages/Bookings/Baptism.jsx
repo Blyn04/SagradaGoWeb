@@ -595,6 +595,7 @@ export default function Baptism() {
                     openToDate={today}
                     showYearDropdown
                     dropdownMode="select"
+                    onKeyDown={(e) => e.preventDefault()}
                   />
                 ) : elem.type === "time" ? (
                   <div className="time-container">

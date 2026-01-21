@@ -393,6 +393,7 @@ export default function Burial() {
                     showYearDropdown
                     dropdownMode="select"
                     minDate={today}
+                    onKeyDown={(e) => e.preventDefault()}
                   />
                 ) : elem.type === "time" ? (
                   <div

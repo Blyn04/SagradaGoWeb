@@ -164,6 +164,7 @@ export default function Confession() {
                     showYearDropdown
                     dropdownMode="select"
                     placeholderText="Select date"
+                    onKeyDown={(e) => e.preventDefault()}
                   />
                 ) : elem.type === "time" ? (
                   <div className="time-container" style={{ border: '1.5px solid #e0e0e0', borderRadius: '6px', height: '45px', overflow: 'hidden' }}>
