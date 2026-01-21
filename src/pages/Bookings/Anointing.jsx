@@ -292,7 +292,7 @@ export default function Anointing() {
 
         {/* SECTION 3: MEDICAL DOCUMENTATION */}
         <div className="form-section">
-          <h2 className="section-title">3. Medical Verification</h2>
+          <h2 className="section-title">3. Medical Documents</h2>
           <div className="upload-grid">
             {uploadFiles.map((elem) => (
               <div key={elem.key} className="per-grid-container" style={{ padding: '15px', border: '1px solid #eee', borderRadius: '8px' }}>
