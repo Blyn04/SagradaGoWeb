@@ -5,9 +5,11 @@ import Cookies from "js-cookie";
 
 export default function ChatBot({ isOpen, onClose }) {
   const [messages, setMessages] = useState([]);
-  const [input, setInput] = useState("");
+  const [inputBot, setInputBot] = useState("");
+  const [inputAdmin, setInputAdmin] = useState("");
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef(null);
+  const [chatBotMode, setChatBotMode] = useState(true);
 
   const chatbotContainerRef = useRef(null);
 
@@ -15,7 +17,11 @@ export default function ChatBot({ isOpen, onClose }) {
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (isOpen && chatbotContainerRef.current && !chatbotContainerRef.current.contains(event.target)) {
+      if (
+        isOpen &&
+        chatbotContainerRef.current &&
+        !chatbotContainerRef.current.contains(event.target)
+      ) {
         onClose();
       }
     };
@@ -35,29 +41,47 @@ export default function ChatBot({ isOpen, onClose }) {
 
   if (!isOpen) return null;
 
-  const sendMessage = async () => {
-    if (!input.trim() || loading) return;
-    const userMessage = { role: "user", text: input.trim() };
-    setMessages((prev) => [...prev, userMessage]);
-    setInput("");
-    setLoading(true);
+  // const sendMessage = async () => {
+  //   if (!inputBot.trim() || loading) return;
+  //   const userMessage = { role: "user", text: inputBot.trim() };
+  //   setMessages((prev) => [...prev, userMessage]);
+  //   setInputBot("");
+  //   setLoading(true);
 
-    try {
-      const res = await axios.post(`${API_URL}/chat/ai/response`, {
+  //   try {
+  //     const res = await axios.post(`${API_URL}/chat/ai/response`, {
+  //       userId: uid,
+  //       message: userMessage.text,
+  //     });
+  //     const aiMessage = { role: "ai", text: res.data.message };
+  //     setMessages((prev) => [...prev, aiMessage]);
+  //   } catch (error) {
+  //     setMessages((prev) => [
+  //       ...prev,
+  //       {
+  //         role: "ai",
+  //         text: "I'm having trouble connecting. Please try again later." + error,
+  //       },
+  //     ]);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
+  async function sendAdminMessage(){
+    try{
+      const res = await axios.post(`${API_URL}/chat/getOrCreateChat`, {
         userId: uid,
-        message: userMessage.text,
+
       });
-      const aiMessage = { role: "ai", text: res.data.message };
-      setMessages((prev) => [...prev, aiMessage]);
-    } catch (error) {
-      setMessages((prev) => [
-        ...prev,
-        { role: "ai", text: "I'm having trouble connecting. Please try again later." },
-      ]);
-    } finally {
-      setLoading(false);
+      console.log("res", res);
+      
     }
-  };
+    catch(err){
+      console.log(err);
+      
+    }
+  }
 
   const styles = {
     floatingWrapper: {
@@ -113,7 +137,7 @@ export default function ChatBot({ isOpen, onClose }) {
       display: "flex",
       justifyContent: role === "user" ? "flex-end" : "flex-start",
       width: "100%",
-      textAlign: 'justify'
+      textAlign: "justify",
     }),
     bubble: (role) => ({
       maxWidth: "80%",
@@ -158,8 +182,8 @@ export default function ChatBot({ isOpen, onClose }) {
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
-      opacity: loading || !input.trim() ? 0.3 : 1,
-    }
+      opacity: loading || !inputBot.trim() ? 0.3 : 1,
+    },
   };
 
   return (
@@ -169,16 +193,45 @@ export default function ChatBot({ isOpen, onClose }) {
         <div style={styles.headerInfo}>
           <div style={styles.statusDot}></div>
           <div>
-            <h3 style={{ margin: 0, fontSize: "14px", fontWeight: 600 }}>SagradaBot</h3>
-            <p style={{ margin: 0, fontSize: "10px", color: "#22c55e" }}>Online</p>
+            <h3 style={{ margin: 0, fontSize: "14px", fontWeight: 600 }}>
+              SagradaBot
+            </h3>
+            <p style={{ margin: 0, fontSize: "10px", color: "#22c55e" }}>
+              Online
+            </p>
           </div>
         </div>
-        <button style={styles.closeBtn} onClick={onClose}>&times;</button>
+        <button style={styles.closeBtn} onClick={onClose}>
+          &times;
+        </button>
+      </div>
+      <div className="w-full h-10 bg-gray-200 rounded-full flex p-1">
+        <button
+          className={`w-1/2 h-full rounded-full text-sm font-medium transition-all duration-300
+            ${chatBotMode ? "bg-amber-400 text-black" : "text-gray-600"}
+            ${chatBotMode ? "" : "cursor-pointer"}
+          `}
+          onClick={() => setChatBotMode(true)}
+        >
+          Chat Bot
+        </button>
+
+        <button
+          className={`w-1/2 h-full rounded-full text-sm font-medium transition-all duration-300
+            ${!chatBotMode ? "bg-amber-400 text-black" : "text-gray-600"}
+            ${!chatBotMode ? "" : "cursor-pointer"}
+          `}
+          onClick={() => setChatBotMode(false)}
+        >
+          Chat Admin
+        </button>
       </div>
 
       <div ref={scrollRef} style={styles.chatArea}>
         {messages.length === 0 && (
-          <div style={{ textAlign: "center", marginTop: "40px", color: "#aaa" }}>
+          <div
+            style={{ textAlign: "center", marginTop: "40px", color: "#aaa" }}
+          >
             <p style={{ fontSize: "12px" }}>Hello! How can I help you today?</p>
           </div>
         )}
@@ -189,7 +242,11 @@ export default function ChatBot({ isOpen, onClose }) {
         ))}
         {loading && (
           <div style={styles.messageRow("ai")}>
-            <span style={{ color: "#999", fontSize: "11px", marginLeft: "10px" }}>Typing...</span>
+            <span
+              style={{ color: "#999", fontSize: "11px", marginLeft: "10px" }}
+            >
+              Typing...
+            </span>
           </div>
         )}
       </div>
@@ -199,14 +256,31 @@ export default function ChatBot({ isOpen, onClose }) {
           <input
             type="text"
             style={styles.inputField}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
+            value={chatBotMode ? inputBot : inputAdmin}
+            onChange={(e) => chatBotMode ? setInputBot(e.target.value) : setInputAdmin(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && sendMessage()}
             placeholder="Type a message..."
           />
-          <button onClick={sendMessage} disabled={loading || !input.trim()} style={styles.sendButton}>
-            <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 10.5 12 3m0 0 7.5 7.5M12 3v18" />
+          <button
+            onClick={sendMessage}
+            disabled={
+              loading || (chatBotMode ? !inputBot.trim() : !inputAdmin.trim())
+            }
+            style={styles.sendButton}
+          >
+            <svg
+              width="14"
+              height="14"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="3"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M4.5 10.5 12 3m0 0 7.5 7.5M12 3v18"
+              />
             </svg>
           </button>
         </div>
