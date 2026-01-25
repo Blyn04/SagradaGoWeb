@@ -175,9 +175,9 @@ export default function AccountManagement() {
   const filterUsers = () => {
     let filtered = users;
 
-    // Filter by archived status
     if (!showArchived) {
       filtered = filtered.filter((user) => !user.is_archived);
+
     } else {
       filtered = filtered.filter((user) => user.is_archived === true);
     }
@@ -486,6 +486,7 @@ export default function AccountManagement() {
       message.error("Please fill out all required fields.");
       return;
     }
+
     if (adminFormData.password !== adminFormData.confirmPassword) {
       message.error("Passwords do not match!");
       return;
@@ -749,6 +750,7 @@ export default function AccountManagement() {
       try {
         setLoadingDonations(true);
         const response = await axios.get(`${API_URL}/admin/getDonationsByUser/${user.uid}`);
+
         if (response.data && response.data.donations) {
           setUserDonations(response.data.donations);
         }
@@ -765,6 +767,7 @@ export default function AccountManagement() {
         const volunteerResponse = await axios.post(`${API_URL}/getUserVolunteers`, {
           user_id: user.uid
         });
+
         if (volunteerResponse.data && volunteerResponse.data.volunteers) {
           setUserVolunteers(volunteerResponse.data.volunteers);
         }
@@ -795,6 +798,7 @@ export default function AccountManagement() {
       previous_parish: user.previous_parish || "",
       residency: user.residency || "",
     });
+
     setBirthdayDisplay(birthdayValue);
     setErrors({});
     setShowDetailsModal(false);
@@ -815,6 +819,7 @@ export default function AccountManagement() {
     let birthdayToValidate = formData.birthday;
     if (birthdayDisplay && /^\d{2}\/\d{2}\/\d{4}$/.test(birthdayDisplay)) {
       birthdayToValidate = parseDateInput(birthdayDisplay);
+      
     } else if (!birthdayToValidate && birthdayDisplay) {
       birthdayToValidate = parseDateInput(birthdayDisplay);
     }
