@@ -109,6 +109,14 @@ export default function AccountManagement() {
     confirmPassword: "",
   });
 
+  const [passwordRules, setPasswordRules] = useState({
+    length: false,
+    uppercase: false,
+    lowercase: false,
+    number: false,
+    specialChar: false,
+  });
+
   useEffect(() => {
     fetchUsers();
   }, []);
@@ -209,6 +217,16 @@ export default function AccountManagement() {
     }
 
     setFilteredUsers(filtered);
+  };
+
+  const getPasswordRules = (password) => {
+    return {
+      length: password.length >= 8,
+      uppercase: /[A-Z]/.test(password),
+      lowercase: /[a-z]/.test(password),
+      number: /[0-9]/.test(password),
+      specialChar: /[!@#$%^&*(),.?":{}|<>]/.test(password),
+    };
   };
 
   const formatDateInput = (value) => {
@@ -363,7 +381,10 @@ export default function AccountManagement() {
     if (!formData.email) newErrors.email = "Email is required";
 
     const passwordError = validatePassword(formData.password);
+    if (passwordError) newErrors.password = passwordError;
+  
     const confirmError = validatePasswordMatch(formData.password, formData.confirmPassword);
+    if (confirmError) newErrors.confirmPassword = confirmError;
 
     const contactError = validateContactNumber(formData.contact_number);
     if (contactError) {
@@ -385,14 +406,14 @@ export default function AccountManagement() {
     //   newErrors.confirmPassword = confirmPasswordError;
     // }
 
-    if (passwordError || confirmError) {
-      setErrors(prev => ({
-        ...prev,
-        password: passwordError,
-        confirmPassword: confirmError
-      }));
-      return;
-    }
+    // if (passwordError || confirmError) {
+    //   setErrors(prev => ({
+    //     ...prev,
+    //     password: passwordError,
+    //     confirmPassword: confirmError
+    //   }));
+    //   return;
+    // }
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -1956,6 +1977,8 @@ export default function AccountManagement() {
                     onChange={(e) => {
                       const newPassword = e.target.value;
                       setFormData({ ...formData, password: newPassword });
+                      setPasswordRules(getPasswordRules(newPassword));
+                      
                       // Clear password error when typing
                       if (errors.password) {
                         setErrors((prev) => ({ ...prev, password: "" }));
@@ -1982,6 +2005,25 @@ export default function AccountManagement() {
                       visible ? <EyeOutlined /> : <EyeInvisibleOutlined />
                     }
                   />
+
+                  <div style={{ marginTop: 8, fontSize: 12 }}>
+                    <div style={{ color: passwordRules.length ? "green" : "red" }}>
+                      • At least 8 characters
+                    </div>
+                    <div style={{ color: passwordRules.uppercase ? "green" : "red" }}>
+                      • At least 1 uppercase letter
+                    </div>
+                    <div style={{ color: passwordRules.lowercase ? "green" : "red" }}>
+                      • At least 1 lowercase letter
+                    </div>
+                    <div style={{ color: passwordRules.number ? "green" : "red" }}>
+                      • At least 1 number
+                    </div>
+                    <div style={{ color: passwordRules.specialChar ? "green" : "red" }}>
+                      • At least 1 special character
+                    </div>
+                  </div>
+        
                 </Form.Item>
               </Col>
               <Col xs={24} sm={12}>
