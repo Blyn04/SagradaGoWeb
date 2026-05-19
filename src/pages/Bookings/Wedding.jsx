@@ -7,14 +7,15 @@ import { useNavigate } from "react-router-dom";
 import { NavbarContext } from "../../context/AllContext";
 
 
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { MobileTimePicker } from "@mui/x-date-pickers/MobileTimePicker";
 import { addDays } from "date-fns";
 import dayjs from "dayjs";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import Cookies from "js-cookie";
+import BookingTimePicker, {
+  validateUserBookingTime,
+  USER_BOOKING_TIME_ERROR,
+} from "../../components/BookingTimePicker";
 
 import Modal from "../../components/Modal";
 import pdf_image from "../../assets/pdfImage.svg";
@@ -325,6 +326,7 @@ export default function Wedding() {
 
     if (!date) textErrors.date = true;
     if (!time) textErrors.time = true;
+    else if (!validateUserBookingTime(time)) textErrors.time = true;
     if (!email) textErrors.email = true;
 
     if (!/^09\d{9}$/.test(contact)) textErrors.contact_number = true;
@@ -429,7 +431,11 @@ export default function Wedding() {
       Object.keys(fileErrors).length > 0
     ) {
       setShowModalMessage(true);
-      setModalMessage("Please complete all required fields.");
+      setModalMessage(
+        textErrors.time && time && !validateUserBookingTime(time)
+          ? USER_BOOKING_TIME_ERROR
+          : "Please complete all required fields.",
+      );
       return;
     }
 
@@ -546,28 +552,17 @@ export default function Wedding() {
                     onKeyDown={(e) => e.preventDefault()}
                   />
                 ) : elem.type === "time" ? (
-                  <div
-                    className={`time-container ${
-                      errors.time ? "input-error" : ""
+                  <BookingTimePicker
+                    value={time}
+                    onChange={(formatted) => {
+                      setTime(formatted);
+                      setErrors((prev) => ({ ...prev, time: false }));
+                    }}
+                    error={errors.time}
+                    className={`time-container${
+                      errors.time ? " input-error" : ""
                     }`}
-                  >
-                    <LocalizationProvider dateAdapter={AdapterDayjs}>
-                      <MobileTimePicker
-                        value={time ? dayjs(`2000-01-01 ${time}`) : null}
-                        onChange={(v) => {
-                          setTime(v ? dayjs(v).format("HH:mm") : "");
-                          setErrors((prev) => ({ ...prev, time: false }));
-                        }}
-                        slotProps={{
-                          textField: {
-                            variant: "standard",
-                            fullWidth: true,
-                            InputProps: { disableUnderline: true },
-                          },
-                        }}
-                      />
-                    </LocalizationProvider>
-                  </div>
+                  />
                 ) : (
                   <input
                     type={elem.type}

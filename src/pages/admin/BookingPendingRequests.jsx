@@ -1,56 +1,24 @@
 import { useState, useEffect, Fragment } from "react";
 import Cookies from "js-cookie";
-import {
-  Card,
-  Table,
-  Tag,
-  Button,
-  Space,
-  Typography,
-  Row,
-  Col,
-  Statistic,
-  Select,
-  Input,
-  Modal,
-  message,
-  Spin,
-  Empty,
-  Tooltip,
-  Form,
-  DatePicker,
-  TimePicker,
-  Checkbox,
-  Tabs,
-} from "antd";
-import {
-  ClockCircleOutlined,
-  CheckCircleOutlined,
-  CloseCircleOutlined,
-  SearchOutlined,
-  EyeOutlined,
-  CalendarOutlined,
-  DollarOutlined,
-  PhoneOutlined,
-  FileImageOutlined,
-  PlusOutlined,
-  EditOutlined,
-  CheckOutlined,
-  CloseOutlined,
-} from "@ant-design/icons";
+import { Card, Divider, Table, Tag, Button, Space, Typography, Row, Col, Statistic, Select, Input, Modal, message, Spin, Empty, Tooltip, Form, DatePicker, TimePicker, Checkbox, Tabs } from "antd";
+import { ClockCircleOutlined, CheckCircleOutlined, CloseCircleOutlined, SearchOutlined, EyeOutlined, CalendarOutlined, DollarOutlined, PhoneOutlined, FileImageOutlined, PlusOutlined, EditOutlined, CheckOutlined, CloseOutlined } from "@ant-design/icons";
 import axios from "axios";
 import { API_URL } from "../../Constants";
 import { supabase } from "../../config/supabase";
 import dayjs from "dayjs";
 import { sacramentRequirements } from "../../utils/sacramentRequirements";
 import Logger from "../../utils/logger";
+import {
+  checkPriestScheduleConflict,
+  PRIEST_BUFFER_HOURS_AFTER_BOOKING,
+} from "../../utils/bookingRules";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
 
 function AdminBookingForm({ bookingType, onSuccess, onCancel }) {
 
-  
+
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [date, setDate] = useState(null);
@@ -305,7 +273,7 @@ function AdminBookingForm({ bookingType, onSuccess, onCancel }) {
         );
         await Logger.logCreateBooking(
           weddingResponse.data?.wedding?.transaction_id ||
-            weddingResponse.data?.transaction_id,
+          weddingResponse.data?.transaction_id,
           bookingType,
           { user_id: selectedUserId },
         );
@@ -363,7 +331,7 @@ function AdminBookingForm({ bookingType, onSuccess, onCancel }) {
         );
         await Logger.logCreateBooking(
           baptismResponse.data?.baptism?.transaction_id ||
-            baptismResponse.data?.transaction_id,
+          baptismResponse.data?.transaction_id,
           bookingType,
           { user_id: selectedUserId },
         );
@@ -409,7 +377,7 @@ function AdminBookingForm({ bookingType, onSuccess, onCancel }) {
         );
         await Logger.logCreateBooking(
           burialResponse.data?.burial?.transaction_id ||
-            burialResponse.data?.transaction_id,
+          burialResponse.data?.transaction_id,
           bookingType,
           { user_id: selectedUserId },
         );
@@ -424,7 +392,7 @@ function AdminBookingForm({ bookingType, onSuccess, onCancel }) {
         );
         await Logger.logCreateBooking(
           communionResponse.data?.communion?.transaction_id ||
-            communionResponse.data?.transaction_id,
+          communionResponse.data?.transaction_id,
           bookingType,
           { user_id: selectedUserId },
         );
@@ -441,7 +409,7 @@ function AdminBookingForm({ bookingType, onSuccess, onCancel }) {
         );
         await Logger.logCreateBooking(
           confirmationResponse.data?.confirmation?.transaction_id ||
-            confirmationResponse.data?.transaction_id,
+          confirmationResponse.data?.transaction_id,
           bookingType,
           { user_id: selectedUserId },
         );
@@ -466,8 +434,8 @@ function AdminBookingForm({ bookingType, onSuccess, onCancel }) {
         );
         await Logger.logCreateBooking(
           anointingResponse.data?.anointing?.transaction_id ||
-            anointingResponse.data?.transaction_id ||
-            payload.transaction_id,
+          anointingResponse.data?.transaction_id ||
+          payload.transaction_id,
           bookingType,
           { user_id: selectedUserId },
         );
@@ -490,7 +458,7 @@ function AdminBookingForm({ bookingType, onSuccess, onCancel }) {
         );
         await Logger.logCreateBooking(
           response.data?.booking?.transaction_id ||
-            response.data?.transaction_id,
+          response.data?.transaction_id,
           bookingType,
           { user_id: selectedUserId },
         );
@@ -517,7 +485,7 @@ function AdminBookingForm({ bookingType, onSuccess, onCancel }) {
       console.error("Error creating booking:", error);
       message.error(
         error.response?.data?.message ||
-          `Failed to create ${bookingType} booking.`,
+        `Failed to create ${bookingType} booking.`,
       );
     } finally {
       setLoading(false);
@@ -720,17 +688,17 @@ function AdminBookingForm({ bookingType, onSuccess, onCancel }) {
         bookingType === "Burial" ||
         bookingType === "Communion" ||
         bookingType === "Confirmation") && (
-        <Form.Item
-          label="Payment Method"
-          name="payment_method"
-          initialValue="in_person"
-        >
-          <Select>
-            <Option value="in_person">In-Person Payment</Option>
-            <Option value="gcash">GCash</Option>
-          </Select>
-        </Form.Item>
-      )}
+          <Form.Item
+            label="Payment Method"
+            name="payment_method"
+            initialValue="in_person"
+          >
+            <Select>
+              <Option value="in_person">In-Person Payment</Option>
+              <Option value="gcash">GCash</Option>
+            </Select>
+          </Form.Item>
+        )}
 
       {/* Wedding-specific fields */}
       {bookingType === "Wedding" && (
@@ -1347,6 +1315,7 @@ export default function BookingPendingRequests() {
   const [editLoading, setEditLoading] = useState(false);
   const [isPolling, setIsPolling] = useState(false);
   const [lastUpdateTime, setLastUpdateTime] = useState(null);
+  const [scheduleBookings, setScheduleBookings] = useState([]);
 
   useEffect(() => {
     // Fetch priests when status filter changes
@@ -1484,7 +1453,7 @@ export default function BookingPendingRequests() {
         }),
       );
 
-      const allBookings = [
+      let allBookings = [
         ...(weddings.data.weddings || []).map((b) => ({
           ...b,
           bookingType: "Wedding",
@@ -1637,6 +1606,8 @@ export default function BookingPendingRequests() {
         ];
       }
 
+      setScheduleBookings(allBookings);
+
       let filtered = allBookings;
 
       if (statusFilter !== "all") {
@@ -1756,12 +1727,26 @@ export default function BookingPendingRequests() {
     bookingDate,
     bookingTime,
     transactionId = null,
+    bookingType = null,
   ) => {
-    try {
-      if (!priestId || !bookingDate || !bookingTime) {
-        return { hasConflict: false };
-      }
+    if (!priestId || !bookingDate || !bookingTime) {
+      return { hasConflict: false };
+    }
 
+    const clientCheck = checkPriestScheduleConflict({
+      priestId,
+      bookingDate,
+      bookingTime,
+      bookingType,
+      allBookings: scheduleBookings,
+      excludeTransactionId: transactionId,
+    });
+
+    if (clientCheck.hasConflict) {
+      return clientCheck;
+    }
+
+    try {
       const dateStr =
         bookingDate instanceof Date ? bookingDate.toISOString() : bookingDate;
       let timeStr = bookingTime;
@@ -1785,13 +1770,45 @@ export default function BookingPendingRequests() {
         date: dateStr,
         time: timeStr,
         transaction_id: transactionId,
+        booking_type: bookingType,
+        buffer_hours: PRIEST_BUFFER_HOURS_AFTER_BOOKING,
       });
 
-      return response.data;
+      if (response.data?.hasConflict) {
+        return response.data;
+      }
+
+      return { hasConflict: false };
     } catch (error) {
       console.error("Error checking priest conflict:", error);
-      return { hasConflict: false, error: error.message };
+      return clientCheck;
     }
+  };
+
+  const handlePriestSelection = async (priestId, booking) => {
+    if (!priestId || !booking) {
+      setSelectedPriestId(priestId);
+      return;
+    }
+
+    const conflictCheck = await checkPriestConflict(
+      priestId,
+      booking.date,
+      booking.time,
+      booking.transaction_id,
+      booking.bookingType,
+    );
+
+    if (conflictCheck.hasConflict) {
+      message.error(
+        conflictCheck.message ||
+          "This priest is not available for this schedule. Choose another priest.",
+      );
+      setSelectedPriestId(null);
+      return;
+    }
+
+    setSelectedPriestId(priestId);
   };
 
   const handleStatusUpdate = async (
@@ -1829,12 +1846,13 @@ export default function BookingPendingRequests() {
             bookingToUpdate.date,
             bookingToUpdate.time,
             bookingId,
+            bookingToUpdate.bookingType,
           );
 
           if (conflictCheck.hasConflict) {
             message.error(
               conflictCheck.message ||
-                "This priest already has a booking at this time. Please select a different priest or time.",
+                "This priest has a conflicting schedule. Select a different priest or adjust the booking time.",
             );
             return;
           }
@@ -2051,7 +2069,7 @@ export default function BookingPendingRequests() {
       console.error("Error updating booking:", error);
       message.error(
         error.response?.data?.message ||
-          "Failed to update booking. Please try again.",
+        "Failed to update booking. Please try again.",
       );
     } finally {
       setEditLoading(false);
@@ -2327,81 +2345,81 @@ export default function BookingPendingRequests() {
     ...(subAdmin
       ? [] // If subAdmin is true, return an empty array (no column)
       : [
-          {
-            // If subAdmin is false, return the Actions column object
-            title: "Actions",
-            key: "actions",
-            width: 150, // Increased width slightly so icons don't squash
-            render: (_, record) => (
-              <Space size="middle">
-                {/* View Details */}
-                <Tooltip title="View Details">
-                  <Button
-                    type="link"
-                    icon={<EyeOutlined />}
-                    className="border-btn"
-                    style={{ padding: "8px" }}
-                    onClick={() => {
-                      setSelectedBooking(record);
-                      setDetailModalVisible(true);
-                    }}
-                  />
-                </Tooltip>
+        {
+          // If subAdmin is false, return the Actions column object
+          title: "Actions",
+          key: "actions",
+          width: 150, // Increased width slightly so icons don't squash
+          render: (_, record) => (
+            <Space size="middle">
+              {/* View Details */}
+              <Tooltip title="View Details">
+                <Button
+                  type="link"
+                  icon={<EyeOutlined />}
+                  className="border-btn"
+                  style={{ padding: "8px" }}
+                  onClick={() => {
+                    setSelectedBooking(record);
+                    setDetailModalVisible(true);
+                  }}
+                />
+              </Tooltip>
 
-                {record.status === "pending" && (
-                  <>
-                    {isBookingDatePast(record) ? (
-                      <Tooltip title="Cannot confirm booking past its date">
-                        <Button
-                          type="link"
-                          icon={<CheckOutlined />}
-                          className="cancelborder-btn"
-                          style={{ padding: "8px" }}
-                          disabled
-                        />
-                      </Tooltip>
-                    ) : (
-                      <Tooltip title="Confirm Booking">
-                        <Button
-                          type="link"
-                          icon={<CheckOutlined />}
-                          className="border-btn"
-                          style={{ padding: "8px" }}
-                          onClick={() =>
-                            handleQuickAction(
-                              record.transaction_id,
-                              record.bookingType,
-                              "confirmed",
-                            )
-                          }
-                          loading={updateLoading}
-                        />
-                      </Tooltip>
-                    )}
-
-                    <Tooltip title="Cancel Booking">
+              {record.status === "pending" && (
+                <>
+                  {isBookingDatePast(record) ? (
+                    <Tooltip title="Cannot confirm booking past its date">
                       <Button
                         type="link"
-                        icon={<CloseOutlined />}
-                        danger
-                        className="dangerborder-btn"
+                        icon={<CheckOutlined />}
+                        className="cancelborder-btn"
+                        style={{ padding: "8px" }}
+                        disabled
+                      />
+                    </Tooltip>
+                  ) : (
+                    <Tooltip title="Confirm Booking">
+                      <Button
+                        type="link"
+                        icon={<CheckOutlined />}
+                        className="border-btn"
                         style={{ padding: "8px" }}
                         onClick={() =>
                           handleQuickAction(
                             record.transaction_id,
                             record.bookingType,
-                            "cancelled",
+                            "confirmed",
                           )
                         }
                         loading={updateLoading}
                       />
                     </Tooltip>
-                  </>
-                )}
-              </Space>
-            ),
-          },
-        ]),
+                  )}
+
+                  <Tooltip title="Cancel Booking">
+                    <Button
+                      type="link"
+                      icon={<CloseOutlined />}
+                      danger
+                      className="dangerborder-btn"
+                      style={{ padding: "8px" }}
+                      onClick={() =>
+                        handleQuickAction(
+                          record.transaction_id,
+                          record.bookingType,
+                          "cancelled",
+                        )
+                      }
+                      loading={updateLoading}
+                    />
+                  </Tooltip>
+                </>
+              )}
+            </Space>
+          ),
+        },
+      ]),
   ];
 
   const renderBookingDetails = () => {
@@ -2460,7 +2478,9 @@ export default function BookingPendingRequests() {
                 style={{ width: "100%", marginTop: 8 }}
                 placeholder="Select a priest"
                 value={selectedPriestId}
-                onChange={(value) => setSelectedPriestId(value)}
+                onChange={(value) =>
+                  handlePriestSelection(value, selectedBooking)
+                }
                 loading={loadingPriests}
                 showSearch
                 filterOption={(input, option) =>
@@ -3309,39 +3329,39 @@ export default function BookingPendingRequests() {
               </Button>
             ),
             selectedBooking?.status === "pending" &&
-              (isBookingDatePast(selectedBooking) ? (
-                <Tooltip
-                  key="confirm-disabled"
-                  title="Cannot confirm booking that is past its scheduled date"
-                >
-                  <Button
-                    type="primary"
-                    style={{
-                      backgroundColor: "#d9d9d9",
-                      borderColor: "#d9d9d9",
-                    }}
-                    disabled
-                  >
-                    Confirm Booking
-                  </Button>
-                </Tooltip>
-              ) : (
+            (isBookingDatePast(selectedBooking) ? (
+              <Tooltip
+                key="confirm-disabled"
+                title="Cannot confirm booking that is past its scheduled date"
+              >
                 <Button
-                  key="confirm"
-                  className="filled-btn"
-                  style={{ padding: "10px" }}
-                  onClick={() =>
-                    handleStatusUpdate(
-                      selectedBooking.transaction_id,
-                      selectedBooking.bookingType,
-                      "confirmed",
-                    )
-                  }
-                  loading={updateLoading}
+                  type="primary"
+                  style={{
+                    backgroundColor: "#d9d9d9",
+                    borderColor: "#d9d9d9",
+                  }}
+                  disabled
                 >
                   Confirm Booking
                 </Button>
-              )),
+              </Tooltip>
+            ) : (
+              <Button
+                key="confirm"
+                className="filled-btn"
+                style={{ padding: "10px" }}
+                onClick={() =>
+                  handleStatusUpdate(
+                    selectedBooking.transaction_id,
+                    selectedBooking.bookingType,
+                    "confirmed",
+                  )
+                }
+                loading={updateLoading}
+              >
+                Confirm Booking
+              </Button>
+            )),
           ].filter(Boolean)}
           width={800}
         >
@@ -3501,7 +3521,14 @@ export default function BookingPendingRequests() {
                 style={{ width: "100%", marginTop: 8 }}
                 placeholder="Select a priest"
                 value={selectedPriestId}
-                onChange={(value) => setSelectedPriestId(value)}
+                onChange={(value) => {
+                  const bookingForAction = bookings.find(
+                    (b) =>
+                      b.transaction_id === pendingAction.bookingId &&
+                      b.bookingType === pendingAction.bookingType,
+                  );
+                  handlePriestSelection(value, bookingForAction);
+                }}
                 loading={loadingPriests}
                 showSearch
                 filterOption={(input, option) =>

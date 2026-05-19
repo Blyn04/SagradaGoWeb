@@ -10,10 +10,11 @@ import { NavbarContext } from "../../context/AllContext";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import dayjs from "dayjs";
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { MobileTimePicker } from "@mui/x-date-pickers/MobileTimePicker";
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import Cookies from "js-cookie";
+import BookingTimePicker, {
+  validateUserBookingTime,
+  USER_BOOKING_TIME_ERROR,
+} from "../../components/BookingTimePicker";
 
 
 import Modal from "../../components/Modal";
@@ -146,13 +147,18 @@ export default function Confession() {
 
     if (!date) newErrors.date = true;
     if (!time) newErrors.time = true;
+    else if (!validateUserBookingTime(time)) newErrors.time = true;
     if (attendees <= 0) newErrors.attendees = true;
 
     setErrors(newErrors);
 
     if (Object.keys(newErrors).length > 0) {
       setShowModalMessage(true);
-      setModalMessage("Please fill in all required fields");
+      setModalMessage(
+        newErrors.time && time && !validateUserBookingTime(time)
+          ? USER_BOOKING_TIME_ERROR
+          : "Please fill in all required fields",
+      );
       setLoading(false)
       return;
     }
@@ -268,39 +274,24 @@ export default function Confession() {
                     onKeyDown={(e) => e.preventDefault()}
                   />
                 ) : elem.type === "time" ? (
-                  <div
+                  <BookingTimePicker
+                    value={time}
+                    onChange={(formatted) => {
+                      setTime(formatted);
+                      if (errors.time)
+                        setErrors((prev) => ({ ...prev, time: false }));
+                    }}
+                    error={errors.time}
                     className="time-container"
                     style={{
-                      border: errors["time"]
+                      border: errors.time
                         ? "2px solid red"
                         : "1.5px solid #e0e0e0",
                       borderRadius: "6px",
                       height: "45px",
                       overflow: "hidden",
                     }}
-                  >
-                    <LocalizationProvider dateAdapter={AdapterDayjs}>
-                      <MobileTimePicker
-                        value={time ? dayjs(`2000-01-01 ${time}`) : null}
-                        onChange={(v) => {
-                          const formatted = v ? dayjs(v).format("HH:mm") : "";
-                          setTime(formatted);
-                          if (errors["time"])
-                            setErrors((prev) => ({ ...prev, time: false }));
-                        }}
-                        slotProps={{
-                          textField: {
-                            variant: "standard",
-                            fullWidth: true,
-                            InputProps: {
-                              disableUnderline: true,
-                              sx: { px: 2, height: "45px", fontSize: "0.9rem" },
-                            },
-                          },
-                        }}
-                      />
-                    </LocalizationProvider>
-                  </div>
+                  />
                 ) : (
                   <input
                     type={elem.type}

@@ -383,11 +383,14 @@ export default function SignInPage() {
 
     try {
       // --- Step 2: Check for Admin Privileges ---
-      const adminResponse = await axios.post(`${API_URL}/findAdmin`, {
-        uid: firebaseUser.uid,
-      });
+      // 404 from findAdmin means "not an admin" — not an error; continue to /login
+      const adminResponse = await axios.post(
+        `${API_URL}/findAdmin`,
+        { uid: firebaseUser.uid },
+        { validateStatus: (status) => status < 500 },
+      );
 
-      if (adminResponse.data?.user) {
+      if (adminResponse.status === 200 && adminResponse.data?.user) {
         const adminData = adminResponse.data.user;
 
         // Check if Admin account is disabled
@@ -474,57 +477,19 @@ export default function SignInPage() {
         setError("Invalid credentials or session expired.");
       } else if (err.response?.status === 403) {
         setError(err.response.data?.message || "Access denied.");
-      } else if (err.response?.status === 404 || err.code === "ERR_NETWORK") {
-        // Backend unreachable: sign in with Firebase only so user can still use the app
-
-
-
-            const findUserResponse = await axios.post(`${API_URL}/findUser`, {
-              uid: firebaseUser.uid,  
-            });
-
-
-
-            const currentUserData = findUserResponse.data.user;
-
-        const minimalUser = normalizeUser({
-          uid: firebaseUser.uid,
-          email: firebaseUser.email || inputEmail,
-          first_name: currentUserData?.first_name || "",
-          middle_name: currentUserData?.middle_name || "",
-          last_name: currentUserData?.last_name || "",
-          contact_number: currentUserData?.contact_number || "",
-          is_admin: false,
-        });
-
-        if (currentUserData?.must_change_password === true) {
-          setPendingLogin({
-            firebaseUser,
-            backendUser: minimalUser,
-            currentPassword: inputPassword,
-          });
-          setShowChangePassword(true);
-          return;
-        }
-
-        setCurrentUser(minimalUser);
-        localStorage.setItem("currentUser", JSON.stringify(minimalUser));
-        localStorage.setItem("limitedAccess", "true"); // backend was unavailable
-        Cookies.set("email", inputEmail, { expires: 7 });
-        Cookies.set("uid", minimalUser.uid, { expires: 7 });
-        Cookies.set("isAdmin", "false", { expires: 7 });
-        Cookies.set(
-          "fullname",
-          `${minimalUser.first_name} ${minimalUser.middle_name} ${minimalUser.last_name}`.trim(),
-          { expires: 7 },
+      } else if (
+        err.code === "ERR_NETWORK" ||
+        err.message === "Network Error" ||
+        !err.response
+      ) {
+        setError(
+          `Cannot reach the API at ${API_URL}. If using localhost, start SagradaGoAPI on port 8080. Otherwise check your VITE_URL in .env and restart npm run dev.`,
         );
-        Cookies.set("contact", minimalUser.contact_number || "", { expires: 7 });
-
-        const sessionTimeout = Date.now() + 5 * 60 * 1000;
-        localStorage.setItem("sessionTimeout", sessionTimeout.toString());
-
-        navigate("/");
-        setShowSignin(false);
+      } else if (err.response?.status === 404) {
+        setError(
+          err.response?.data?.message ||
+            "No account found with this email. Please sign up first.",
+        );
       } else {
         setError("An error occurred during login. Please try again.");
       }
