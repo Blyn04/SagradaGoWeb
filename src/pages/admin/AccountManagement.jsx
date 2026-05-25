@@ -1,9 +1,17 @@
-﻿import { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { API_URL } from "../../Constants";
 import { auth } from "../../config/firebase";
 import Logger from "../../utils/logger";
+import {
+  validateBirthday as validateBirthdayRule,
+  validateFloatingPriestDates,
+  getPriestMaxBirthdayDate,
+  formatDateTimeStamp,
+  formatDateOnly,
+  MIN_PRIEST_AGE_YEARS,
+} from "../../utils/priestValidation";
 import {
   createUserWithEmailAndPassword,
   sendEmailVerification,
@@ -88,6 +96,8 @@ export default function AccountManagement() {
     is_priest: false,
     previous_parish: "",
     residency: "",
+    start_date: "",
+    end_date: "",
   });
 
   const [birthdayDisplay, setBirthdayDisplay] = useState("");
@@ -256,33 +266,11 @@ export default function AccountManagement() {
     return value;
   };
 
-  const validateBirthday = (birthday) => {
-    if (!birthday) {
-      return "Birthday is required";
-    }
-
-    const dateString = parseDateInput(birthday);
-    let date = dayjs(dateString, "YYYY-MM-DD", true);
-    if (!date.isValid()) {
-      date = dayjs(dateString);
-    }
-
-    const today = dayjs();
-    const minDate = dayjs().subtract(120, "years");
-
-    if (!date.isValid()) {
-      return "Please enter a valid date (MM/DD/YYYY)";
-    }
-
-    if (date.isAfter(today)) {
-      return "Birthday cannot be in the future";
-    }
-
-    if (date.isBefore(minDate)) {
-      return "Please enter a valid birthday (not more than 120 years ago)";
-    }
-
-    return "";
+  const validateBirthday = (birthday, isPriest = false) => {
+    const dateString = birthday?.includes("/")
+      ? parseDateInput(birthday)
+      : birthday;
+    return validateBirthdayRule(dateString, { isPriest });
   };
 
   const checkEmailExists = async (email, currentUserEmail = null) => {
@@ -397,9 +385,18 @@ export default function AccountManagement() {
       newErrors.contact_number = contactError;
     }
 
-    const birthdayError = validateBirthday(formData.birthday);
+    const birthdayError = validateBirthday(formData.birthday, formData.is_priest);
     if (birthdayError) {
       newErrors.birthday = birthdayError;
+    }
+
+    const floatingDatesError = validateFloatingPriestDates(
+      formData.residency,
+      formData.start_date,
+      formData.end_date,
+    );
+    if (formData.is_priest && floatingDatesError) {
+      newErrors.floating_dates = floatingDatesError;
     }
 
     // const passwordError = validatePassword(formData.password);
@@ -470,6 +467,13 @@ export default function AccountManagement() {
 
         if (formData.residency) {
           createPayload.residency = formData.residency;
+        }
+
+        if (formData.residency === "Floating") {
+          createPayload.start_date = dayjs(formData.start_date).format(
+            "YYYY-MM-DD",
+          );
+          createPayload.end_date = dayjs(formData.end_date).format("YYYY-MM-DD");
         }
       }
 
@@ -841,6 +845,10 @@ export default function AccountManagement() {
       is_priest: user.is_priest || false,
       previous_parish: user.previous_parish || "",
       residency: user.residency || "",
+      start_date: user.start_date
+        ? dayjs(user.start_date).format("YYYY-MM-DD")
+        : "",
+      end_date: user.end_date ? dayjs(user.end_date).format("YYYY-MM-DD") : "",
     });
 
     setBirthdayDisplay(birthdayValue);
@@ -867,9 +875,21 @@ export default function AccountManagement() {
       birthdayToValidate = parseDateInput(birthdayDisplay);
     }
 
-    const birthdayError = validateBirthday(birthdayToValidate);
+    const birthdayError = validateBirthday(
+      birthdayToValidate,
+      formData.is_priest,
+    );
     if (birthdayError) {
       newErrors.birthday = birthdayError;
+    }
+
+    const floatingDatesError = validateFloatingPriestDates(
+      formData.residency,
+      formData.start_date,
+      formData.end_date,
+    );
+    if (formData.is_priest && floatingDatesError) {
+      newErrors.floating_dates = floatingDatesError;
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -929,9 +949,21 @@ export default function AccountManagement() {
         if (formData.residency) {
           updatePayload.residency = formData.residency;
         }
+
+        if (formData.residency === "Floating") {
+          updatePayload.start_date = dayjs(formData.start_date).format(
+            "YYYY-MM-DD",
+          );
+          updatePayload.end_date = dayjs(formData.end_date).format("YYYY-MM-DD");
+        } else {
+          updatePayload.start_date = null;
+          updatePayload.end_date = null;
+        }
       } else {
         updatePayload.previous_parish = undefined;
         updatePayload.residency = undefined;
+        updatePayload.start_date = null;
+        updatePayload.end_date = null;
       }
 
       await axios.put(`${API_URL}/updateUser`, updatePayload);
@@ -971,12 +1003,79 @@ export default function AccountManagement() {
       email: "",
       is_priest: isPriest,
       previous_parish: "",
-      residency: "",
+      residency: isPriest ? "Permanent" : "",
+      start_date: "",
+      end_date: "",
     });
 
     setBirthdayDisplay("");
     setErrors({});
   };
+
+  const renderFloatingPriestFields = () => (
+    <>
+      <Col xs={24} sm={12}>
+        <Form.Item
+          label={
+            <>
+              Start Date <span style={{ color: "red" }}>*</span>
+            </>
+          }
+          validateStatus={errors.floating_dates ? "error" : ""}
+          help={errors.floating_dates}
+        >
+          <DatePicker
+            value={formData.start_date ? dayjs(formData.start_date) : null}
+            onChange={(date) => {
+              const formatted = date ? date.format("YYYY-MM-DD") : "";
+              setFormData({ ...formData, start_date: formatted });
+              const err = validateFloatingPriestDates(
+                "Floating",
+                formatted,
+                formData.end_date,
+              );
+              setErrors((prev) => ({ ...prev, floating_dates: err }));
+            }}
+            style={{ width: "100%" }}
+            format="MM/DD/YYYY"
+            placeholder="Assignment start date"
+          />
+        </Form.Item>
+      </Col>
+      <Col xs={24} sm={12}>
+        <Form.Item
+          label={
+            <>
+              End Date <span style={{ color: "red" }}>*</span>
+            </>
+          }
+        >
+          <DatePicker
+            value={formData.end_date ? dayjs(formData.end_date) : null}
+            onChange={(date) => {
+              const formatted = date ? date.format("YYYY-MM-DD") : "";
+              setFormData({ ...formData, end_date: formatted });
+              const err = validateFloatingPriestDates(
+                "Floating",
+                formData.start_date,
+                formatted,
+              );
+              setErrors((prev) => ({ ...prev, floating_dates: err }));
+            }}
+            style={{ width: "100%" }}
+            format="MM/DD/YYYY"
+            disabledDate={(current) =>
+              formData.start_date
+                ? current &&
+                  current.isBefore(dayjs(formData.start_date), "day")
+                : false
+            }
+            placeholder="Assignment end date"
+          />
+        </Form.Item>
+      </Col>
+    </>
+  );
 
   const userCount = users.filter((user) => !user.is_priest).length;
   const priestCount = users.filter((user) => user.is_priest).length;
@@ -1025,6 +1124,30 @@ export default function AccountManagement() {
           {isPriest ? "Priest" : "User"}
         </Tag>
       ),
+    },
+    ...(filterType === "priests"
+      ? [
+          {
+            title: "Residency",
+            dataIndex: "residency",
+            key: "residency",
+            render: (residency) => residency || "Permanent",
+          },
+          {
+            title: "Assignment Period",
+            key: "assignment_period",
+            render: (_, record) =>
+              record.residency === "Floating"
+                ? `${formatDateOnly(record.start_date)} – ${formatDateOnly(record.end_date)}`
+                : "—",
+          },
+        ]
+      : []),
+    {
+      title: "Created",
+      dataIndex: "createdAt",
+      key: "createdAt",
+      render: (date) => formatDateTimeStamp(date),
     },
     {
       title: "Status",
@@ -1618,8 +1741,72 @@ export default function AccountManagement() {
                         <Text>{viewingUser.residency || "N/A"}</Text>
                       </div>
                     </Col>
+                    {viewingUser.residency === "Floating" && (
+                      <>
+                        <Col xs={24} sm={12}>
+                          <div style={{ marginBottom: 16 }}>
+                            <Text
+                              strong
+                              style={{
+                                display: "block",
+                                marginBottom: 4,
+                                color: "#666",
+                              }}
+                            >
+                              Assignment Start Date
+                            </Text>
+                            <Text>{formatDateOnly(viewingUser.start_date)}</Text>
+                          </div>
+                        </Col>
+                        <Col xs={24} sm={12}>
+                          <div style={{ marginBottom: 16 }}>
+                            <Text
+                              strong
+                              style={{
+                                display: "block",
+                                marginBottom: 4,
+                                color: "#666",
+                              }}
+                            >
+                              Assignment End Date
+                            </Text>
+                            <Text>{formatDateOnly(viewingUser.end_date)}</Text>
+                          </div>
+                        </Col>
+                      </>
+                    )}
                   </>
                 )}
+                <Col xs={24} sm={12}>
+                  <div style={{ marginBottom: 16 }}>
+                    <Text
+                      strong
+                      style={{
+                        display: "block",
+                        marginBottom: 4,
+                        color: "#666",
+                      }}
+                    >
+                      Created
+                    </Text>
+                    <Text>{formatDateTimeStamp(viewingUser.createdAt)}</Text>
+                  </div>
+                </Col>
+                <Col xs={24} sm={12}>
+                  <div style={{ marginBottom: 16 }}>
+                    <Text
+                      strong
+                      style={{
+                        display: "block",
+                        marginBottom: 4,
+                        color: "#666",
+                      }}
+                    >
+                      Last Updated
+                    </Text>
+                    <Text>{formatDateTimeStamp(viewingUser.updatedAt)}</Text>
+                  </div>
+                </Col>
                 {!viewingUser.is_priest && (
                   <>
                     <Col xs={24} sm={12}>
@@ -1999,7 +2186,12 @@ export default function AccountManagement() {
                     </>
                   }
                   validateStatus={errors.birthday ? "error" : ""}
-                  help={errors.birthday}
+                  help={
+                    errors.birthday ||
+                    (formData.is_priest
+                      ? `Priests must be at least ${MIN_PRIEST_AGE_YEARS} years old`
+                      : undefined)
+                  }
                 >
                   <DatePicker
                     value={formData.birthday ? dayjs(formData.birthday) : null}
@@ -2008,7 +2200,10 @@ export default function AccountManagement() {
                         const formatted = date.format("YYYY-MM-DD");
                         setFormData({ ...formData, birthday: formatted });
                         setBirthdayDisplay(date.format("MM/DD/YYYY"));
-                        const error = validateBirthday(formatted);
+                        const error = validateBirthday(
+                          formatted,
+                          formData.is_priest,
+                        );
                         setErrors((prev) => ({ ...prev, birthday: error }));
                       } else {
                         setFormData({ ...formData, birthday: "" });
@@ -2024,6 +2219,11 @@ export default function AccountManagement() {
                     style={{ width: "100%" }}
                     inputReadOnly={true}
                     allowClear={true}
+                    disabledDate={(current) =>
+                      formData.is_priest &&
+                      current &&
+                      current.isAfter(getPriestMaxBirthdayDate(), "day")
+                    }
                     disabledDate={(current) => {
                       return (
                         current &&
@@ -2087,7 +2287,14 @@ export default function AccountManagement() {
                       <Select
                         value={formData.residency}
                         onChange={(value) =>
-                          setFormData({ ...formData, residency: value })
+                          setFormData({
+                            ...formData,
+                            residency: value,
+                            start_date:
+                              value === "Floating" ? formData.start_date : "",
+                            end_date:
+                              value === "Floating" ? formData.end_date : "",
+                          })
                         }
                         placeholder="Select residency"
                         allowClear
@@ -2097,6 +2304,7 @@ export default function AccountManagement() {
                       </Select>
                     </Form.Item>
                   </Col>
+                  {formData.residency === "Floating" && renderFloatingPriestFields()}
                 </>
               )}
             </Row>
@@ -2229,7 +2437,12 @@ export default function AccountManagement() {
                     </>
                   }
                   validateStatus={errors.birthday ? "error" : ""}
-                  help={errors.birthday}
+                  help={
+                    errors.birthday ||
+                    (formData.is_priest
+                      ? `Priests must be at least ${MIN_PRIEST_AGE_YEARS} years old`
+                      : undefined)
+                  }
                 >
                   <DatePicker
                     value={formData.birthday ? dayjs(formData.birthday) : null}
@@ -2238,7 +2451,10 @@ export default function AccountManagement() {
                         const formatted = date.format("YYYY-MM-DD");
                         setFormData({ ...formData, birthday: formatted });
                         setBirthdayDisplay(date.format("MM/DD/YYYY"));
-                        const error = validateBirthday(formatted);
+                        const error = validateBirthday(
+                          formatted,
+                          formData.is_priest,
+                        );
                         setErrors((prev) => ({ ...prev, birthday: error }));
                       } else {
                         setFormData({ ...formData, birthday: "" });
@@ -2254,6 +2470,11 @@ export default function AccountManagement() {
                     style={{ width: "100%" }}
                     inputReadOnly={true}
                     allowClear={true}
+                    disabledDate={(current) =>
+                      formData.is_priest &&
+                      current &&
+                      current.isAfter(getPriestMaxBirthdayDate(), "day")
+                    }
                     disabledDate={(current) => {
                       return (
                         current &&
@@ -2333,7 +2554,14 @@ export default function AccountManagement() {
                       <Select
                         value={formData.residency}
                         onChange={(value) =>
-                          setFormData({ ...formData, residency: value })
+                          setFormData({
+                            ...formData,
+                            residency: value,
+                            start_date:
+                              value === "Floating" ? formData.start_date : "",
+                            end_date:
+                              value === "Floating" ? formData.end_date : "",
+                          })
                         }
                         placeholder="Select residency"
                         allowClear
@@ -2343,6 +2571,7 @@ export default function AccountManagement() {
                       </Select>
                     </Form.Item>
                   </Col>
+                  {formData.residency === "Floating" && renderFloatingPriestFields()}
                 </>
               )}
             </Row>

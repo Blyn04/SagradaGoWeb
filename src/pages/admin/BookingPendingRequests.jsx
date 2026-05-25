@@ -12,6 +12,7 @@ import {
   checkPriestScheduleConflict,
   PRIEST_BUFFER_HOURS_AFTER_BOOKING,
 } from "../../utils/bookingRules";
+import { isPriestAssignable } from "../../utils/priestValidation";
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -1374,6 +1375,15 @@ export default function BookingPendingRequests() {
     }
   };
 
+  const getAssignablePriests = (bookingDate) => {
+    const referenceDate = bookingDate
+      ? dayjs(bookingDate).format("YYYY-MM-DD")
+      : undefined;
+    return priests.filter((priest) =>
+      isPriestAssignable(priest, referenceDate),
+    );
+  };
+
   useEffect(() => {
     filterBookings();
   }, [searchTerm, bookings, typeFilter, monthFilter, dateFilterTab]);
@@ -1788,6 +1798,15 @@ export default function BookingPendingRequests() {
   const handlePriestSelection = async (priestId, booking) => {
     if (!priestId || !booking) {
       setSelectedPriestId(priestId);
+      return;
+    }
+
+    const priest = priests.find((p) => p.uid === priestId);
+    if (priest && !isPriestAssignable(priest, booking.date)) {
+      message.error(
+        "This floating priest is not active on the booking date. Check their start and end dates.",
+      );
+      setSelectedPriestId(null);
       return;
     }
 
@@ -2489,9 +2508,14 @@ export default function BookingPendingRequests() {
                   )
                 }
               >
-                {priests.map((priest) => (
+                {getAssignablePriests(selectedBooking?.date).map((priest) => (
                   <Option key={priest.uid} value={priest.uid}>
                     {priest.full_name}
+                    {priest.residency === "Floating" &&
+                    priest.start_date &&
+                    priest.end_date
+                      ? ` (Floating: ${dayjs(priest.start_date).format("MM/DD/YY")}–${dayjs(priest.end_date).format("MM/DD/YY")})`
+                      : ""}
                   </Option>
                 ))}
               </Select>
@@ -3537,9 +3561,20 @@ export default function BookingPendingRequests() {
                   )
                 }
               >
-                {priests.map((priest) => (
+                {getAssignablePriests(
+                  bookings.find(
+                    (b) =>
+                      b.transaction_id === pendingAction?.bookingId &&
+                      b.bookingType === pendingAction?.bookingType,
+                  )?.date,
+                ).map((priest) => (
                   <Option key={priest.uid} value={priest.uid}>
                     {priest.full_name}
+                    {priest.residency === "Floating" &&
+                    priest.start_date &&
+                    priest.end_date
+                      ? ` (Floating: ${dayjs(priest.start_date).format("MM/DD/YY")}–${dayjs(priest.end_date).format("MM/DD/YY")})`
+                      : ""}
                   </Option>
                 ))}
               </Select>
