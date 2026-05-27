@@ -90,6 +90,8 @@ export default function AccountManagement() {
     is_priest: false,
     previous_parish: "",
     residency: "",
+    start_date: "",
+    end_date: "",
   });
 
   const [birthdayDisplay, setBirthdayDisplay] = useState("");
@@ -415,24 +417,9 @@ export default function AccountManagement() {
       newErrors.birthday = birthdayError;
     }
 
-    // const passwordError = validatePassword(formData.password);
-    // if (passwordError) {
-    //   newErrors.password = passwordError;
-    // }
-
-    // const confirmPasswordError = validatePasswordMatch(formData.password, formData.confirmPassword);
-    // if (confirmPasswordError) {
-    //   newErrors.confirmPassword = confirmPasswordError;
-    // }
-
-    // if (passwordError || confirmError) {
-    //   setErrors(prev => ({
-    //     ...prev,
-    //     password: passwordError,
-    //     confirmPassword: confirmError
-    //   }));
-    //   return;
-    // }
+    if (formData.is_priest && !formData.residency) {
+      newErrors.residency = "Residency is required";
+    }
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -492,9 +479,14 @@ export default function AccountManagement() {
         if (formData.previous_parish) {
           createPayload.previous_parish = formData.previous_parish;
         }
-
         if (formData.residency) {
           createPayload.residency = formData.residency;
+        }
+        if (formData.start_date) {
+          createPayload.start_date = formData.start_date;
+        }
+        if (formData.end_date) {
+          createPayload.end_date = formData.end_date;
         }
       }
 
@@ -862,6 +854,8 @@ export default function AccountManagement() {
       is_priest: user.is_priest || false,
       previous_parish: user.previous_parish || "",
       residency: user.residency || "",
+      start_date: user.start_date ? dayjs(user.start_date).format("YYYY-MM-DD") : "",
+      end_date: user.end_date ? dayjs(user.end_date).format("YYYY-MM-DD") : "",
     });
 
     setBirthdayDisplay(birthdayValue);
@@ -891,6 +885,10 @@ export default function AccountManagement() {
     const birthdayError = validateBirthday(birthdayToValidate);
     if (birthdayError) {
       newErrors.birthday = birthdayError;
+    }
+
+    if (formData.is_priest && !formData.residency) {
+      newErrors.residency = "Residency is required";
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -946,13 +944,20 @@ export default function AccountManagement() {
         if (formData.previous_parish) {
           updatePayload.previous_parish = formData.previous_parish;
         }
-
         if (formData.residency) {
           updatePayload.residency = formData.residency;
+        }
+        if (formData.start_date) {
+          updatePayload.start_date = formData.start_date;
+        }
+        if (formData.end_date) {
+          updatePayload.end_date = formData.end_date;
         }
       } else {
         updatePayload.previous_parish = undefined;
         updatePayload.residency = undefined;
+        updatePayload.start_date = undefined;
+        updatePayload.end_date = undefined;
       }
 
       await axios.put(`${API_URL}/updateUser`, updatePayload);
@@ -995,6 +1000,8 @@ export default function AccountManagement() {
       is_priest: isPriest,
       previous_parish: "",
       residency: "",
+      start_date: "",
+      end_date: "",
     });
 
     setBirthdayDisplay("");
@@ -1068,8 +1075,6 @@ export default function AccountManagement() {
       },
     },
 
-    // This says: If subAdmin is true, return empty array.
-    // If subAdmin is false (or undefined), return the column array.
     ...(subAdmin
       ? []
       : [
@@ -1641,6 +1646,44 @@ export default function AccountManagement() {
                         <Text>{viewingUser.residency || "N/A"}</Text>
                       </div>
                     </Col>
+                    <Col xs={24} sm={12}>
+                      <div style={{ marginBottom: 16 }}>
+                        <Text
+                          strong
+                          style={{
+                            display: "block",
+                            marginBottom: 4,
+                            color: "#666",
+                          }}
+                        >
+                          Start Date <span style={{ color: "red" }}>*</span>
+                        </Text>
+                        <Text>
+                          {viewingUser.start_date
+                            ? formatDate(viewingUser.start_date)
+                            : "N/A"}
+                        </Text>
+                      </div>
+                    </Col>
+                    <Col xs={24} sm={12}>
+                      <div style={{ marginBottom: 16 }}>
+                        <Text
+                          strong
+                          style={{
+                            display: "block",
+                            marginBottom: 4,
+                            color: "#666",
+                          }}
+                        >
+                          End Date
+                        </Text>
+                        <Text>
+                          {viewingUser.end_date
+                            ? formatDate(viewingUser.end_date)
+                            : "N/A"}
+                        </Text>
+                      </div>
+                    </Col>
                   </>
                 )}
                 {!viewingUser.is_priest && (
@@ -1938,11 +1981,7 @@ export default function AccountManagement() {
             <Row gutter={16}>
               <Col xs={24} sm={12}>
                 <Form.Item
-                  label={
-                    <>
-                      First Name <span style={{ color: "red" }}>*</span>
-                    </>
-                  }
+                  label={<>First Name <span style={{ color: "red" }}>*</span></>}
                   validateStatus={errors.first_name ? "error" : ""}
                   help={errors.first_name}
                 >
@@ -1968,11 +2007,7 @@ export default function AccountManagement() {
               </Col>
               <Col xs={24} sm={12}>
                 <Form.Item
-                  label={
-                    <>
-                      Last Name <span style={{ color: "red" }}>*</span>
-                    </>
-                  }
+                  label={<>Last Name <span style={{ color: "red" }}>*</span></>}
                   validateStatus={errors.last_name ? "error" : ""}
                   help={errors.last_name}
                 >
@@ -1987,11 +2022,7 @@ export default function AccountManagement() {
               </Col>
               <Col xs={24} sm={12}>
                 <Form.Item
-                  label={
-                    <>
-                      Contact Number <span style={{ color: "red" }}>*</span>
-                    </>
-                  }
+                  label={<>Contact Number <span style={{ color: "red" }}>*</span></>}
                   validateStatus={errors.contact_number ? "error" : ""}
                   help={errors.contact_number}
                 >
@@ -1999,14 +2030,9 @@ export default function AccountManagement() {
                     value={formData.contact_number}
                     onChange={(e) => handleContactNumberChange(e.target.value)}
                     onBlur={() => {
-                      const error = validateContactNumber(
-                        formData.contact_number,
-                      );
+                      const error = validateContactNumber(formData.contact_number);
                       if (error) {
-                        setErrors((prev) => ({
-                          ...prev,
-                          contact_number: error,
-                        }));
+                        setErrors((prev) => ({ ...prev, contact_number: error }));
                       }
                     }}
                     placeholder="09XXXXXXXXX (11 digits, starts with 09)"
@@ -2016,11 +2042,7 @@ export default function AccountManagement() {
               </Col>
               <Col xs={24} sm={12}>
                 <Form.Item
-                  label={
-                    <>
-                      Birthday <span style={{ color: "red" }}>*</span>
-                    </>
-                  }
+                  label={<>Birthday <span style={{ color: "red" }}>*</span></>}
                   validateStatus={errors.birthday ? "error" : ""}
                   help={errors.birthday}
                 >
@@ -2059,11 +2081,7 @@ export default function AccountManagement() {
               </Col>
               <Col xs={24} sm={12}>
                 <Form.Item
-                  label={
-                    <>
-                      Email <span style={{ color: "red" }}>*</span>
-                    </>
-                  }
+                  label={<>Email <span style={{ color: "red" }}>*</span></>}
                   validateStatus={errors.email ? "error" : ""}
                   help={errors.email}
                 >
@@ -2096,17 +2114,18 @@ export default function AccountManagement() {
                       <Input
                         value={formData.previous_parish}
                         onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            previous_parish: e.target.value,
-                          })
+                          setFormData({ ...formData, previous_parish: e.target.value })
                         }
                         placeholder="Enter previous parish"
                       />
                     </Form.Item>
                   </Col>
                   <Col xs={24} sm={12}>
-                    <Form.Item label="Residency">
+                    <Form.Item
+                      label={<>Residency <span style={{ color: "red" }}>*</span></>}
+                      validateStatus={errors.residency ? "error" : ""}
+                      help={errors.residency}
+                    >
                       <Select
                         value={formData.residency}
                         onChange={(value) =>
@@ -2118,6 +2137,63 @@ export default function AccountManagement() {
                         <Option value="Permanent">Permanent</Option>
                         <Option value="Floating">Floating</Option>
                       </Select>
+                    </Form.Item>
+                  </Col>
+                  <Col xs={24} sm={12}>
+                    <Form.Item
+                      label={<>Start Date <span style={{ color: "red" }}>*</span></>}
+                      validateStatus={errors.start_date ? "error" : ""}
+                      help={errors.start_date}
+                    >
+                      <DatePicker
+                        value={formData.start_date ? dayjs(formData.start_date) : null}
+                        onChange={(date) => {
+                          const newStartDate = date ? date.format("YYYY-MM-DD") : "";
+                          setFormData((prev) => ({
+                            ...prev,
+                            start_date: newStartDate,
+                            end_date:
+                              prev.end_date &&
+                              newStartDate &&
+                              dayjs(prev.end_date).isBefore(dayjs(newStartDate))
+                                ? ""
+                                : prev.end_date,
+                          }));
+                        }}
+                        format="MM/DD/YYYY"
+                        placeholder="Select start date"
+                        style={{ width: "100%" }}
+                        inputReadOnly={true}
+                        allowClear={true}
+                      />
+                    </Form.Item>
+                  </Col>
+                  <Col xs={24} sm={12}>
+                    <Form.Item
+                      label={<>End Date <span style={{ color: "red" }}>*</span></>}
+                      validateStatus={errors.end_date ? "error" : ""}
+                      help={errors.end_date}
+                    >
+                      <DatePicker
+                        value={formData.end_date ? dayjs(formData.end_date) : null}
+                        onChange={(date) =>
+                          setFormData({
+                            ...formData,
+                            end_date: date ? date.format("YYYY-MM-DD") : "",
+                          })
+                        }
+                        format="MM/DD/YYYY"
+                        placeholder="Select end date"
+                        style={{ width: "100%" }}
+                        inputReadOnly={true}
+                        allowClear={true}
+                        disabledDate={(current) =>
+                          formData.start_date
+                            ? current &&
+                              current < dayjs(formData.start_date).startOf("day")
+                            : false
+                        }
+                      />
                     </Form.Item>
                   </Col>
                 </>
@@ -2168,11 +2244,7 @@ export default function AccountManagement() {
             <Row gutter={16}>
               <Col xs={24} sm={12}>
                 <Form.Item
-                  label={
-                    <>
-                      First Name <span style={{ color: "red" }}>*</span>
-                    </>
-                  }
+                  label={<>First Name <span style={{ color: "red" }}>*</span></>}
                   validateStatus={errors.first_name ? "error" : ""}
                   help={errors.first_name}
                 >
@@ -2198,11 +2270,7 @@ export default function AccountManagement() {
               </Col>
               <Col xs={24} sm={12}>
                 <Form.Item
-                  label={
-                    <>
-                      Last Name <span style={{ color: "red" }}>*</span>
-                    </>
-                  }
+                  label={<>Last Name <span style={{ color: "red" }}>*</span></>}
                   validateStatus={errors.last_name ? "error" : ""}
                   help={errors.last_name}
                 >
@@ -2217,11 +2285,7 @@ export default function AccountManagement() {
               </Col>
               <Col xs={24} sm={12}>
                 <Form.Item
-                  label={
-                    <>
-                      Contact Number <span style={{ color: "red" }}>*</span>
-                    </>
-                  }
+                  label={<>Contact Number <span style={{ color: "red" }}>*</span></>}
                   validateStatus={errors.contact_number ? "error" : ""}
                   help={errors.contact_number}
                 >
@@ -2229,14 +2293,9 @@ export default function AccountManagement() {
                     value={formData.contact_number}
                     onChange={(e) => handleContactNumberChange(e.target.value)}
                     onBlur={() => {
-                      const error = validateContactNumber(
-                        formData.contact_number,
-                      );
+                      const error = validateContactNumber(formData.contact_number);
                       if (error) {
-                        setErrors((prev) => ({
-                          ...prev,
-                          contact_number: error,
-                        }));
+                        setErrors((prev) => ({ ...prev, contact_number: error }));
                       }
                     }}
                     placeholder="09XXXXXXXXX (11 digits, starts with 09)"
@@ -2246,14 +2305,11 @@ export default function AccountManagement() {
               </Col>
               <Col xs={24} sm={12}>
                 <Form.Item
-                  label={
-                    <>
-                      Birthday <span style={{ color: "red" }}>*</span>
-                    </>
-                  }
+                  label={<>Birthday <span style={{ color: "red" }}>*</span></>}
                   validateStatus={errors.birthday ? "error" : ""}
                   help={errors.birthday}
                 >
+                  {/* ── UPDATED: min age 18 for regular users, 25 for priests ── */}
                   <DatePicker
                     value={formData.birthday ? dayjs(formData.birthday) : null}
                     onChange={(date) => {
@@ -2278,9 +2334,13 @@ export default function AccountManagement() {
                     inputReadOnly={true}
                     allowClear={true}
                     disabledDate={(current) => {
+                      const minAge = formData.is_priest ? 25 : 18;
+                      const maxDate = dayjs()
+                        .subtract(minAge, "years")
+                        .endOf("day");
                       return (
                         current &&
-                        (current > dayjs().endOf("day") ||
+                        (current > maxDate ||
                           current < dayjs().subtract(120, "years"))
                       );
                     }}
@@ -2289,11 +2349,7 @@ export default function AccountManagement() {
               </Col>
               <Col xs={24} sm={12}>
                 <Form.Item
-                  label={
-                    <>
-                      Email <span style={{ color: "red" }}>*</span>
-                    </>
-                  }
+                  label={<>Email <span style={{ color: "red" }}>*</span></>}
                   validateStatus={errors.email ? "error" : ""}
                   help={errors.email}
                 >
@@ -2309,11 +2365,7 @@ export default function AccountManagement() {
               </Col>
               <Col xs={24} sm={12}>
                 <Form.Item
-                  label={
-                    <>
-                      Password <span style={{ color: "red" }}>*</span>
-                    </>
-                  }
+                  label={<>Password <span style={{ color: "red" }}>*</span></>}
                   validateStatus={errors.password ? "error" : ""}
                   help={errors.password}
                 >
@@ -2323,12 +2375,9 @@ export default function AccountManagement() {
                       const newPassword = e.target.value;
                       setFormData({ ...formData, password: newPassword });
                       setPasswordRules(getPasswordRules(newPassword));
-
-                      // Clear password error when typing
                       if (errors.password) {
                         setErrors((prev) => ({ ...prev, password: "" }));
                       }
-                      // Re-validate confirm password if it exists
                       if (formData.confirmPassword) {
                         const confirmError = validatePasswordMatch(
                           newPassword,
@@ -2345,7 +2394,6 @@ export default function AccountManagement() {
                       if (error) {
                         setErrors((prev) => ({ ...prev, password: error }));
                       }
-                      // Also validate confirm password match
                       if (formData.confirmPassword) {
                         const confirmError = validatePasswordMatch(
                           formData.password,
@@ -2362,37 +2410,20 @@ export default function AccountManagement() {
                       visible ? <EyeOutlined /> : <EyeInvisibleOutlined />
                     }
                   />
-
                   <div style={{ marginTop: 8, fontSize: 12 }}>
-                    <div
-                      style={{ color: passwordRules.length ? "green" : "red" }}
-                    >
+                    <div style={{ color: passwordRules.length ? "green" : "red" }}>
                       • At least 8 characters
                     </div>
-                    <div
-                      style={{
-                        color: passwordRules.uppercase ? "green" : "red",
-                      }}
-                    >
+                    <div style={{ color: passwordRules.uppercase ? "green" : "red" }}>
                       • At least 1 uppercase letter
                     </div>
-                    <div
-                      style={{
-                        color: passwordRules.lowercase ? "green" : "red",
-                      }}
-                    >
+                    <div style={{ color: passwordRules.lowercase ? "green" : "red" }}>
                       • At least 1 lowercase letter
                     </div>
-                    <div
-                      style={{ color: passwordRules.number ? "green" : "red" }}
-                    >
+                    <div style={{ color: passwordRules.number ? "green" : "red" }}>
                       • At least 1 number
                     </div>
-                    <div
-                      style={{
-                        color: passwordRules.specialChar ? "green" : "red",
-                      }}
-                    >
+                    <div style={{ color: passwordRules.specialChar ? "green" : "red" }}>
                       • At least 1 special character
                     </div>
                   </div>
@@ -2400,11 +2431,7 @@ export default function AccountManagement() {
               </Col>
               <Col xs={24} sm={12}>
                 <Form.Item
-                  label={
-                    <>
-                      Confirm Password <span style={{ color: "red" }}>*</span>
-                    </>
-                  }
+                  label={<>Confirm Password <span style={{ color: "red" }}>*</span></>}
                   validateStatus={errors.confirmPassword ? "error" : ""}
                   help={errors.confirmPassword}
                 >
@@ -2416,19 +2443,14 @@ export default function AccountManagement() {
                         ...formData,
                         confirmPassword: newConfirmPassword,
                       });
-                      // Clear error when typing
                       if (errors.confirmPassword) {
                         setErrors((prev) => ({ ...prev, confirmPassword: "" }));
                       }
-                      // Validate match if password exists
                       if (formData.password) {
                         const error = validatePasswordMatch(
                           formData.password,
                           newConfirmPassword,
                         );
-                        // if (error) {
-                        //   setErrors((prev) => ({ ...prev, confirmPassword: error }));
-                        // }
                         setErrors((prev) => ({
                           ...prev,
                           confirmPassword: error,
@@ -2483,7 +2505,11 @@ export default function AccountManagement() {
                     </Form.Item>
                   </Col>
                   <Col xs={24} sm={12}>
-                    <Form.Item label="Residency">
+                    <Form.Item
+                      label={<>Residency <span style={{ color: "red" }}>*</span></>}
+                      validateStatus={errors.residency ? "error" : ""}
+                      help={errors.residency}
+                    >
                       <Select
                         value={formData.residency}
                         onChange={(value) =>
@@ -2495,6 +2521,63 @@ export default function AccountManagement() {
                         <Option value="Permanent">Permanent</Option>
                         <Option value="Floating">Floating</Option>
                       </Select>
+                    </Form.Item>
+                  </Col>
+                  <Col xs={24} sm={12}>
+                    <Form.Item
+                      label={<>Start Date <span style={{ color: "red" }}>*</span></>}
+                      validateStatus={errors.start_date ? "error" : ""}
+                      help={errors.start_date}
+                    >
+                      <DatePicker
+                        value={formData.start_date ? dayjs(formData.start_date) : null}
+                        onChange={(date) => {
+                          const newStartDate = date ? date.format("YYYY-MM-DD") : "";
+                          setFormData((prev) => ({
+                            ...prev,
+                            start_date: newStartDate,
+                            end_date:
+                              prev.end_date &&
+                              newStartDate &&
+                              dayjs(prev.end_date).isBefore(dayjs(newStartDate))
+                                ? ""
+                                : prev.end_date,
+                          }));
+                        }}
+                        format="MM/DD/YYYY"
+                        placeholder="Select start date"
+                        style={{ width: "100%" }}
+                        inputReadOnly={true}
+                        allowClear={true}
+                      />
+                    </Form.Item>
+                  </Col>
+                  <Col xs={24} sm={12}>
+                    <Form.Item
+                      label={<>End Date <span style={{ color: "red" }}>*</span></>}
+                      validateStatus={errors.end_date ? "error" : ""}
+                      help={errors.end_date}
+                    >
+                      <DatePicker
+                        value={formData.end_date ? dayjs(formData.end_date) : null}
+                        onChange={(date) =>
+                          setFormData({
+                            ...formData,
+                            end_date: date ? date.format("YYYY-MM-DD") : "",
+                          })
+                        }
+                        format="MM/DD/YYYY"
+                        placeholder="Select end date"
+                        style={{ width: "100%" }}
+                        inputReadOnly={true}
+                        allowClear={true}
+                        disabledDate={(current) =>
+                          formData.start_date
+                            ? current &&
+                              current < dayjs(formData.start_date).startOf("day")
+                            : false
+                        }
+                      />
                     </Form.Item>
                   </Col>
                 </>
@@ -2556,19 +2639,12 @@ export default function AccountManagement() {
             <Row gutter={16}>
               <Col xs={24} sm={8}>
                 <Form.Item
-                  label={
-                    <>
-                      First Name <span style={{ color: "red" }}>*</span>
-                    </>
-                  }
+                  label={<>First Name <span style={{ color: "red" }}>*</span></>}
                 >
                   <Input
                     value={adminFormData.first_name}
                     onChange={(e) =>
-                      setAdminFormData({
-                        ...adminFormData,
-                        first_name: e.target.value,
-                      })
+                      setAdminFormData({ ...adminFormData, first_name: e.target.value })
                     }
                     placeholder="Enter first name"
                   />
@@ -2579,10 +2655,7 @@ export default function AccountManagement() {
                   <Input
                     value={adminFormData.middle_name}
                     onChange={(e) =>
-                      setAdminFormData({
-                        ...adminFormData,
-                        middle_name: e.target.value,
-                      })
+                      setAdminFormData({ ...adminFormData, middle_name: e.target.value })
                     }
                     placeholder="Enter middle name"
                   />
@@ -2590,19 +2663,12 @@ export default function AccountManagement() {
               </Col>
               <Col xs={24} sm={8}>
                 <Form.Item
-                  label={
-                    <>
-                      Last Name <span style={{ color: "red" }}>*</span>
-                    </>
-                  }
+                  label={<>Last Name <span style={{ color: "red" }}>*</span></>}
                 >
                   <Input
                     value={adminFormData.last_name}
                     onChange={(e) =>
-                      setAdminFormData({
-                        ...adminFormData,
-                        last_name: e.target.value,
-                      })
+                      setAdminFormData({ ...adminFormData, last_name: e.target.value })
                     }
                     placeholder="Enter last name"
                   />
@@ -2613,10 +2679,7 @@ export default function AccountManagement() {
                   <Input
                     value={adminFormData.contact_number}
                     onChange={(e) =>
-                      setAdminFormData({
-                        ...adminFormData,
-                        contact_number: e.target.value,
-                      })
+                      setAdminFormData({ ...adminFormData, contact_number: e.target.value })
                     }
                     placeholder="Enter contact number"
                   />
@@ -2625,11 +2688,7 @@ export default function AccountManagement() {
               <Col xs={24} sm={8}>
                 <Form.Item label="Birthday">
                   <DatePicker
-                    value={
-                      adminFormData.birthday
-                        ? dayjs(adminFormData.birthday)
-                        : null
-                    }
+                    value={adminFormData.birthday ? dayjs(adminFormData.birthday) : null}
                     onChange={(date) => {
                       if (date) {
                         setAdminFormData({
@@ -2660,10 +2719,7 @@ export default function AccountManagement() {
                   <Input
                     value={adminFormData.profile}
                     onChange={(e) =>
-                      setAdminFormData({
-                        ...adminFormData,
-                        profile: e.target.value,
-                      })
+                      setAdminFormData({ ...adminFormData, profile: e.target.value })
                     }
                     placeholder="Enter profile picture URL"
                   />
@@ -2671,20 +2727,13 @@ export default function AccountManagement() {
               </Col>
               <Col xs={24} sm={12}>
                 <Form.Item
-                  label={
-                    <>
-                      Email <span style={{ color: "red" }}>*</span>
-                    </>
-                  }
+                  label={<>Email <span style={{ color: "red" }}>*</span></>}
                 >
                   <Input
                     type="email"
                     value={adminFormData.email}
                     onChange={(e) =>
-                      setAdminFormData({
-                        ...adminFormData,
-                        email: e.target.value,
-                      })
+                      setAdminFormData({ ...adminFormData, email: e.target.value })
                     }
                     placeholder="Enter email"
                   />
@@ -2692,19 +2741,12 @@ export default function AccountManagement() {
               </Col>
               <Col xs={24} sm={12}>
                 <Form.Item
-                  label={
-                    <>
-                      Password <span style={{ color: "red" }}>*</span>
-                    </>
-                  }
+                  label={<>Password <span style={{ color: "red" }}>*</span></>}
                 >
                   <Input.Password
                     value={adminFormData.password}
                     onChange={(e) =>
-                      setAdminFormData({
-                        ...adminFormData,
-                        password: e.target.value,
-                      })
+                      setAdminFormData({ ...adminFormData, password: e.target.value })
                     }
                     placeholder="Enter password"
                     iconRender={(visible) =>
@@ -2715,19 +2757,12 @@ export default function AccountManagement() {
               </Col>
               <Col xs={24} sm={12}>
                 <Form.Item
-                  label={
-                    <>
-                      Confirm Password <span style={{ color: "red" }}>*</span>
-                    </>
-                  }
+                  label={<>Confirm Password <span style={{ color: "red" }}>*</span></>}
                 >
                   <Input.Password
                     value={adminFormData.confirmPassword}
                     onChange={(e) =>
-                      setAdminFormData({
-                        ...adminFormData,
-                        confirmPassword: e.target.value,
-                      })
+                      setAdminFormData({ ...adminFormData, confirmPassword: e.target.value })
                     }
                     placeholder="Confirm password"
                     iconRender={(visible) =>
@@ -2798,7 +2833,6 @@ export default function AccountManagement() {
           width={900}
           maskClosable={true}
         >
-          {/* Counts and Stats */}
           <div
             style={{
               marginBottom: 24,
@@ -2810,10 +2844,7 @@ export default function AccountManagement() {
             <Row gutter={16}>
               <Col xs={24} sm={8}>
                 <div style={{ textAlign: "center" }}>
-                  <Text
-                    type="secondary"
-                    style={{ display: "block", fontSize: 12, marginBottom: 4 }}
-                  >
+                  <Text type="secondary" style={{ display: "block", fontSize: 12, marginBottom: 4 }}>
                     Total Events
                   </Text>
                   <Text strong style={{ fontSize: 24, color: "#262626" }}>
@@ -2823,10 +2854,7 @@ export default function AccountManagement() {
               </Col>
               <Col xs={24} sm={8}>
                 <div style={{ textAlign: "center" }}>
-                  <Text
-                    type="secondary"
-                    style={{ display: "block", fontSize: 12, marginBottom: 4 }}
-                  >
+                  <Text type="secondary" style={{ display: "block", fontSize: 12, marginBottom: 4 }}>
                     Volunteered
                   </Text>
                   <Text strong style={{ fontSize: 24, color: "#1890ff" }}>
@@ -2836,10 +2864,7 @@ export default function AccountManagement() {
               </Col>
               <Col xs={24} sm={8}>
                 <div style={{ textAlign: "center" }}>
-                  <Text
-                    type="secondary"
-                    style={{ display: "block", fontSize: 12, marginBottom: 4 }}
-                  >
+                  <Text type="secondary" style={{ display: "block", fontSize: 12, marginBottom: 4 }}>
                     Participated
                   </Text>
                   <Text strong style={{ fontSize: 24, color: "#52c41a" }}>
@@ -2850,20 +2875,11 @@ export default function AccountManagement() {
             </Row>
           </div>
 
-          {/* Search and Filters */}
           <Card style={{ marginBottom: 16, padding: 0 }}>
             <div style={{ padding: "16px" }}>
               <Row gutter={16}>
                 <Col xs={24} sm={12}>
-                  <Text
-                    strong
-                    style={{
-                      fontFamily: "Poppins",
-                      fontSize: 14,
-                      display: "block",
-                      marginBottom: 8,
-                    }}
-                  >
+                  <Text strong style={{ fontFamily: "Poppins", fontSize: 14, display: "block", marginBottom: 8 }}>
                     Search Event:
                   </Text>
                   <Input
@@ -2881,26 +2897,13 @@ export default function AccountManagement() {
                   />
                 </Col>
                 <Col xs={24} sm={6}>
-                  <Text
-                    strong
-                    style={{
-                      fontFamily: "Poppins",
-                      fontSize: 14,
-                      display: "block",
-                      marginBottom: 8,
-                    }}
-                  >
+                  <Text strong style={{ fontFamily: "Poppins", fontSize: 14, display: "block", marginBottom: 8 }}>
                     Type:
                   </Text>
                   <Select
                     value={eventsFilterType}
                     onChange={setEventsFilterType}
-                    style={{
-                      width: "100%",
-                      fontFamily: "Poppins, sans-serif",
-                      fontWeight: 500,
-                      height: "42px",
-                    }}
+                    style={{ width: "100%", fontFamily: "Poppins, sans-serif", fontWeight: 500, height: "42px" }}
                   >
                     <Option value="all">All Types</Option>
                     <Option value="volunteer">Volunteer</Option>
@@ -2908,26 +2911,13 @@ export default function AccountManagement() {
                   </Select>
                 </Col>
                 <Col xs={24} sm={6}>
-                  <Text
-                    strong
-                    style={{
-                      fontFamily: "Poppins",
-                      fontSize: 14,
-                      display: "block",
-                      marginBottom: 8,
-                    }}
-                  >
+                  <Text strong style={{ fontFamily: "Poppins", fontSize: 14, display: "block", marginBottom: 8 }}>
                     Status:
                   </Text>
                   <Select
                     value={eventsStatusFilter}
                     onChange={setEventsStatusFilter}
-                    style={{
-                      width: "100%",
-                      fontFamily: "Poppins, sans-serif",
-                      fontWeight: 500,
-                      height: "42px",
-                    }}
+                    style={{ width: "100%", fontFamily: "Poppins, sans-serif", fontWeight: 500, height: "42px" }}
                   >
                     <Option value="all">All Status</Option>
                     <Option value="pending">Pending</Option>
@@ -2939,7 +2929,6 @@ export default function AccountManagement() {
             </div>
           </Card>
 
-          {/* Events List */}
           <div style={{ maxHeight: "400px", overflowY: "auto" }}>
             {loadingVolunteers ? (
               <div style={{ textAlign: "center", padding: "40px" }}>
@@ -2948,9 +2937,7 @@ export default function AccountManagement() {
             ) : filteredEvents.length === 0 ? (
               <Empty
                 description={
-                  eventsSearchTerm ||
-                  eventsFilterType !== "all" ||
-                  eventsStatusFilter !== "all"
+                  eventsSearchTerm || eventsFilterType !== "all" || eventsStatusFilter !== "all"
                     ? "No events match your filters"
                     : "No events found"
                 }
@@ -2961,55 +2948,20 @@ export default function AccountManagement() {
                 {filteredEvents.map((volunteer, index) => (
                   <Card
                     key={volunteer._id || index}
-                    style={{
-                      marginBottom: 12,
-                      border: "1px solid #f0f0f0",
-                      borderRadius: 8,
-                    }}
+                    style={{ marginBottom: 12, border: "1px solid #f0f0f0", borderRadius: 8 }}
                     bodyStyle={{ padding: 16 }}
                   >
-                    <div
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "flex-start",
-                      }}
-                    >
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                       <div style={{ flex: 1 }}>
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 12,
-                            marginBottom: 8,
-                          }}
-                        >
-                          <Text
-                            strong
-                            style={{ fontSize: 16, fontFamily: "Poppins" }}
-                          >
+                        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8 }}>
+                          <Text strong style={{ fontSize: 16, fontFamily: "Poppins" }}>
                             {volunteer.eventTitle || "General Volunteer"}
                           </Text>
-                          <Tag
-                            color={
-                              volunteer.registration_type === "volunteer"
-                                ? "blue"
-                                : "green"
-                            }
-                          >
-                            {volunteer.registration_type === "volunteer"
-                              ? "Volunteer"
-                              : "Participant"}
+                          <Tag color={volunteer.registration_type === "volunteer" ? "blue" : "green"}>
+                            {volunteer.registration_type === "volunteer" ? "Volunteer" : "Participant"}
                           </Tag>
                         </div>
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 12,
-                            marginTop: 8,
-                          }}
-                        >
+                        <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 8 }}>
                           <Tag
                             color={
                               volunteer.status === "confirmed"
@@ -3023,9 +2975,7 @@ export default function AccountManagement() {
                           </Tag>
                           <Text type="secondary" style={{ fontSize: 12 }}>
                             Registered:{" "}
-                            {volunteer.createdAt
-                              ? formatDate(volunteer.createdAt)
-                              : "N/A"}
+                            {volunteer.createdAt ? formatDate(volunteer.createdAt) : "N/A"}
                           </Text>
                         </div>
                       </div>
@@ -3038,8 +2988,7 @@ export default function AccountManagement() {
 
           <div style={{ marginTop: 16, textAlign: "right" }}>
             <Text type="secondary" style={{ fontSize: 12 }}>
-              Showing {filteredEvents.length} of {userVolunteers.length}{" "}
-              event(s)
+              Showing {filteredEvents.length} of {userVolunteers.length} event(s)
             </Text>
           </div>
         </Modal>
@@ -3066,27 +3015,12 @@ export default function AccountManagement() {
           maskClosable={true}
         >
           <div style={{ padding: "16px 0" }}>
-            <Text
-              style={{
-                display: "block",
-                marginBottom: 16,
-                fontSize: 14,
-                color: "#666",
-              }}
-            >
+            <Text style={{ display: "block", marginBottom: 16, fontSize: 14, color: "#666" }}>
               Are you sure you want to send a password reset email to{" "}
               <Text strong>{resettingPasswordUser?.email}</Text>?
             </Text>
-            <Text
-              style={{
-                display: "block",
-                fontSize: 13,
-                color: "#999",
-                fontStyle: "italic",
-              }}
-            >
-              The user will receive an email with instructions to reset their
-              password.
+            <Text style={{ display: "block", fontSize: 13, color: "#999", fontStyle: "italic" }}>
+              The user will receive an email with instructions to reset their password.
             </Text>
           </div>
           <div

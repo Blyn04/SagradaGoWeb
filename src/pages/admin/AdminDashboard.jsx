@@ -39,6 +39,8 @@ export default function AdminDashboard() {
   const [aiAnalysis, setAiAnalysis] = useState("");
   const [loadingAI, setLoadingAI] = useState(false);
   const [bookingMonthFilter, setBookingMonthFilter] = useState(null);
+  // ── NEW: donation month filter ──
+  const [donationMonthFilter, setDonationMonthFilter] = useState(null);
   const [stats, setStats] = useState({
     totalUsers: 0,
     totalPriests: 0,
@@ -52,6 +54,20 @@ export default function AdminDashboard() {
   useEffect(() => {
     fetchDashboardData();
   }, []);
+
+  // ── Derive filtered donation data based on selected month ──
+  const filteredDonationReportData = donationMonthFilter
+    ? donationReportData.filter((d) => {
+        if (!d.date) return false;
+        return dayjs(d.date).format("YYYY-MM") === donationMonthFilter;
+      })
+    : donationReportData;
+
+  // ── Compute total amount for the current (filtered) donation set ──
+  const filteredDonationTotal = filteredDonationReportData.reduce(
+    (sum, d) => sum + (parseFloat(d.amount) || 0),
+    0
+  );
 
   const generateAIAnalysis = (donationsData = null, bookingsData = null, currentStatsData = null, monthlyDataArray = null) => {
     try {
@@ -111,7 +127,6 @@ export default function AdminDashboard() {
         const trendText = trend === "increasing" ? "increasing" : trend === "decreasing" ? "decreasing" : "stable";
         const recentTotal = recentMonths.reduce((sum, month) => sum + (donationsByMonth[month] || 0), 0);
         insights += `• Donation trend shows ${trendText} activity with ${recentTotal} donation${recentTotal !== 1 ? "s" : ""} across the last ${recentMonths.length} month${recentMonths.length !== 1 ? "s" : ""}.\n\n`;
-
       } else {
         insights += "• No donation timeline data available yet.\n\n";
       }
@@ -129,11 +144,9 @@ export default function AdminDashboard() {
 
         if (otherMethods) {
           insights += `• ${topMethod[0]} is the most popular payment method at ${topPercentage}%, followed by ${otherMethods}.\n\n`;
-
         } else {
           insights += `• All donations are processed through ${topMethod[0]} (100%).\n\n`;
         }
-
       } else {
         insights += "• No payment method data available.\n\n";
       }
@@ -153,11 +166,9 @@ export default function AdminDashboard() {
 
         if (otherTypes) {
           insights += `• ${topType[0]} leads with ${topPercentage}% of bookings, followed by ${otherTypes}.\n\n`;
-
         } else {
           insights += `• All bookings are for ${topType[0]} (100%).\n\n`;
         }
-
       } else {
         insights += "• No booking type data available.\n\n";
       }
@@ -174,7 +185,6 @@ export default function AdminDashboard() {
           return `${status.charAt(0).toUpperCase() + status.slice(1)} (${percentage}%)`;
         }).join(", ");
         insights += `• Booking status distribution: ${statusSummary}.\n\n`;
-
       } else {
         insights += "• No booking status data available.\n\n";
       }
@@ -187,7 +197,6 @@ export default function AdminDashboard() {
         const latestMonth = bookingMonths[bookingMonths.length - 1];
         const latestCount = bookingsByMonth[latestMonth] || 0;
         insights += `• Recent booking activity shows ${recentBookingTotal} booking${recentBookingTotal !== 1 ? "s" : ""} across ${bookingMonths.length} month${bookingMonths.length !== 1 ? "s" : ""}, with ${latestCount} booking${latestCount !== 1 ? "s" : ""} in ${dayjs(latestMonth).format("MMM YYYY")}.\n\n`;
-
       } else {
         insights += "• No booking timeline data available.\n\n";
       }
@@ -307,10 +316,8 @@ export default function AdminDashboard() {
           const groom = `${booking.groom_first_name || ''} ${booking.groom_last_name || ''}`.trim();
           const bride = `${booking.bride_first_name || ''} ${booking.bride_last_name || ''}`.trim();
           return groom && bride ? `${groom} & ${bride}` : (groom || bride || booking.full_name || "Wedding");
-
         } else if (booking.bookingType === "Burial") {
           return booking.deceased_name || booking.name || booking.user?.name || booking.full_name || "Burial Service";
-
         } else {
           return booking.user?.name || booking.name || booking.full_name || `${booking.first_name || ""} ${booking.last_name || ""}`.trim() || booking.bookingType || "Event";
         }
@@ -323,7 +330,6 @@ export default function AdminDashboard() {
       const eventsForCalendar = confirmedBookings.map((b) => {
         if (!b.date) return null;
         const bookingDate = dayjs(b.date);
-
         if (!bookingDate.isValid()) return null;
         const bookingType = b.bookingType || "Event";
 
@@ -351,7 +357,6 @@ export default function AdminDashboard() {
       const eventsForCalendarFromEvents = allEvents.map((evt) => {
         if (!evt.date) return null;
         const eventDate = dayjs(evt.date);
-
         if (!eventDate.isValid()) return null;
         const eventType = evt.type === "event" ? "Event" : "Activity";
 
@@ -359,7 +364,7 @@ export default function AdminDashboard() {
           date: eventDate.format("YYYY-MM-DD"),
           name: evt.title || eventType,
           type: eventType,
-          status: "confirmed", 
+          status: "confirmed",
           title: evt.title,
           description: evt.description,
           location: evt.location,
@@ -420,7 +425,6 @@ export default function AdminDashboard() {
 
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
-
     } finally {
       setLoading(false);
     }
@@ -433,12 +437,10 @@ export default function AdminDashboard() {
     if (Array.isArray(bookingOrBookings)) {
       setDayBookings(bookingOrBookings);
       setSelectedBooking(clickedBooking || bookingOrBookings[0]);
-
     } else {
       setDayBookings([]);
       setSelectedBooking(bookingOrBookings);
     }
-
     setIsModalVisible(true);
   };
 
@@ -483,7 +485,6 @@ export default function AdminDashboard() {
     },
   ];
 
-
   if (loading) {
     return (
       <div className="dashboard-loading-container">
@@ -495,14 +496,11 @@ export default function AdminDashboard() {
   const renderBookingDetails = () => {
     if (!selectedBooking) return null;
     const details = [];
-
     const isEvent = selectedBooking.title && (selectedBooking.type === "Event" || selectedBooking.type === "Activity");
 
     Object.keys(selectedBooking).forEach((key) => {
       if (["_id", "__v", "user", "name"].includes(key)) return;
-
       const value = selectedBooking[key];
-
       if (value !== null && value !== undefined && value !== "") {
         details.push({ key, value });
       }
@@ -510,7 +508,6 @@ export default function AdminDashboard() {
 
     return (
       <div>
-        {/* Show booking selector if there are multiple bookings */}
         {dayBookings.length > 1 && (
           <div style={{ marginBottom: 20, padding: 12, backgroundColor: "#f5f5f5", borderRadius: 6 }}>
             <Text strong style={{ display: "block", marginBottom: 8 }}>
@@ -526,7 +523,8 @@ export default function AdminDashboard() {
                   size="small"
                   onClick={() => handleSelectBooking(booking)}
                 >
-                  {booking.title || booking.bookingName || booking.bookingType || booking.type} {booking.time || (booking.time_start && booking.time_end ? `(${booking.time_start} - ${booking.time_end})` : booking.time_start ? `(${booking.time_start})` : "")}
+                  {booking.title || booking.bookingName || booking.bookingType || booking.type}{" "}
+                  {booking.time || (booking.time_start && booking.time_end ? `(${booking.time_start} - ${booking.time_end})` : booking.time_start ? `(${booking.time_start})` : "")}
                 </Button>
               ))}
             </Space>
@@ -551,20 +549,14 @@ export default function AdminDashboard() {
             </Col>
           )}
           {details.map(({ key, value }) => {
-            // Skip fields that are already displayed above
             if (isEvent && ["title", "type", "status"].includes(key)) return null;
             if (!isEvent && ["bookingType", "type", "status"].includes(key)) return null;
-            
-            // Format display names
             let displayKey = key.replace(/_/g, " ");
             displayKey = displayKey.replace(/\b\w/g, l => l.toUpperCase());
-            
-            // Format date values
             let displayValue = value;
             if (key === "date" && value) {
               displayValue = dayjs(value).format("MMMM DD, YYYY");
             }
-            
             return (
               <Col span={12} key={key}>
                 <Text strong>{displayKey}:</Text>
@@ -575,6 +567,36 @@ export default function AdminDashboard() {
         </Row>
       </div>
     );
+  };
+
+  // ── Helper: build month options for a given data array ──
+  const getMonthOptions = (dataArray, dateField = "date") => {
+    const monthSet = new Set();
+    dataArray.forEach((item) => {
+      if (item[dateField]) {
+        monthSet.add(dayjs(item[dateField]).format("YYYY-MM"));
+      }
+    });
+
+    // Sort descending (most recent first)
+    const sorted = Array.from(monthSet).sort((a, b) => b.localeCompare(a));
+
+    return [
+      { value: null, label: "All Months" },
+      ...sorted.map((m) => ({ value: m, label: dayjs(m).format("MMMM YYYY") })),
+    ];
+  };
+
+  const getBookingMonthOptions = () => {
+    const options = [{ value: null, label: "All Months" }];
+    const currentDate = dayjs();
+    for (let i = 0; i < 12; i++) {
+      const monthDate = currentDate.subtract(i, "month");
+      const value = monthDate.format("YYYY-MM");
+      const label = monthDate.format("MMMM YYYY");
+      options.push({ value, label });
+    }
+    return options;
   };
 
   const donationColumns = [
@@ -607,19 +629,19 @@ export default function AdminDashboard() {
     { title: "Value", dataIndex: "value", key: "value" },
   ];
 
-  const getBookingMonthOptions = () => {
-    const options = [{ value: null, label: "All Months" }];
-    const currentDate = dayjs();
-
-    for (let i = 0; i < 12; i++) {
-      const monthDate = currentDate.subtract(i, "month");
-      const value = monthDate.format("YYYY-MM");
-      const label = monthDate.format("MMMM YYYY");
-      options.push({ value, label });
-    }
-    
-    return options;
-  };
+  // ── Summary row appended to the exported donation data ──
+  const donationExportData = [
+    ...filteredDonationReportData,
+    {
+      id: "TOTAL",
+      donor_name: "",
+      email: "",
+      amount: filteredDonationTotal,
+      paymentMethod: "",
+      date: "",
+      transaction_id: `TOTAL (${filteredDonationReportData.length} record${filteredDonationReportData.length !== 1 ? "s" : ""})`,
+    },
+  ];
 
   return (
     <div className="dashboard-container">
@@ -702,28 +724,6 @@ export default function AdminDashboard() {
           )}
         </Row>
 
-        {/* Quick Actions */}
-        {/* <Card title={<Title level={4} className="dashboard-quick-actions-title">Quick Actions</Title>} className="dashboard-quick-actions-card">
-          <Row gutter={[16, 16]}>
-            {quickActions.map((action, index) => {
-              const cardClass =
-                action.path.includes("account") ? "dashboard-quick-action-card-users" :
-                  action.path.includes("bookings") ? "dashboard-quick-action-card-bookings" :
-                    action.path.includes("donations") ? "dashboard-quick-action-card-donations" :
-                      "dashboard-quick-action-card-volunteers";
-              return (
-                <Col xs={24} sm={12} lg={6} key={index}>
-                  <Card hoverable onClick={() => navigate(action.path)} className={`dashboard-quick-action-card ${cardClass}`} bodyStyle={{ padding: "24px" }}>
-                    <div className="dashboard-quick-action-icon">{action.icon}</div>
-                    <Title level={5} className="dashboard-quick-action-title">{action.title}</Title>
-                    <Text type="secondary" className="dashboard-quick-action-description">{action.description}</Text>
-                  </Card>
-                </Col>
-              );
-            })}
-          </Row>
-        </Card> */}
-
         {/* AI Stats Analysis with System Overview Report and System Overview - Side by Side */}
         <Row gutter={[4, 16]} align="top" style={{ marginBottom: 15 }}>
           <Col xs={24} lg={12}>
@@ -766,7 +766,6 @@ export default function AdminDashboard() {
                 >
                   {aiAnalysis.split("\n").map((line, index) => {
                     const isHeader = /^[📈💳📅📋⏱️💡]/.test(line);
-
                     return (
                       <div
                         key={index}
@@ -835,7 +834,7 @@ export default function AdminDashboard() {
           </Row>
         </Card>
 
-        {/* System Overview */}
+        {/* Calendar */}
         <Card
           title={<Title level={4} className="dashboard-system-overview-title">Calendar</Title>}
           className="dashboard-system-overview-card"
@@ -860,8 +859,59 @@ export default function AdminDashboard() {
           <ReportTemplate
             title={<span className="report-template-title">Donation Report</span>}
             columns={donationColumns}
-            data={donationReportData}
+            // Pass filtered+total-appended data so the export picks it up
+            data={donationExportData}
             reportType="donation"
+            monthFilter={donationMonthFilter}
+            filter={
+              <Row gutter={[16, 16]} align="middle">
+                {/* Month selector */}
+                <Col flex="auto">
+                  <Text strong>Filter by Month:</Text>
+                </Col>
+                <Col flex="200px">
+                  <Select
+                    style={{ width: "100%", fontFamily: "Poppins, sans-serif", fontWeight: 500 }}
+                    value={donationMonthFilter}
+                    onChange={setDonationMonthFilter}
+                    placeholder="Select month"
+                    allowClear
+                  >
+                    {getMonthOptions(donationReportData).map((option) => (
+                      <Option key={option.value || "all"} value={option.value}>
+                        {option.label}
+                      </Option>
+                    ))}
+                  </Select>
+                </Col>
+                {/* Live total for the current filter */}
+                <Col span={24}>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      padding: "8px 12px",
+                      background: "#f6ffed",
+                      border: "1px solid #b7eb8f",
+                      borderRadius: 6,
+                    }}
+                  >
+                    <Text strong style={{ color: "#389e0d" }}>
+                      {donationMonthFilter
+                        ? `Total for ${dayjs(donationMonthFilter).format("MMMM YYYY")}`
+                        : "Total (All Time)"}
+                    </Text>
+                    <Text strong style={{ color: "#389e0d", fontSize: 16 }}>
+                      ₱{filteredDonationTotal.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      <span style={{ fontSize: 12, fontWeight: 400, marginLeft: 6, color: "#52c41a" }}>
+                        ({filteredDonationReportData.length} record{filteredDonationReportData.length !== 1 ? "s" : ""})
+                      </span>
+                    </Text>
+                  </div>
+                </Col>
+              </Row>
+            }
           />
         </Col>
         <Col xs={24} lg={12}>
