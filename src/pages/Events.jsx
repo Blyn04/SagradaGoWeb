@@ -32,8 +32,6 @@ export default function Events() {
   const [current, setCurrent] = useState(0);
 
   const [searchText, setSearchText] = useState("");
-  const [locationFilter, setLocationFilter] = useState("");
-  const [dateFilter, setDateFilter] = useState("");
 
   const [showSignInAlert, setShowSignInAlert] = useState(false);
 
@@ -52,8 +50,9 @@ export default function Events() {
     setIsLoading(true);
     try {
       const { data } = await axios.get(`${API_URL}/getAllEvents`);
-      setEvents(data.events);
-      setFilteredEvents(data.events);
+      const eventList = Array.isArray(data?.events) ? data.events : [];
+      setEvents(eventList);
+      setFilteredEvents(eventList);
     } catch (err) {
       console.error("Error fetching events:", err);
     } finally {
@@ -79,13 +78,24 @@ export default function Events() {
   const [sortOrder, setSortOrder] = useState("asc");
 
   useEffect(() => {
-    let filtered = [...events];
+    let filtered = Array.isArray(events) ? [...events] : [];
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    filtered = filtered.filter((e) => {
+      if (!e?.date) return false;
+      const eventDate = new Date(e.date);
+      if (Number.isNaN(eventDate.getTime())) return false;
+      return eventDate >= today;
+    });
 
     if (searchText) {
+      const query = searchText.toLowerCase();
       filtered = filtered.filter(
         (e) =>
-          e.title.toLowerCase().includes(searchText.toLowerCase()) ||
-          e.description.toLowerCase().includes(searchText.toLowerCase()),
+          (e.title?.toLowerCase() ?? "").includes(query) ||
+          (e.description?.toLowerCase() ?? "").includes(query),
       );
     }
 
@@ -229,7 +239,7 @@ export default function Events() {
           <p style={{ textAlign: "center" }}>No events found.</p>
         ) : (
           <div className="events-grid">
-            {filteredEvents.map((event, index) => (
+            {filteredEvents.map((event) => (
               <div key={event._id} className="event-card">
                 <div
                   className="event-card-clickable"
@@ -246,9 +256,9 @@ export default function Events() {
                   <div className="event-content">
                     <h3>{event.title}</h3>
                     <p className="event-description">
-                      {event.description.length > 80
-                        ? event.description.substring(0, 80) + "..."
-                        : event.description}
+                      {(event.description ?? "").length > 80
+                        ? `${(event.description ?? "").substring(0, 80)}...`
+                        : (event.description ?? "")}
                     </p>
                     <div className="event-meta">
                       <span className="event-location">{event.location}</span>
@@ -332,7 +342,7 @@ export default function Events() {
               <hr className="eventmodal-divider" />
               <p className="eventmodal-description-full">
                 {selectedEvent.description &&
-                selectedEvent.description.trim() !== ""
+                  selectedEvent.description.trim() !== ""
                   ? selectedEvent.description
                   : "No description displayed."}
               </p>
@@ -550,8 +560,6 @@ export default function Events() {
         onClose={() => setShowSignInAlert(false)}
         message="Please sign in to register for this event."
       />
-
-      {showSignin && <SignInPage />}
 
       <Footer />
     </>

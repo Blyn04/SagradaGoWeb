@@ -5,11 +5,13 @@ import Button from "../components/Button";
 import { NavbarContext } from "../context/AllContext";
 import SignUpPage from "./SignUpPage";
 import ForgotPasswordModal from "../components/ForgotPasswordModal";
+import ChangePasswordModal from "../components/ChangePasswordModal";
 import { useNavigate } from "react-router-dom";
 import Cookies from "js-cookie";
 import axios from "axios";
 import { API_URL } from "../Constants";
 import { EyeInvisibleOutlined, EyeTwoTone } from "@ant-design/icons";
+import "../styles/signup.css";
 
 export default function SignInPage() {
   const navigate = useNavigate();
@@ -21,6 +23,8 @@ export default function SignInPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [showChangePassword, setShowChangePassword] = useState(false);
+  const [pendingLogin, setPendingLogin] = useState(null);
 
   // async function SignIn() {
   //   setError("");
@@ -266,7 +270,7 @@ export default function SignInPage() {
 
   //     const backendUser = loginResponse.data.user;
   //     setCurrentUser(backendUser);
-  //     localStorage.setItem("currentUser", JSON.stringify(backendUser));
+  //     localStorage.setItem("currentUser", JSON.stringify(sessionUser));
 
   //     Cookies.set("email", inputEmail, { expires: 7 });
   //     Cookies.set("uid", backendUser.uid, { expires: 7 });
@@ -303,6 +307,29 @@ export default function SignInPage() {
   //     setLoading(false);
   //   }
   // }
+
+  const completeUserSession = (backendUser, email) => {
+    const sessionUser = { ...backendUser, must_change_password: false };
+    setCurrentUser(sessionUser);
+    localStorage.setItem("currentUser", JSON.stringify(sessionUser));
+    Cookies.set("email", email, { expires: 7 });
+    Cookies.set("uid", backendUser.uid, { expires: 7 });
+    Cookies.set("isAdmin", "false", { expires: 7 });
+    Cookies.set(
+      "fullname",
+      `${backendUser.first_name} ${backendUser.middle_name} ${backendUser.last_name}`.trim(),
+      { expires: 7 },
+    );
+    Cookies.set("contact", backendUser.contact_number, { expires: 7 });
+
+    const sessionTimeout = Date.now() + 5 * 60 * 1000;
+    localStorage.setItem("sessionTimeout", sessionTimeout.toString());
+
+    navigate("/");
+    setShowSignin(false);
+    setShowChangePassword(false);
+    setPendingLogin(null);
+  };
 
   async function SignIn() {
     setError("");
@@ -356,11 +383,14 @@ export default function SignInPage() {
 
     try {
       // --- Step 2: Check for Admin Privileges ---
-      const adminResponse = await axios.post(`${API_URL}/findAdmin`, {
-        uid: firebaseUser.uid,
-      });
+      // 404 from findAdmin means "not an admin" — not an error; continue to /login
+      const adminResponse = await axios.post(
+        `${API_URL}/findAdmin`,
+        { uid: firebaseUser.uid },
+        { validateStatus: (status) => status < 500 },
+      );
 
-      if (adminResponse.data?.user) {
+      if (adminResponse.status === 200 && adminResponse.data?.user) {
         const adminData = adminResponse.data.user;
 
         // Check if Admin account is disabled
@@ -403,8 +433,6 @@ export default function SignInPage() {
       });
 
       const userData = loginResponse.data.user;
-      
-      
 
       // Check if Regular User account is disabled
       if (userData.is_active === false) {
@@ -413,82 +441,55 @@ export default function SignInPage() {
         return;
       }
 
-      const backendUser = normalizeUser(userData);
+      let backendUser = normalizeUser(userData);
+      let mustChangePassword = userData.must_change_password === true;
 
-      // Set State & Storage
-      setCurrentUser(backendUser);
+      // Confirm flag from findUser (DB source of truth)
+      try {
+        const findUserResponse = await axios.post(`${API_URL}/findUser`, {
+          uid: firebaseUser.uid,
+        });
+        const profile = findUserResponse.data?.user;
+        if (profile) {
+          backendUser = normalizeUser({ ...backendUser, ...profile });
+          if (profile.must_change_password === true) {
+            mustChangePassword = true;
+          }
+        }
+      } catch (findErr) {
+        console.warn("Could not verify must_change_password:", findErr);
+      }
 
+      if (mustChangePassword) {
+        setPendingLogin({
+          firebaseUser,
+          backendUser,
+          currentPassword: inputPassword,
+        });
+        setShowChangePassword(true);
+        return;
+      }
 
-      localStorage.setItem("currentUser", JSON.stringify(backendUser));
-
-
-      
-
-      // Set Cookies
-      Cookies.set("email", inputEmail, { expires: 7 });
-      Cookies.set("uid", backendUser.uid, { expires: 7 });
-      Cookies.set("isAdmin", "false", { expires: 7 });
-      Cookies.set(
-        "fullname",
-        `${backendUser.first_name} ${backendUser.middle_name} ${backendUser.last_name}`.trim(),
-        { expires: 7 },
-      );
-      console.log("Backend User Data:", backendUser);
-      
-      Cookies.set("contact", backendUser.contact_number, { expires: 7 });
-
-      const sessionTimeout = Date.now() + 5 * 60 * 1000;
-      localStorage.setItem("sessionTimeout", sessionTimeout.toString());
-
-      navigate("/");
-      setShowSignin(false);
+      completeUserSession(backendUser, inputEmail);
     } catch (err) {
       console.error("Backend validation failed:", err);
       if (err.response?.status === 401) {
         setError("Invalid credentials or session expired.");
       } else if (err.response?.status === 403) {
         setError(err.response.data?.message || "Access denied.");
-      } else if (err.response?.status === 404 || err.code === "ERR_NETWORK") {
-        // Backend unreachable: sign in with Firebase only so user can still use the app
-
-
-
-            const findUserResponse = await axios.post(`${API_URL}/findUser`, {
-              uid: firebaseUser.uid,  
-            });
-
-
-
-            const currentUserData = findUserResponse.data.user;
-            console.log("find user respoonse",findUserResponse.data.user);
-            
-        
-
-        const minimalUser = normalizeUser({
-          uid: firebaseUser.uid,
-          email: firebaseUser.email || inputEmail,
-          first_name: currentUserData?.first_name || "",
-          middle_name: currentUserData?.middle_name || "",
-          last_name: currentUserData?.last_name || "",
-          contact_number: currentUserData?.contact_number || "",
-          is_admin: false,
-        });
-        
-
-        setCurrentUser(minimalUser);
-        localStorage.setItem("currentUser", JSON.stringify(minimalUser));
-        localStorage.setItem("limitedAccess", "true"); // backend was unavailable
-        Cookies.set("email", inputEmail, { expires: 7 });
-        Cookies.set("uid", minimalUser.uid, { expires: 7 });
-        Cookies.set("isAdmin", "false", { expires: 7 });
-        Cookies.set("fullname", `${minimalUser.first_name} ${minimalUser.middle_name} ${minimalUser.last_name}`.trim(), { expires: 7 });
-        Cookies.set("contact", minimalUser.contact_number || "", { expires: 7 });
-
-        const sessionTimeout = Date.now() + 5 * 60 * 1000;
-        localStorage.setItem("sessionTimeout", sessionTimeout.toString());
-
-        navigate("/");
-        setShowSignin(false);
+      } else if (
+        err.code === "ERR_NETWORK" ||
+        err.message === "Network Error" ||
+        !err.response
+      ) {
+        setError(
+          `Cannot reach the API at ${API_URL}. If using localhost, start SagradaGoAPI on port 8080. Otherwise check your VITE_URL in .env and restart npm run dev.`,
+        );
+      } else if (err.response?.status === 404) {
+        setError(
+          err.response?.data?.message ||
+            "No account found with this email. Please sign up first.",
+        );
       } else {
         setError("An error occurred during login. Please try again.");
       }
@@ -607,14 +608,26 @@ export default function SignInPage() {
       {showSignup ? (
         <SignUpPage />
       ) : (
-        <div className="modal-overlay">
+        <>
+        <div
+          className="modal-overlay"
+          style={showChangePassword ? { pointerEvents: "none" } : undefined}
+        >
           <div className="modal-card">
             <div className="modal-close">
               <button
+                type="button"
                 onClick={() => {
+                  if (showChangePassword) return;
                   setShowSignin(false);
                   setShowSignup(false);
                 }}
+                disabled={showChangePassword}
+                style={
+                  showChangePassword
+                    ? { opacity: 0.4, cursor: "not-allowed" }
+                    : undefined
+                }
               >
                 ✕
               </button>
@@ -681,11 +694,25 @@ export default function SignInPage() {
             </button>
 
             <ForgotPasswordModal
-              visible={showForgotPassword}
+              visible={showForgotPassword && !showChangePassword}
               onClose={() => setShowForgotPassword(false)}
             />
           </div>
         </div>
+
+        {showChangePassword && pendingLogin && (
+          <ChangePasswordModal
+            visible={showChangePassword}
+            email={inputEmail}
+            uid={pendingLogin.backendUser.uid}
+            currentPassword={pendingLogin.currentPassword}
+            firebaseUser={pendingLogin.firebaseUser}
+            onSuccess={() =>
+              completeUserSession(pendingLogin.backendUser, inputEmail)
+            }
+          />
+        )}
+        </>
       )}
     </>
   );

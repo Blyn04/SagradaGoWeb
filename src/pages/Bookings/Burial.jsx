@@ -10,11 +10,11 @@ import { NavbarContext } from "../../context/AllContext";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import dayjs from "dayjs";
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { MobileTimePicker } from "@mui/x-date-pickers/MobileTimePicker";
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-
 import Cookies from "js-cookie";
+import BookingTimePicker, {
+  validateUserBookingTime,
+  USER_BOOKING_TIME_ERROR,
+} from "../../components/BookingTimePicker";
 
 import pdf_image from "../../assets/pdfImage.svg";
 import Modal from "../../components/Modal";
@@ -22,7 +22,8 @@ import Modal from "../../components/Modal";
 
 export default function Burial() {
 
-  const { setSelectedNavbar } = useContext(NavbarContext);
+  const { setSelectedNavbar, setTotalAmount } = useContext(NavbarContext);
+  
 
   const [showModalMessage, setShowModalMessage] = useState(false);
   const [modalMessage, setModalMessage] = useState();
@@ -53,6 +54,7 @@ export default function Burial() {
 
     if (!date) newErrors.date = true;
     if (!time) newErrors.time = true;
+    else if (!validateUserBookingTime(time)) newErrors.time = true;
 
     uploadFiles.forEach((f) => {
       if (!f.preview) newErrors[f.key] = true;
@@ -373,15 +375,18 @@ export default function Burial() {
     setShowModalMessage(false);
 
     if (bookComplete) {
-      setSelectedNavbar("Home");
-      navigate("/");
+      navigate("/payment-method");
     }
   };
 
   async function handleSubmit() {
     if (!validate()) {
       setShowModalMessage(true);
-      setModalMessage("Please fill in all required fields.");
+      setModalMessage(
+        time && !validateUserBookingTime(time)
+          ? USER_BOOKING_TIME_ERROR
+          : "Please fill in all required fields.",
+      );
       return;
     }
 
@@ -440,12 +445,13 @@ export default function Burial() {
       const res = await axios.post(`${API_URL}/createBurialWeb`, payload);
 
       setBookComplete(true);
+      setTotalAmount(1000)
 
       setShowModalMessage(true);
       setModalMessage("Burial booking submitted successfully!");
       setIsLoading(false);
 
-      navigate("/");
+      navigate("/payment-method");
       console.log("Saved:", res.data);
     } catch (err) {
       console.error("UPLOAD ERROR:", err);
@@ -549,35 +555,21 @@ export default function Burial() {
                     onKeyDown={(e) => e.preventDefault()}
                   />
                 ) : elem.type === "time" ? (
-                  <div
-                    className={`time-container ${errors.time ? "input-error" : ""}`}
+                  <BookingTimePicker
+                    value={time}
+                    onChange={(formatted) => {
+                      setTime(formatted);
+                      if (errors.time)
+                        setErrors((prev) => ({ ...prev, time: false }));
+                    }}
+                    error={errors.time}
+                    className={`time-container${errors.time ? " input-error" : ""}`}
                     style={{
                       borderRadius: "6px",
                       height: "45px",
                       overflow: "hidden",
                     }}
-                  >
-                    <LocalizationProvider dateAdapter={AdapterDayjs}>
-                      <MobileTimePicker
-                        value={time ? dayjs(`2000-01-01 ${time}`) : null}
-                        onChange={(v) => {
-                          setTime(v ? dayjs(v).format("HH:mm") : "");
-                          if (errors.time)
-                            setErrors((prev) => ({ ...prev, time: false }));
-                        }}
-                        slotProps={{
-                          textField: {
-                            variant: "standard",
-                            fullWidth: true,
-                            InputProps: {
-                              disableUnderline: true,
-                              sx: { px: 2, height: "45px", fontSize: "0.9rem" },
-                            },
-                          },
-                        }}
-                      />
-                    </LocalizationProvider>
-                  </div>
+                  />
                 ) : (
                   <input
                     type={elem.type}
@@ -800,7 +792,7 @@ export default function Burial() {
             onClick={handleSubmit}
             disabled={isLoading}
           >
-            {isLoading ? "Submitting" : "Confirm & Book Burial Service"}
+            {isLoading ? "Processing Booking..." : "Submit Booking"}
           </button>
         </div>
       </div>

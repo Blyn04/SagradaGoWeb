@@ -42,10 +42,15 @@ export default function Header() {
   }, []);
 
   useEffect(() => {
-    if (location.pathname === "/") {
-      setSelectedNavbar("home");
+    const pathToNavId = {
+      "/": "home",
+      "/book-service": "book",
+      "/events": "event",
+    };
+    if (pathToNavId[location.pathname]) {
+      setSelectedNavbar(pathToNavId[location.pathname]);
     }
-  }, []);
+  }, [location.pathname, setSelectedNavbar]);
 
   const handleLogout = () => {
     setShowProfileDropdown(false);

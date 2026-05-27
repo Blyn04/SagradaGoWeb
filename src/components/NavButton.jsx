@@ -59,15 +59,15 @@ export default function NavButton({
           key={service.id}
           href={service.path}
           onClick={(e) => {
-            if(email){
+            if (email) {
               e.preventDefault();
               handleDropdownClick(service.path, service.id);
             }
-            else{
+            else {
               setShowSignInAlert(true);
               e.preventDefault();
             }
-            
+
           }}
         >
           {service.name}
@@ -79,21 +79,30 @@ export default function NavButton({
   const shouldShowDropdown = activeDropdown && id === "book";
 
   return (
-    <div className="nav-container relative">
+    <div
+      className="nav-container relative"
+      onMouseEnter={() => {
+        if (id === "book") setActiveDropdown(true);
+        onMouseEnter?.();
+      }}
+      onMouseLeave={() => {
+        if (id === "book") setActiveDropdown(false);
+        onMouseLeave?.();
+      }}
+    >
       <button
+        type="button"
         className={`nav-button ${selectedNavbar === id ? "underline" : ""}`}
         onClick={onClick}
-        onMouseEnter={onMouseEnter}
-        onMouseLeave={onMouseLeave}
       >
         {text}
       </button>
 
       {shouldShowDropdown && dropdownMenu}
 
-      <SignInAlert 
-        open={showSignInAlert} 
-        onClose={() => setShowSignInAlert(false)} 
+      <SignInAlert
+        open={showSignInAlert}
+        onClose={() => setShowSignInAlert(false)}
       />
     </div>
   );

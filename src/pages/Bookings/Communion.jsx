@@ -9,10 +9,11 @@ import { NavbarContext } from "../../context/AllContext";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import dayjs from "dayjs";
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { MobileTimePicker } from "@mui/x-date-pickers/MobileTimePicker";
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import Cookies from "js-cookie";
+import BookingTimePicker, {
+  validateUserBookingTime,
+  USER_BOOKING_TIME_ERROR,
+} from "../../components/BookingTimePicker";
 
 import pdf_image from "../../assets/pdfImage.svg";
 import Modal from "../../components/Modal";
@@ -20,7 +21,8 @@ import Modal from "../../components/Modal";
 
 
 export default function Communion() {
-  const { setSelectedNavbar } = useContext(NavbarContext);
+  const { setSelectedNavbar, setTotalAmount} = useContext(NavbarContext);
+  
 
   const [fname, setFname] = useState("");
   const [mname, setMname] = useState("");
@@ -54,6 +56,7 @@ export default function Communion() {
     if (!contactNumber) newErrors.contact_number = true;
     if (!date) newErrors.date = true;
     if (!time) newErrors.time = true;
+    else if (!validateUserBookingTime(time)) newErrors.time = true;
     if (!attendees || attendees <= 0) newErrors.attendees = true;
 
     if (!baptismalCertificateFile) newErrors.baptismal_certFile = true;
@@ -220,15 +223,18 @@ export default function Communion() {
     setShowModalMessage(false);
 
     if (bookComplete) {
-      setSelectedNavbar("Home");
-      navigate("/");
+      navigate("/payment-method");
     }
   };
 
   async function handleSubmit() {
     if (!validate()) {
       setShowModalMessage(true);
-      setModalMessage("Please fill in all required fields.");
+      setModalMessage(
+        time && !validateUserBookingTime(time)
+          ? USER_BOOKING_TIME_ERROR
+          : "Please fill in all required fields.",
+      );
       return;
     }
 
@@ -272,6 +278,7 @@ export default function Communion() {
       const res = await axios.post(`${API_URL}/createCommunionWeb`, payload);
 
       setBookComplete(true);
+      setTotalAmount(500);
 
       setShowModalMessage(true);
       setModalMessage("Communion booking submitted successfully!");
@@ -294,7 +301,6 @@ export default function Communion() {
       setParentConsentPreview(null);
       setErrors({});
 
-      navigate("/");
     } catch (err) {
       console.error("UPLOAD ERROR:", err);
 
@@ -401,26 +407,16 @@ export default function Communion() {
                       overflow: "hidden",
                     }}
                   >
-                    <LocalizationProvider dateAdapter={AdapterDayjs}>
-                      <MobileTimePicker
-                        value={time ? dayjs(`2000-01-01 ${time}`) : null}
-                        onChange={(v) => {
-                          setTime(v ? dayjs(v).format("HH:mm") : "");
-                          if (errors.time)
-                            setErrors((prev) => ({ ...prev, time: false }));
-                        }}
-                        slotProps={{
-                          textField: {
-                            variant: "standard",
-                            fullWidth: true,
-                            InputProps: {
-                              disableUnderline: true,
-                              sx: { px: 2, height: "45px", fontSize: "0.9rem" },
-                            },
-                          },
-                        }}
-                      />
-                    </LocalizationProvider>
+                    <BookingTimePicker
+                      value={time}
+                      onChange={(formatted) => {
+                        setTime(formatted);
+                        if (errors.time)
+                          setErrors((prev) => ({ ...prev, time: false }));
+                      }}
+                      error={errors.time}
+                      className="time-container"
+                    />
                   </div>
                 ) : (
                   <input
@@ -472,26 +468,16 @@ export default function Communion() {
                       overflow: "hidden",
                     }}
                   >
-                    <LocalizationProvider dateAdapter={AdapterDayjs}>
-                      <MobileTimePicker
-                        value={time ? dayjs(`2000-01-01 ${time}`) : null}
-                        onChange={(v) => {
-                          setTime(v ? dayjs(v).format("HH:mm") : "");
-                          if (errors.time)
-                            setErrors((prev) => ({ ...prev, time: false }));
-                        }}
-                        slotProps={{
-                          textField: {
-                            variant: "standard",
-                            fullWidth: true,
-                            InputProps: {
-                              disableUnderline: true,
-                              sx: { px: 2, height: "45px", fontSize: "0.9rem" },
-                            },
-                          },
-                        }}
-                      />
-                    </LocalizationProvider>
+                    <BookingTimePicker
+                      value={time}
+                      onChange={(formatted) => {
+                        setTime(formatted);
+                        if (errors.time)
+                          setErrors((prev) => ({ ...prev, time: false }));
+                      }}
+                      error={errors.time}
+                      className="time-container"
+                    />
                   </div>
                 ) : (
                   <input
@@ -744,7 +730,7 @@ export default function Communion() {
             onClick={handleSubmit}
             disabled={loading}
           >
-            {loading ? "Submitting..." : "Confirm Communion Schedule"}
+            {loading ? "Processing Booking..." : "Submit Booking"}
           </button>
         </div>
       </div>
