@@ -51,6 +51,9 @@ import Cookies from "js-cookie";
 const { Title, Text } = Typography;
 const { Option } = Select;
 
+const MIN_USER_AGE_YEARS = 18;
+const MIN_PRIEST_AGE_YEARS = 25;
+
 export default function AccountManagement() {
   const navigate = useNavigate();
   const [users, setUsers] = useState([]);
@@ -88,6 +91,8 @@ export default function AccountManagement() {
     is_priest: false,
     previous_parish: "",
     residency: "",
+    start_date: "",
+    end_date: "",
   });
 
   const [birthdayDisplay, setBirthdayDisplay] = useState("");
@@ -256,7 +261,7 @@ export default function AccountManagement() {
     return value;
   };
 
-  const validateBirthday = (birthday) => {
+  const validateBirthday = (birthday, { isPriest = false } = {}) => {
     if (!birthday) {
       return "Birthday is required";
     }
@@ -280,6 +285,33 @@ export default function AccountManagement() {
 
     if (date.isBefore(minDate)) {
       return "Please enter a valid birthday (not more than 120 years ago)";
+    }
+
+    const minAgeYears = isPriest ? MIN_PRIEST_AGE_YEARS : MIN_USER_AGE_YEARS;
+    const age = today.diff(date, "year");
+    if (age < minAgeYears) {
+      return isPriest
+        ? `Priests must be at least ${MIN_PRIEST_AGE_YEARS} years old.`
+        : `Users must be at least ${MIN_USER_AGE_YEARS} years old.`;
+    }
+
+    return "";
+  };
+
+  const validateFloatingPriestDates = (residency, startDate, endDate) => {
+    if (residency !== "Floating") return "";
+    if (!startDate) return "Start date is required for floating priests";
+    if (!endDate) return "End date is required for floating priests";
+
+    const start = dayjs(startDate);
+    const end = dayjs(endDate);
+
+    if (!start.isValid() || !end.isValid()) {
+      return "Please enter valid start and end dates";
+    }
+
+    if (end.isBefore(start, "day")) {
+      return "End date must be on or after start date";
     }
 
     return "";
@@ -397,9 +429,30 @@ export default function AccountManagement() {
       newErrors.contact_number = contactError;
     }
 
-    const birthdayError = validateBirthday(formData.birthday);
+    const birthdayError = validateBirthday(formData.birthday, {
+      isPriest: formData.is_priest,
+    });
     if (birthdayError) {
       newErrors.birthday = birthdayError;
+    }
+
+    if (formData.is_priest) {
+      if (!formData.residency) {
+        newErrors.residency = "Residency is required";
+      }
+
+      const floatingDatesError = validateFloatingPriestDates(
+        formData.residency,
+        formData.start_date,
+        formData.end_date,
+      );
+      if (floatingDatesError) {
+        if (!formData.start_date) newErrors.start_date = "Start date is required";
+        if (!formData.end_date) newErrors.end_date = "End date is required";
+        if (formData.start_date && formData.end_date) {
+          newErrors.end_date = floatingDatesError;
+        }
+      }
     }
 
     // const passwordError = validatePassword(formData.password);
@@ -468,8 +521,11 @@ export default function AccountManagement() {
           createPayload.previous_parish = formData.previous_parish;
         }
 
-        if (formData.residency) {
-          createPayload.residency = formData.residency;
+        createPayload.residency = formData.residency;
+
+        if (formData.residency === "Floating") {
+          createPayload.start_date = formData.start_date;
+          createPayload.end_date = formData.end_date;
         }
       }
 
@@ -841,6 +897,16 @@ export default function AccountManagement() {
       is_priest: user.is_priest || false,
       previous_parish: user.previous_parish || "",
       residency: user.residency || "",
+      start_date: user.start_date
+        ? dayjs(user.start_date).format("YYYY-MM-DD")
+        : user.floating_start_date
+          ? dayjs(user.floating_start_date).format("YYYY-MM-DD")
+          : "",
+      end_date: user.end_date
+        ? dayjs(user.end_date).format("YYYY-MM-DD")
+        : user.floating_end_date
+          ? dayjs(user.floating_end_date).format("YYYY-MM-DD")
+          : "",
     });
 
     setBirthdayDisplay(birthdayValue);
@@ -867,9 +933,30 @@ export default function AccountManagement() {
       birthdayToValidate = parseDateInput(birthdayDisplay);
     }
 
-    const birthdayError = validateBirthday(birthdayToValidate);
+    const birthdayError = validateBirthday(birthdayToValidate, {
+      isPriest: formData.is_priest,
+    });
     if (birthdayError) {
       newErrors.birthday = birthdayError;
+    }
+
+    if (formData.is_priest) {
+      if (!formData.residency) {
+        newErrors.residency = "Residency is required";
+      }
+
+      const floatingDatesError = validateFloatingPriestDates(
+        formData.residency,
+        formData.start_date,
+        formData.end_date,
+      );
+      if (floatingDatesError) {
+        if (!formData.start_date) newErrors.start_date = "Start date is required";
+        if (!formData.end_date) newErrors.end_date = "End date is required";
+        if (formData.start_date && formData.end_date) {
+          newErrors.end_date = floatingDatesError;
+        }
+      }
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -926,12 +1013,20 @@ export default function AccountManagement() {
           updatePayload.previous_parish = formData.previous_parish;
         }
 
-        if (formData.residency) {
-          updatePayload.residency = formData.residency;
+        updatePayload.residency = formData.residency;
+
+        if (formData.residency === "Floating") {
+          updatePayload.start_date = formData.start_date;
+          updatePayload.end_date = formData.end_date;
+        } else {
+          updatePayload.start_date = undefined;
+          updatePayload.end_date = undefined;
         }
       } else {
         updatePayload.previous_parish = undefined;
         updatePayload.residency = undefined;
+        updatePayload.start_date = undefined;
+        updatePayload.end_date = undefined;
       }
 
       await axios.put(`${API_URL}/updateUser`, updatePayload);
@@ -972,6 +1067,8 @@ export default function AccountManagement() {
       is_priest: isPriest,
       previous_parish: "",
       residency: "",
+      start_date: "",
+      end_date: "",
     });
 
     setBirthdayDisplay("");
@@ -2008,7 +2105,9 @@ export default function AccountManagement() {
                         const formatted = date.format("YYYY-MM-DD");
                         setFormData({ ...formData, birthday: formatted });
                         setBirthdayDisplay(date.format("MM/DD/YYYY"));
-                        const error = validateBirthday(formatted);
+                        const error = validateBirthday(formatted, {
+                          isPriest: formData.is_priest,
+                        });
                         setErrors((prev) => ({ ...prev, birthday: error }));
                       } else {
                         setFormData({ ...formData, birthday: "" });
@@ -2025,9 +2124,15 @@ export default function AccountManagement() {
                     inputReadOnly={true}
                     allowClear={true}
                     disabledDate={(current) => {
+                      const minAgeYears = formData.is_priest
+                        ? MIN_PRIEST_AGE_YEARS
+                        : MIN_USER_AGE_YEARS;
+                      const maxBirthday = dayjs()
+                        .subtract(minAgeYears, "year")
+                        .endOf("day");
                       return (
                         current &&
-                        (current > dayjs().endOf("day") ||
+                        (current > maxBirthday ||
                           current < dayjs().subtract(120, "years"))
                       );
                     }}
@@ -2083,7 +2188,15 @@ export default function AccountManagement() {
                     </Form.Item>
                   </Col>
                   <Col xs={24} sm={12}>
-                    <Form.Item label="Residency">
+                    <Form.Item
+                      label={
+                        <>
+                          Residency <span style={{ color: "red" }}>*</span>
+                        </>
+                      }
+                      validateStatus={errors.residency ? "error" : ""}
+                      help={errors.residency}
+                    >
                       <Select
                         value={formData.residency}
                         onChange={(value) =>
@@ -2097,6 +2210,75 @@ export default function AccountManagement() {
                       </Select>
                     </Form.Item>
                   </Col>
+                  {formData.residency === "Floating" && (
+                    <>
+                      <Col xs={24} sm={12}>
+                        <Form.Item
+                          label={
+                            <>
+                              Start Date <span style={{ color: "red" }}>*</span>
+                            </>
+                          }
+                          validateStatus={errors.start_date ? "error" : ""}
+                          help={errors.start_date}
+                        >
+                          <DatePicker
+                            value={
+                              formData.start_date ? dayjs(formData.start_date) : null
+                            }
+                            onChange={(date) => {
+                              const formatted = date ? date.format("YYYY-MM-DD") : "";
+                              setFormData((prev) => ({
+                                ...prev,
+                                start_date: formatted,
+                              }));
+                              setErrors((prev) => ({
+                                ...prev,
+                                start_date: "",
+                                end_date: prev.end_date,
+                              }));
+                            }}
+                            format="MM/DD/YYYY"
+                            placeholder="Select start date"
+                            style={{ width: "100%" }}
+                            inputReadOnly={true}
+                            allowClear={true}
+                          />
+                        </Form.Item>
+                      </Col>
+                      <Col xs={24} sm={12}>
+                        <Form.Item
+                          label={
+                            <>
+                              End Date <span style={{ color: "red" }}>*</span>
+                            </>
+                          }
+                          validateStatus={errors.end_date ? "error" : ""}
+                          help={errors.end_date}
+                        >
+                          <DatePicker
+                            value={formData.end_date ? dayjs(formData.end_date) : null}
+                            onChange={(date) => {
+                              const formatted = date ? date.format("YYYY-MM-DD") : "";
+                              setFormData((prev) => ({
+                                ...prev,
+                                end_date: formatted,
+                              }));
+                              setErrors((prev) => ({
+                                ...prev,
+                                end_date: "",
+                              }));
+                            }}
+                            format="MM/DD/YYYY"
+                            placeholder="Select end date"
+                            style={{ width: "100%" }}
+                            inputReadOnly={true}
+                            allowClear={true}
+                          />
+                        </Form.Item>
+                      </Col>
+                    </>
+                  )}
                 </>
               )}
             </Row>
@@ -2238,7 +2420,9 @@ export default function AccountManagement() {
                         const formatted = date.format("YYYY-MM-DD");
                         setFormData({ ...formData, birthday: formatted });
                         setBirthdayDisplay(date.format("MM/DD/YYYY"));
-                        const error = validateBirthday(formatted);
+                        const error = validateBirthday(formatted, {
+                          isPriest: formData.is_priest,
+                        });
                         setErrors((prev) => ({ ...prev, birthday: error }));
                       } else {
                         setFormData({ ...formData, birthday: "" });
@@ -2255,9 +2439,15 @@ export default function AccountManagement() {
                     inputReadOnly={true}
                     allowClear={true}
                     disabledDate={(current) => {
+                      const minAgeYears = formData.is_priest
+                        ? MIN_PRIEST_AGE_YEARS
+                        : MIN_USER_AGE_YEARS;
+                      const maxBirthday = dayjs()
+                        .subtract(minAgeYears, "year")
+                        .endOf("day");
                       return (
                         current &&
-                        (current > dayjs().endOf("day") ||
+                        (current > maxBirthday ||
                           current < dayjs().subtract(120, "years"))
                       );
                     }}
@@ -2329,7 +2519,15 @@ export default function AccountManagement() {
                     </Form.Item>
                   </Col>
                   <Col xs={24} sm={12}>
-                    <Form.Item label="Residency">
+                    <Form.Item
+                      label={
+                        <>
+                          Residency <span style={{ color: "red" }}>*</span>
+                        </>
+                      }
+                      validateStatus={errors.residency ? "error" : ""}
+                      help={errors.residency}
+                    >
                       <Select
                         value={formData.residency}
                         onChange={(value) =>
@@ -2343,6 +2541,75 @@ export default function AccountManagement() {
                       </Select>
                     </Form.Item>
                   </Col>
+                  {formData.residency === "Floating" && (
+                    <>
+                      <Col xs={24} sm={12}>
+                        <Form.Item
+                          label={
+                            <>
+                              Start Date <span style={{ color: "red" }}>*</span>
+                            </>
+                          }
+                          validateStatus={errors.start_date ? "error" : ""}
+                          help={errors.start_date}
+                        >
+                          <DatePicker
+                            value={
+                              formData.start_date ? dayjs(formData.start_date) : null
+                            }
+                            onChange={(date) => {
+                              const formatted = date ? date.format("YYYY-MM-DD") : "";
+                              setFormData((prev) => ({
+                                ...prev,
+                                start_date: formatted,
+                              }));
+                              setErrors((prev) => ({
+                                ...prev,
+                                start_date: "",
+                                end_date: prev.end_date,
+                              }));
+                            }}
+                            format="MM/DD/YYYY"
+                            placeholder="Select start date"
+                            style={{ width: "100%" }}
+                            inputReadOnly={true}
+                            allowClear={true}
+                          />
+                        </Form.Item>
+                      </Col>
+                      <Col xs={24} sm={12}>
+                        <Form.Item
+                          label={
+                            <>
+                              End Date <span style={{ color: "red" }}>*</span>
+                            </>
+                          }
+                          validateStatus={errors.end_date ? "error" : ""}
+                          help={errors.end_date}
+                        >
+                          <DatePicker
+                            value={formData.end_date ? dayjs(formData.end_date) : null}
+                            onChange={(date) => {
+                              const formatted = date ? date.format("YYYY-MM-DD") : "";
+                              setFormData((prev) => ({
+                                ...prev,
+                                end_date: formatted,
+                              }));
+                              setErrors((prev) => ({
+                                ...prev,
+                                end_date: "",
+                              }));
+                            }}
+                            format="MM/DD/YYYY"
+                            placeholder="Select end date"
+                            style={{ width: "100%" }}
+                            inputReadOnly={true}
+                            allowClear={true}
+                          />
+                        </Form.Item>
+                      </Col>
+                    </>
+                  )}
                 </>
               )}
             </Row>
